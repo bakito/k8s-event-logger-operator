@@ -7,6 +7,7 @@ import (
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -82,9 +84,9 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling EventLogger")
 
-	// Fetch the EventLogger instance
-	instance := &eventloggerv1.EventLogger{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	// Fetch the EventLogger cr
+	cr := &eventloggerv1.EventLogger{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, cr)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -97,10 +99,10 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	// Define a new Deployment object
-	dep := deploymentForCR(instance, nil)
+	dep := deploymentForCR(cr, nil)
 
-	// Set EventLogger instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, dep, r.scheme); err != nil {
+	// Set EventLogger cr as the owner and controller
+	if err := controllerutil.SetControllerReference(cr, dep, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -109,7 +111,52 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
 		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+
+		conf, err := yaml.Marshal(cr.Spec)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		sec := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      cr.Name + "-event-logger",
+				Namespace: cr.Namespace,
+				Labels: map[string]string{
+					"app": cr.Name,
+				},
+			},
+			Type: "github.com/bakito/k8s-event-logger-operator",
+			Data: map[string][]byte{
+				"event-listener": conf,
+			},
+		}
+		// Set EventLogger cr as the owner and controller
+		if err := controllerutil.SetControllerReference(cr, sec, r.scheme); err != nil {
+			return reconcile.Result{}, err
+		}
+
+		err = r.client.Create(context.TODO(), sec)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 		err = r.client.Create(context.TODO(), dep)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		sacc, role, rb, err := rbac(cr, r.scheme)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		err = r.client.Create(context.TODO(), sacc)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		err = r.client.Create(context.TODO(), role)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+		err = r.client.Create(context.TODO(), rb)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
@@ -121,7 +168,7 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	// Deployment already exists - check if changed
-	if checkChanged(instance, dep) {
+	if checkChanged(cr, dep) {
 		reqLogger.Info("Updating Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.client.Update(context.TODO(), dep)
 		if err != nil {
@@ -159,16 +206,104 @@ func deploymentForCR(cr *eventloggerv1.EventLogger, dep *appsv1.Deployment) *app
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:    "busybox",
-							Image:   "busybox",
-							Command: []string{"sleep", "3600"},
+							Name:  "event-logger",
+							Image: "quay.io/bakito/k8s-event-logger",
+							Env: []corev1.EnvVar{
+								corev1.EnvVar{
+									Name:  "SLEEP",
+									Value: "1000",
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								corev1.VolumeMount{
+									Name:      "config",
+									MountPath: "/opt/go/config",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						corev1.Volume{
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: cr.Name + "-event-logger",
+								},
+							},
 						},
 					},
 				},
 			},
 		},
 	}
+}
+
+func rbac(cr *eventloggerv1.EventLogger, scheme *runtime.Scheme) (*corev1.ServiceAccount, *rbacv1.Role, *rbacv1.RoleBinding, error) {
+	sacc := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cr.Name,
+			Namespace: cr.Namespace,
+			Labels: map[string]string{
+				"app": cr.Name,
+			},
+		},
+	}
+
+	// Set EventLogger cr as the owner and controller
+	if err := controllerutil.SetControllerReference(cr, sacc, scheme); err != nil {
+		return nil, nil, nil, err
+	}
+
+	role := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cr.Name,
+			Namespace: cr.Namespace,
+			Labels: map[string]string{
+				"app": cr.Name,
+			},
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{""},
+				Resources: []string{"events"},
+				Verbs:     []string{"watch", "get", "list"},
+			},
+		},
+	}
+
+	// Set EventLogger cr as the owner and controller
+	if err := controllerutil.SetControllerReference(cr, role, scheme); err != nil {
+		return nil, nil, nil, err
+	}
+	rb := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cr.Name,
+			Namespace: cr.Namespace,
+			Labels: map[string]string{
+				"app": cr.Name,
+			},
+		},
+		Subjects: []rbacv1.Subject{
+			rbacv1.Subject{
+				Kind:      "ServiceAccount",
+				Name:      cr.Name,
+				Namespace: cr.Namespace,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			Kind:     "Role",
+			APIGroup: "rbac.authorization.k8s.io",
+			Name:     cr.Name,
+		},
+	}
+
+	// Set EventLogger cr as the owner and controller
+	err := controllerutil.SetControllerReference(cr, rb, scheme)
+	return sacc, role, rb, err
 }
