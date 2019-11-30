@@ -3,5 +3,5 @@ kind: EventLogger
 metadata:
   name: example-eventlogger
 spec:
-  # Add fields here
-  size: 3
+  kinds:
+    - name: ConfigMap

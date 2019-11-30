@@ -205,6 +205,9 @@ func deploymentForCR(cr *eventloggerv1.EventLogger, dep *appsv1.Deployment) *app
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels,

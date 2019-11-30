@@ -13,4 +13,5 @@ func main() {
 		time.Sleep(time.Duration(s) * time.Second)
 	}
 
+	println("bye")
 }
