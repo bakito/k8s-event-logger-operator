@@ -4,7 +4,7 @@ import (
 	"context"
 	"reflect"
 
-	eventloggerv1 "github.com/bakito/event-logger-operator/pkg/apis/eventlogger/v1"
+	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

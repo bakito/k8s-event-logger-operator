@@ -1,7 +1,7 @@
 package apis
 
 import (
-	v1 "github.com/bakito/event-logger-operator/pkg/apis/eventlogger/v1"
+	v1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 )
 
 func init() {

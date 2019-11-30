@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/bakito/event-logger-operator/pkg/controller/eventlogger"
+	"github.com/bakito/k8s-event-logger-operator/pkg/controller/eventlogger"
 )
 
 func init() {

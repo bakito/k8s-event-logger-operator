@@ -1,4 +1,4 @@
-module github.com/bakito/event-logger-operator
+module github.com/bakito/k8s-event-logger-operator
 
 go 1.13
 

@@ -10,8 +10,8 @@ ENV GOPROXY=https://goproxy.io \
     CGO_ENABLED=0 \
     GOOS=linux \
     GOARCH=amd64
-RUN go build -a -installsuffix cgo -ldflags="-w -s" -o event-logger-operator cmd/manager/main.go && \
-    upx --ultra-brute -q event-logger-operator
+RUN go build -a -installsuffix cgo -ldflags="-w -s" -o k8s-event-logger-operator cmd/manager/main.go && \
+    upx --ultra-brute -q k8s-event-logger-operator
 
 # application image
 
@@ -20,6 +20,6 @@ FROM scratch
 LABEL maintainer="bakito <github@bakito.ch>"
 EXPOSE 8080
 USER 1001
-ENTRYPOINT ["/go/bin/event-logger-operator"]
+ENTRYPOINT ["/go/bin/k8s-event-logger-operator"]
 
-COPY --from=builder /build/event-logger-operator /go/bin/event-logger-operator
+COPY --from=builder /build/k8s-event-logger-operator /go/bin/k8s-event-logger-operator
