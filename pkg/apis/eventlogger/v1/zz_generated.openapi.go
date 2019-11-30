@@ -67,6 +67,23 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 			SchemaProps: spec.SchemaProps{
 				Description: "EventLoggerSpec defines the desired state of EventLogger",
 				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kinds": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kinds the kinds to logg the events for",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"kinds"},
 			},
 		},
 	}
