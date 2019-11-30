@@ -35,9 +35,8 @@ spec:
               description: Kinds the kinds to logg the events for
               items:
                 type: string
-              maxItems: 500
-              minItems: 1
               type: array
+              uniqueItems: true
           required:
           - kinds
           type: object

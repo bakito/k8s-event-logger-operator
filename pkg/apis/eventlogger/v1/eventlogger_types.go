@@ -9,6 +9,7 @@ import (
 type EventLoggerSpec struct {
 
 	// Kinds the kinds to logg the events for
+	// +kubebuilder:validation:UniqueItems=true
 	Kinds []string `json:"kinds"`
 }
 
