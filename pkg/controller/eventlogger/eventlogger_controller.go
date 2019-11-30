@@ -2,6 +2,7 @@ package eventlogger
 
 import (
 	"context"
+	"reflect"
 
 	eventloggerv1 "github.com/bakito/event-logger-operator/pkg/apis/eventlogger/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -96,7 +97,7 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	// Define a new Deployment object
-	dep := newDeploymentForCR(instance)
+	dep := deploymentForCR(instance, nil)
 
 	// Set EventLogger instance as the owner and controller
 	if err := controllerutil.SetControllerReference(instance, dep, r.scheme); err != nil {
@@ -120,7 +121,7 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	// Deployment already exists - check if changed
-	if checkChanged(dep) {
+	if checkChanged(instance, dep) {
 		reqLogger.Info("Updating Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 		err = r.client.Update(context.TODO(), dep)
 		if err != nil {
@@ -134,16 +135,18 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 }
 
 // check if the existing deployment was changed
-func checkChanged(dep *appsv1.Deployment) bool {
-	if dep.Spec.Replicas == nil || *dep.Spec.Replicas != 1 {
-		dep.Spec.Replicas = &replicas
-		return true
-	}
-	return false
+func checkChanged(cr *eventloggerv1.EventLogger, dep *appsv1.Deployment) bool {
+	clone := dep.DeepCopy()
+	// re-apply initial values to original dep
+	deploymentForCR(cr, dep)
+	return !reflect.DeepEqual(dep, clone)
 }
 
-// newDeploymentForCR returns a busybox dep with the same name/namespace as the cr
-func newDeploymentForCR(cr *eventloggerv1.EventLogger) *appsv1.Deployment {
+// deploymentForCR returns a busybox dep with the same name/namespace as the cr
+func deploymentForCR(cr *eventloggerv1.EventLogger, dep *appsv1.Deployment) *appsv1.Deployment {
+	if dep == nil {
+		dep = &appsv1.Deployment{}
+	}
 	labels := map[string]string{
 		"app": cr.Name,
 	}
