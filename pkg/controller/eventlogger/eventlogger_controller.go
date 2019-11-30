@@ -24,8 +24,9 @@ import (
 )
 
 var (
-	log            = logf.Log.WithName("controller_eventlogger")
-	replicas int32 = 1
+	log                   = logf.Log.WithName("controller_eventlogger")
+	replicas        int32 = 1
+	defaultFileMode int32 = 420
 )
 
 // Add creates a new EventLogger Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -168,14 +169,12 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	// Deployment already exists - check if changed
-	if checkChanged(cr, dep) {
-		reqLogger.Info("Updating Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.client.Update(context.TODO(), dep)
+	if checkChanged(cr, found) {
+		reqLogger.Info("Updating Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+		err = r.client.Update(context.TODO(), found)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-	} else {
-		reqLogger.Info("Skip reconcile: Deployment already exists", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
 	}
 
 	return reconcile.Result{}, nil
@@ -186,65 +185,80 @@ func checkChanged(cr *eventloggerv1.EventLogger, dep *appsv1.Deployment) bool {
 	clone := dep.DeepCopy()
 	// re-apply initial values to original dep
 	deploymentForCR(cr, dep)
+
 	return !reflect.DeepEqual(dep, clone)
 }
 
 // deploymentForCR returns a busybox dep with the same name/namespace as the cr
 func deploymentForCR(cr *eventloggerv1.EventLogger, dep *appsv1.Deployment) *appsv1.Deployment {
 	if dep == nil {
-		dep = &appsv1.Deployment{}
+		dep = &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{},
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Env: []corev1.EnvVar{
+									corev1.EnvVar{},
+								},
+								VolumeMounts: []corev1.VolumeMount{
+									corev1.VolumeMount{},
+								},
+							},
+						},
+						Volumes: []corev1.Volume{
+							corev1.Volume{
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
 	}
 	labels := map[string]string{
 		"app": cr.Name,
 	}
-	return &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-event-logger",
-			Namespace: cr.Namespace,
-			Labels:    labels,
+
+	dep.ObjectMeta.Name = cr.Name + "-event-logger"
+	dep.ObjectMeta.Namespace = cr.Namespace
+	dep.ObjectMeta.Labels = labels
+	dep.Spec.Replicas = &replicas
+	dep.Spec.Selector.MatchLabels = labels
+	dep.Spec.Template.ObjectMeta.Labels = labels
+	dep.Spec.Template.Spec.Containers[0].Name = "event-logger"
+	dep.Spec.Template.Spec.Containers[0].Image = "quay.io/bakito/k8s-event-logger"
+	dep.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
+		corev1.EnvVar{
+			Name:  "SLEEP",
+			Value: "1000",
 		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "event-logger",
-							Image: "quay.io/bakito/k8s-event-logger",
-							Env: []corev1.EnvVar{
-								corev1.EnvVar{
-									Name:  "SLEEP",
-									Value: "1000",
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								corev1.VolumeMount{
-									Name:      "config",
-									MountPath: "/opt/go/config",
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						corev1.Volume{
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: cr.Name + "-event-logger",
-								},
-							},
-						},
-					},
+	}
+
+	dep.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
+		corev1.VolumeMount{
+			Name:      "config",
+			MountPath: "/opt/go/config",
+		},
+	}
+	dep.Spec.Template.Spec.Volumes = []corev1.Volume{
+		corev1.Volume{
+			Name: "config",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					DefaultMode: &defaultFileMode,
+					SecretName:  cr.Name + "-event-logger",
 				},
 			},
 		},
 	}
+
+	return dep
 }
 
 func rbac(cr *eventloggerv1.EventLogger, scheme *runtime.Scheme) (*corev1.ServiceAccount, *rbacv1.Role, *rbacv1.RoleBinding, error) {
