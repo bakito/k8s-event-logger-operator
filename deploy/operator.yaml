@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-logger-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: event-logger-operator
+  template:
+    metadata:
+      labels:
+        name: event-logger-operator
+    spec:
+      serviceAccountName: event-logger-operator
+      containers:
+        - name: event-logger-operator
+          # Replace this with the built image name
+          image: REPLACE_IMAGE
+          command:
+          - event-logger-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "event-logger-operator"

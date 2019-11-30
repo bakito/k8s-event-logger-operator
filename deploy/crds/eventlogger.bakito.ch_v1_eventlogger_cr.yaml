@@ -1,0 +1,7 @@
+apiVersion: eventlogger.bakito.ch/v1
+kind: EventLogger
+metadata:
+  name: example-eventlogger
+spec:
+  # Add fields here
+  size: 3
