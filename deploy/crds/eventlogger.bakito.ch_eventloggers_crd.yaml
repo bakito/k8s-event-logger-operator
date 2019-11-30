@@ -31,10 +31,42 @@ spec:
         spec:
           description: EventLoggerSpec defines the desired state of EventLogger
           properties:
+            eventTypes:
+              description: EventTypes the event types to log. If empty all events
+                are logged.
+              items:
+                type: string
+              minItems: 0
+              type: array
+              uniqueItems: true
             kinds:
               description: Kinds the kinds to logg the events for
               items:
-                type: string
+                description: Kind defines a kind to loge events for
+                properties:
+                  eventTypes:
+                    description: EventTypes the event types to log. If empty events
+                      are logged as defined in spec.
+                    items:
+                      type: string
+                    minItems: 0
+                    type: array
+                    uniqueItems: true
+                  matchingPatterns:
+                    description: MatchingPatterns optional regex pattern that must
+                      be contained in the message to be logged
+                    items:
+                      type: string
+                    minItems: 0
+                    type: array
+                    uniqueItems: true
+                  name:
+                    minLength: 3
+                    type: string
+                required:
+                - name
+                type: object
+              minItems: 1
               type: array
               uniqueItems: true
           required:
@@ -42,6 +74,17 @@ spec:
           type: object
         status:
           description: EventLoggerStatus defines the observed state of EventLogger
+          properties:
+            lastProcessed:
+              description: LastProcessed the timestamp the cr was lats processed
+              type: string
+            operatorVersion:
+              description: 'Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+                OperatorVersion the version of the operator that processed the cr'
+              type: string
+          required:
+          - lastProcessed
+          - operatorVersion
           type: object
       type: object
   version: v1

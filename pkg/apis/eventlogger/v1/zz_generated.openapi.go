@@ -14,6 +14,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"./pkg/apis/eventlogger/v1.EventLogger":       schema_pkg_apis_eventlogger_v1_EventLogger(ref),
 		"./pkg/apis/eventlogger/v1.EventLoggerSpec":   schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref),
 		"./pkg/apis/eventlogger/v1.EventLoggerStatus": schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref),
+		"./pkg/apis/eventlogger/v1.Kind":              schema_pkg_apis_eventlogger_v1_Kind(ref),
 	}
 }
 
@@ -69,8 +70,31 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kinds": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Kinds the kinds to logg the events for",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("./pkg/apis/eventlogger/v1.Kind"),
+									},
+								},
+							},
+						},
+					},
+					"eventTypes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "EventTypes the event types to log. If empty all events are logged.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -86,6 +110,8 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 				Required: []string{"kinds"},
 			},
 		},
+		Dependencies: []string{
+			"./pkg/apis/eventlogger/v1.Kind"},
 	}
 }
 
@@ -95,6 +121,81 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref common.ReferenceCallba
 			SchemaProps: spec.SchemaProps{
 				Description: "EventLoggerStatus defines the observed state of EventLogger",
 				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"operatorVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html OperatorVersion the version of the operator that processed the cr",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"lastProcessed": {
+						SchemaProps: spec.SchemaProps{
+							Description: "LastProcessed the timestamp the cr was lats processed",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"operatorVersion", "lastProcessed"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_eventlogger_v1_Kind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Kind defines a kind to loge events for",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"eventTypes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "EventTypes the event types to log. If empty events are logged as defined in spec.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"matchingPatterns": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "MatchingPatterns optional regex pattern that must be contained in the message to be logged",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"name"},
 			},
 		},
 	}
