@@ -193,16 +193,29 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:  "event-logger",
-					Image: "quay.io/bakito/k8s-event-logger",
+					Name:            "event-logger",
+					Image:           "quay.io/bakito/k8s-event-logger",
+					ImagePullPolicy: corev1.PullAlways,
 					Env: []corev1.EnvVar{
-						corev1.EnvVar{
-							Name:  "SLEEP",
-							Value: "1000",
+						{
+							Name: "WATCH_NAMESPACE",
+							ValueFrom: &corev1.EnvVarSource{
+								FieldRef: &corev1.ObjectFieldSelector{
+									FieldPath: "metadata.namespace",
+								},
+							},
+						},
+						{
+							Name: "POD_NAME",
+							ValueFrom: &corev1.EnvVarSource{
+								FieldRef: &corev1.ObjectFieldSelector{
+									FieldPath: "metadata.name",
+								},
+							},
 						},
 					},
 					VolumeMounts: []corev1.VolumeMount{
-						corev1.VolumeMount{
+						{
 							Name:      "config",
 							MountPath: "/opt/go/config",
 						},
@@ -210,7 +223,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 				},
 			},
 			Volumes: []corev1.Volume{
-				corev1.Volume{
+				{
 					Name: "config",
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
@@ -278,7 +291,7 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 		Rules: []rbacv1.PolicyRule{
 			{
 				APIGroups: []string{""},
-				Resources: []string{"events"},
+				Resources: []string{"events", "pods"},
 				Verbs:     []string{"watch", "get", "list"},
 			},
 		},
@@ -296,7 +309,7 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 			},
 		},
 		Subjects: []rbacv1.Subject{
-			rbacv1.Subject{
+			{
 				Kind:      "ServiceAccount",
 				Name:      cr.Name,
 				Namespace: cr.Namespace,

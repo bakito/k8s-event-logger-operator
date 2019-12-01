@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +12,6 @@ import (
 	"github.com/bakito/k8s-event-logger-operator/pkg/controller/event"
 	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
-	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -76,14 +74,6 @@ func main() {
 
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-
-	ctx := context.TODO()
-	// Become the leader before proceeding
-	err = leader.Become(ctx, "event-logger-operator-lock")
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
