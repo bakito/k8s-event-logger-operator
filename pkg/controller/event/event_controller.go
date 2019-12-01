@@ -75,8 +75,22 @@ func (p loggingPredicate) Create(e event.CreateEvent) bool {
 }
 
 func (p loggingPredicate) shouldLog(e *corev1.Event) bool {
-	if _, ok := p.kinds[e.InvolvedObject.Kind]; ok {
-		return true
+	k, ok := p.kinds[e.InvolvedObject.Kind]
+	if !ok {
+		return false
+	}
+
+	if len(k.EventTypes) != 0 && !contains(k.EventTypes, e.Type) {
+		return false
+	}
+	return true
+}
+
+func contains(list []string, val string) bool {
+	for _, v := range list {
+		if v == val {
+			return true
+		}
 	}
 	return false
 }
