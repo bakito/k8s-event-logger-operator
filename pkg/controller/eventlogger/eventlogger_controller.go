@@ -3,6 +3,7 @@ package eventlogger
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"time"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
@@ -107,7 +108,11 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 
 	sec, err := secretForCR(cr)
 	// Check if this Secret already exists
-	secChanged, err := r.createIfNotExists(cr, sec, reqLogger, true)
+	secChanged, err := r.createIfNotExists(cr, sec, reqLogger, func(curr runtime.Object, next runtime.Object) bool {
+		o1 := curr.(*corev1.Secret)
+		o2 := next.(*corev1.Secret)
+		return !reflect.DeepEqual(o1.Data, o2.Data)
+	})
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
@@ -116,15 +121,19 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
-	saccChanged, err := r.createIfNotExists(cr, sacc, reqLogger, false)
+	saccChanged, err := r.createIfNotExists(cr, sacc, reqLogger, nil)
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
-	roleChanged, err := r.createIfNotExists(cr, role, reqLogger, false)
+	roleChanged, err := r.createIfNotExists(cr, role, reqLogger, func(curr runtime.Object, next runtime.Object) bool {
+		o1 := curr.(*rbacv1.Role)
+		o2 := next.(*rbacv1.Role)
+		return !reflect.DeepEqual(o1.Rules, o2.Rules)
+	})
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
-	rbChanged, err := r.createIfNotExists(cr, rb, reqLogger, false)
+	rbChanged, err := r.createIfNotExists(cr, rb, reqLogger, nil)
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
@@ -132,7 +141,7 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	// Define a new Pod object
 	pod := podForCR(cr)
 	// Check if this Pod already exists
-	podChanged, err := r.createIfNotExists(cr, pod, reqLogger, false)
+	podChanged, err := r.createIfNotExists(cr, pod, reqLogger, nil)
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
@@ -144,7 +153,10 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger, res runtime.Object, reqLogger logr.Logger, update bool) (bool, error) {
+func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger,
+	res runtime.Object,
+	reqLogger logr.Logger,
+	updateCheck func(curr runtime.Object, next runtime.Object) bool) (bool, error) {
 	query := res.DeepCopyObject()
 	mo := res.(metav1.Object)
 	// Check if this Resource already exists
@@ -166,11 +178,14 @@ func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger, 
 		return false, err
 	}
 
-	if update {
+	if updateCheck != nil && updateCheck(query, res) {
 		err = r.client.Update(context.TODO(), res.(runtime.Object))
+		reqLogger.Info(fmt.Sprintf("Updating %s", query.GetObjectKind().GroupVersionKind().Kind), "Namespace", mo.GetNamespace(), "Name", mo.GetName())
+
 		if err != nil {
 			return false, err
 		}
+		return true, nil
 	}
 
 	// Resource already exists

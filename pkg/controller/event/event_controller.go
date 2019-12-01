@@ -74,7 +74,7 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 
 func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 	evt := e.(*corev1.Event)
-	if p.shouldLog(evt) || true {
+	if p.shouldLog(evt) {
 		eventLogger := log.WithValues(
 			"Namespace", mo.GetNamespace(),
 			"Name", mo.GetName(),
