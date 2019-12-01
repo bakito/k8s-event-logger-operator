@@ -98,7 +98,16 @@ func main() {
 		os.Exit(1)
 	}
 	config := &eventloggerv1.EventLoggerSpec{}
-	configFile, _ := ioutil.ReadFile(configFilePath)
+	configFile, err := ioutil.ReadFile(configFilePath)
+	if err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if _, ok := os.LookupEnv("DEBUG_CONFIG"); ok {
+		log.WithValues("file", configFilePath).Info(string(configFile))
+	}
+
 	err = yaml.Unmarshal(configFile, &config)
 	if err != nil {
 		log.Error(err, "")

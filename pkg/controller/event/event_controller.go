@@ -1,6 +1,8 @@
 package event
 
 import (
+	"regexp"
+
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -42,7 +44,7 @@ type loggingPredicate struct {
 	kinds map[string]eventloggerv1.Kind
 }
 
-func (p loggingPredicate) init(config *eventloggerv1.EventLoggerSpec) {
+func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerSpec) {
 	p.kinds = make(map[string]eventloggerv1.Kind)
 	for _, k := range config.Kinds {
 		p.kinds[k.Name] = k
@@ -74,19 +76,36 @@ func (p loggingPredicate) Create(e event.CreateEvent) bool {
 	return false
 }
 
-func (p loggingPredicate) shouldLog(e *corev1.Event) bool {
+func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
 	k, ok := p.kinds[e.InvolvedObject.Kind]
 	if !ok {
 		return false
 	}
 
-	if len(k.EventTypes) != 0 && !contains(k.EventTypes, e.Type) {
+	if !p.contains(k.EventTypes, e.Type) {
 		return false
 	}
-	return true
+
+	return !p.matches(k.MatchingPatterns, e.Type)
 }
 
-func contains(list []string, val string) bool {
+func (p *loggingPredicate) matches(list []string, val string) bool {
+	if len(list) == 0 {
+		return true
+	}
+	for _, v := range list {
+		var p = regexp.MustCompile(v)
+		if p.MatchString(val) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *loggingPredicate) contains(list []string, val string) bool {
+	if len(list) == 0 {
+		return true
+	}
 	for _, v := range list {
 		if v == val {
 			return true
