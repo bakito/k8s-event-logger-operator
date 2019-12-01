@@ -3,6 +3,7 @@ package eventlogger
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"time"
 
@@ -18,9 +19,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
@@ -35,6 +38,7 @@ const (
 var (
 	log                   = logf.Log.WithName("controller_eventlogger")
 	defaultFileMode int32 = 420
+	gracePeriod     int64
 )
 
 // Add creates a new EventLogger Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -62,8 +66,16 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to secondary resource Pods and requeue the owner EventLogger
+	// Watch for changes to secondary resource Pod and requeue the owner EventLogger
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &eventloggerv1.EventLogger{},
+	}, &deletedPredicate{})
+	if err != nil {
+		return err
+	}
+	// Watch for changes to secondary resource Secret and requeue the owner EventLogger
+	err = c.Watch(&source.Kind{Type: &corev1.Secret{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &eventloggerv1.EventLogger{},
 	})
@@ -103,60 +115,109 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return r.updateCR(cr, err)
+		return r.updateCR(cr, reqLogger, err)
 	}
-
 	sec, err := secretForCR(cr)
 	// Check if this Secret already exists
-	secChanged, err := r.createIfNotExists(cr, sec, reqLogger, func(curr runtime.Object, next runtime.Object) bool {
+	secChanged, err := r.createOrReplace(cr, sec, reqLogger, func(curr runtime.Object, next runtime.Object) updateReplace {
 		o1 := curr.(*corev1.Secret)
 		o2 := next.(*corev1.Secret)
-		return !reflect.DeepEqual(o1.Data, o2.Data)
+		if reflect.DeepEqual(o1.Data, o2.Data) {
+			return no
+		}
+		return update
 	})
 	if err != nil {
-		return r.updateCR(cr, err)
+		return r.updateCR(cr, reqLogger, err)
 	}
 
 	sacc, role, rb := rbacForCR(cr)
 	if err != nil {
-		return r.updateCR(cr, err)
+		return r.updateCR(cr, reqLogger, err)
 	}
-	saccChanged, err := r.createIfNotExists(cr, sacc, reqLogger, nil)
+	saccChanged, err := r.createOrReplace(cr, sacc, reqLogger, nil)
 	if err != nil {
-		return r.updateCR(cr, err)
+		return r.updateCR(cr, reqLogger, err)
 	}
-	roleChanged, err := r.createIfNotExists(cr, role, reqLogger, func(curr runtime.Object, next runtime.Object) bool {
+	roleChanged, err := r.createOrReplace(cr, role, reqLogger, func(curr runtime.Object, next runtime.Object) updateReplace {
 		o1 := curr.(*rbacv1.Role)
 		o2 := next.(*rbacv1.Role)
-		return !reflect.DeepEqual(o1.Rules, o2.Rules)
+		if reflect.DeepEqual(o1.Rules, o2.Rules) {
+			return no
+		}
+		return update
 	})
 	if err != nil {
-		return r.updateCR(cr, err)
+		return r.updateCR(cr, reqLogger, err)
 	}
-	rbChanged, err := r.createIfNotExists(cr, rb, reqLogger, nil)
+	rbChanged, err := r.createOrReplace(cr, rb, reqLogger, nil)
 	if err != nil {
-		return r.updateCR(cr, err)
+		return r.updateCR(cr, reqLogger, err)
 	}
 
 	// Define a new Pod object
 	pod := podForCR(cr)
 	// Check if this Pod already exists
-	podChanged, err := r.createIfNotExists(cr, pod, reqLogger, nil)
+	podChanged, err := r.createOrReplacePod(cr, pod, reqLogger, secChanged)
 	if err != nil {
-		return r.updateCR(cr, err)
+		return r.updateCR(cr, reqLogger, err)
 	}
 
 	if secChanged || saccChanged || roleChanged || rbChanged || podChanged {
-		return r.updateCR(cr, nil)
+		return r.updateCR(cr, reqLogger, nil)
 	}
 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger,
+func (r *ReconcileEventLogger) createOrReplacePod(cr *eventloggerv1.EventLogger, pod *corev1.Pod,
+	reqLogger logr.Logger, replace bool) (bool, error) {
+
+	podList := &corev1.PodList{}
+	opts := []client.ListOption{
+		client.InNamespace(cr.Namespace),
+		client.MatchingLabels(map[string]string{
+			"app":        cr.Name,
+			"created-by": "eventlogger"}),
+	}
+	err := r.client.List(context.TODO(), podList, opts...)
+
+	if err != nil {
+		return false, err
+	}
+
+	if replace || len(podList.Items) > 1 {
+
+		for _, p := range podList.Items {
+			reqLogger.Info(fmt.Sprintf("Deleting %s", pod.Kind), "Namespace", pod.GetNamespace(), "Name", pod.GetName())
+			err = r.client.Delete(context.TODO(), &p, &client.DeleteOptions{GracePeriodSeconds: &gracePeriod})
+			if err != nil {
+				return false, err
+			}
+		}
+		podList = &corev1.PodList{}
+	}
+
+	if len(podList.Items) == 0 {
+		// Set EventLogger cr as the owner and controller
+		if err := controllerutil.SetControllerReference(cr, pod, r.scheme); err != nil {
+			return false, err
+		}
+		reqLogger.Info(fmt.Sprintf("Creating a new %s", pod.Kind), "Namespace", pod.GetNamespace(), "Name", pod.GetName())
+		err = r.client.Create(context.TODO(), pod)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (r *ReconcileEventLogger) createOrReplace(cr *eventloggerv1.EventLogger,
 	res runtime.Object,
 	reqLogger logr.Logger,
-	updateCheck func(curr runtime.Object, next runtime.Object) bool) (bool, error) {
+	updateCheck func(curr runtime.Object, next runtime.Object) updateReplace) (bool, error) {
 	query := res.DeepCopyObject()
 	mo := res.(metav1.Object)
 	// Check if this Resource already exists
@@ -178,22 +239,39 @@ func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger,
 		return false, err
 	}
 
-	if updateCheck != nil && updateCheck(query, res) {
-		err = r.client.Update(context.TODO(), res.(runtime.Object))
-		reqLogger.Info(fmt.Sprintf("Updating %s", query.GetObjectKind().GroupVersionKind().Kind), "Namespace", mo.GetNamespace(), "Name", mo.GetName())
+	if updateCheck != nil {
+		check := updateCheck(query, res)
+		if check == update {
+			reqLogger.Info(fmt.Sprintf("Updating %s", query.GetObjectKind().GroupVersionKind().Kind), "Namespace", mo.GetNamespace(), "Name", mo.GetName())
+			err = r.client.Update(context.TODO(), res.(runtime.Object))
 
-		if err != nil {
-			return false, err
+			if err != nil {
+				return false, err
+			}
+			return true, nil
+		} else if check == replace {
+			reqLogger.Info(fmt.Sprintf("Replacing %s", query.GetObjectKind().GroupVersionKind().Kind), "Namespace", mo.GetNamespace(), "Name", mo.GetName())
+
+			err = r.client.Delete(context.TODO(), query.(runtime.Object))
+
+			if err != nil {
+				return false, err
+			}
+			err = r.client.Create(context.TODO(), query.(runtime.Object))
+
+			if err != nil {
+				return false, err
+			}
+			return true, nil
 		}
-		return true, nil
 	}
-
 	// Resource already exists
 	return false, nil
 }
 
-func (r *ReconcileEventLogger) updateCR(cr *eventloggerv1.EventLogger, err error) (reconcile.Result, error) {
+func (r *ReconcileEventLogger) updateCR(cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
 	if err != nil {
+		logger.Error(err, "")
 		cr.Status.Error = err.Error()
 	} else {
 		cr.Status.Error = ""
@@ -206,7 +284,8 @@ func (r *ReconcileEventLogger) updateCR(cr *eventloggerv1.EventLogger, err error
 // podForCR returns a pod with the same name/namespace as the cr
 func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	labels := map[string]string{
-		"app": cr.Name,
+		"app":        cr.Name,
+		"created-by": "eventlogger",
 	}
 
 	return &corev1.Pod{
@@ -214,7 +293,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 			Kind: "Pod",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
+			Name:      cr.Name + "-" + randString(),
 			Namespace: cr.Namespace,
 			Labels:    labels,
 		},
@@ -302,7 +381,7 @@ func secretForCR(cr *eventloggerv1.EventLogger) (*corev1.Secret, error) {
 			elConfigFileName: conf,
 		},
 	}
-	return sec, err
+	return sec, nil
 }
 
 func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.Role, *rbacv1.RoleBinding) {
@@ -365,4 +444,46 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 	}
 
 	return sacc, role, rb
+}
+
+type updateReplace string
+
+const (
+	update  updateReplace = "update"
+	replace updateReplace = "replace"
+	no      updateReplace = "no"
+)
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyz"
+
+func randString() string {
+	b := make([]byte, 8)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
+type deletedPredicate struct {
+	predicate.Funcs
+}
+
+// Create implements Predicate
+func (p deletedPredicate) Create(e event.CreateEvent) bool {
+	return false
+}
+
+// Delete implements Predicate
+func (p deletedPredicate) Delete(e event.DeleteEvent) bool {
+	return true
+}
+
+// Update implements Predicate
+func (p deletedPredicate) Update(e event.UpdateEvent) bool {
+	return false
+}
+
+// Generic implements Predicate
+func (p deletedPredicate) Generic(e event.GenericEvent) bool {
+	return false
 }
