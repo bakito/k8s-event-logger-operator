@@ -5,6 +5,8 @@ import (
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -41,26 +43,41 @@ type loggingPredicate struct {
 	predicate.Funcs
 	lastVersion string
 
-	kinds map[string]eventloggerv1.Kind
+	kinds map[string]*eventloggerv1.Kind
 }
 
 func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerSpec) {
-	p.kinds = make(map[string]eventloggerv1.Kind)
+	p.kinds = make(map[string]*eventloggerv1.Kind)
 	for _, k := range config.Kinds {
-		p.kinds[k.Name] = k
-		if k.EventTypes == nil {
-			k.EventTypes = config.EventTypes
+		kp := &k
+		p.kinds[k.Name] = kp
+		if kp.EventTypes == nil {
+			kp.EventTypes = config.EventTypes
 		}
 	}
 }
 
 // Create implements Predicate
 func (p loggingPredicate) Create(e event.CreateEvent) bool {
-	evt := e.Object.(*corev1.Event)
+	return p.logEvent(e.Meta, e.Object)
+}
+
+// Delete implements Predicate
+func (p loggingPredicate) Delete(e event.DeleteEvent) bool {
+	return p.logEvent(e.Meta, e.Object)
+}
+
+// Update implements Predicate
+func (p loggingPredicate) Update(e event.UpdateEvent) bool {
+	return p.logEvent(e.MetaNew, e.ObjectNew)
+}
+
+func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
+	evt := e.(*corev1.Event)
 	if p.shouldLog(evt) || true {
 		eventLogger := log.WithValues(
-			"Namespace", e.Meta.GetNamespace(),
-			"Name", e.Meta.GetName(),
+			"Namespace", mo.GetNamespace(),
+			"Name", mo.GetName(),
 			"Reason", evt.Reason,
 			"Timestamp", evt.LastTimestamp,
 			"Type", evt.Type,
@@ -86,7 +103,7 @@ func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
 		return false
 	}
 
-	return !p.matches(k.MatchingPatterns, e.Type)
+	return p.matches(k.MatchingPatterns, e.Message)
 }
 
 func (p *loggingPredicate) matches(list []string, val string) bool {

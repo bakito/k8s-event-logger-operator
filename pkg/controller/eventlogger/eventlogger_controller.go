@@ -107,7 +107,7 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 
 	sec, err := secretForCR(cr)
 	// Check if this Secret already exists
-	secChanged, err := r.createIfNotExists(cr, sec, reqLogger)
+	secChanged, err := r.createIfNotExists(cr, sec, reqLogger, true)
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
@@ -116,15 +116,15 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
-	saccChanged, err := r.createIfNotExists(cr, sacc, reqLogger)
+	saccChanged, err := r.createIfNotExists(cr, sacc, reqLogger, false)
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
-	roleChanged, err := r.createIfNotExists(cr, role, reqLogger)
+	roleChanged, err := r.createIfNotExists(cr, role, reqLogger, false)
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
-	rbChanged, err := r.createIfNotExists(cr, rb, reqLogger)
+	rbChanged, err := r.createIfNotExists(cr, rb, reqLogger, false)
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
@@ -132,7 +132,7 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	// Define a new Pod object
 	pod := podForCR(cr)
 	// Check if this Pod already exists
-	podChanged, err := r.createIfNotExists(cr, pod, reqLogger)
+	podChanged, err := r.createIfNotExists(cr, pod, reqLogger, false)
 	if err != nil {
 		return r.updateCR(cr, err)
 	}
@@ -144,7 +144,7 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger, res runtime.Object, reqLogger logr.Logger) (bool, error) {
+func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger, res runtime.Object, reqLogger logr.Logger, update bool) (bool, error) {
 	query := res.DeepCopyObject()
 	mo := res.(metav1.Object)
 	// Check if this Resource already exists
@@ -164,6 +164,13 @@ func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger, 
 
 	} else if err != nil {
 		return false, err
+	}
+
+	if update {
+		err = r.client.Update(context.TODO(), res.(runtime.Object))
+		if err != nil {
+			return false, err
+		}
 	}
 
 	// Resource already exists
@@ -222,6 +229,10 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 						{
 							Name:  c.EnvConfigFilePath,
 							Value: elAbsConfigFilePath,
+						},
+						{
+							Name:  "DEBUG_CONFIG",
+							Value: "true",
 						},
 					},
 					VolumeMounts: []corev1.VolumeMount{
