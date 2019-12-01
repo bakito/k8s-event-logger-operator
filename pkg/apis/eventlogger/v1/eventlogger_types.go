@@ -48,6 +48,9 @@ type EventLoggerStatus struct {
 	OperatorVersion string `json:"operatorVersion"`
 	// LastProcessed the timestamp the cr was lats processed
 	LastProcessed string `json:"lastProcessed"`
+
+	// Error
+	Error string `json:"error,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

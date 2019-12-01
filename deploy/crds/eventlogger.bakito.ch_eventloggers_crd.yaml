@@ -75,6 +75,9 @@ spec:
         status:
           description: EventLoggerStatus defines the observed state of EventLogger
           properties:
+            error:
+              description: Error
+              type: string
             lastProcessed:
               description: LastProcessed the timestamp the cr was lats processed
               type: string

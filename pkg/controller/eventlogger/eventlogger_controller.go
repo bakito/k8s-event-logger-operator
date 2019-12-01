@@ -2,10 +2,8 @@ package eventlogger
 
 import (
 	"context"
-	"reflect"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -54,8 +52,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to secondary resource Deployments and requeue the owner EventLogger
-	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
+	// Watch for changes to secondary resource Pods and requeue the owner EventLogger
+	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &eventloggerv1.EventLogger{},
 	})
@@ -99,19 +97,19 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Deployment object
-	dep := deploymentForCR(cr, nil)
+	// Define a new Pod object
+	pod := podForCR(cr)
 
 	// Set EventLogger cr as the owner and controller
-	if err := controllerutil.SetControllerReference(cr, dep, r.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(cr, pod, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Check if this Deployment already exists
-	found := &appsv1.Deployment{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: dep.Name, Namespace: dep.Namespace}, found)
+	// Check if this Pod already exists
+	found := &corev1.Pod{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
 
 		conf, err := yaml.Marshal(cr.Spec)
 		if err != nil {
@@ -139,10 +137,6 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-		err = r.client.Create(context.TODO(), dep)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
 
 		sacc, role, rb, err := rbac(cr, r.scheme)
 		if err != nil {
@@ -162,103 +156,67 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 			return reconcile.Result{}, err
 		}
 
-		// Deployment created successfully - don't requeue
+		err = r.client.Create(context.TODO(), pod)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		// Pod created successfully - don't requeue
 		return reconcile.Result{}, nil
 	} else if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Deployment already exists - check if changed
-	if checkChanged(cr, found) {
-		reqLogger.Info("Updating Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-		err = r.client.Update(context.TODO(), found)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-	}
+	// Pod already exists
 
 	return reconcile.Result{}, nil
 }
 
-// check if the existing deployment was changed
-func checkChanged(cr *eventloggerv1.EventLogger, dep *appsv1.Deployment) bool {
-	clone := dep.DeepCopy()
-	// re-apply initial values to original dep
-	deploymentForCR(cr, dep)
-
-	return !reflect.DeepEqual(dep, clone)
-}
-
-// deploymentForCR returns a busybox dep with the same name/namespace as the cr
-func deploymentForCR(cr *eventloggerv1.EventLogger, dep *appsv1.Deployment) *appsv1.Deployment {
-	if dep == nil {
-		dep = &appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{},
-			Spec: appsv1.DeploymentSpec{
-				Selector: &metav1.LabelSelector{},
-				Template: corev1.PodTemplateSpec{
-					ObjectMeta: metav1.ObjectMeta{},
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{
-							{
-								Env: []corev1.EnvVar{
-									corev1.EnvVar{},
-								},
-								VolumeMounts: []corev1.VolumeMount{
-									corev1.VolumeMount{},
-								},
-							},
-						},
-						Volumes: []corev1.Volume{
-							corev1.Volume{
-								VolumeSource: corev1.VolumeSource{
-									Secret: &corev1.SecretVolumeSource{},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-	}
+// podForCR returns a pod with the same name/namespace as the cr
+func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
 
-	dep.ObjectMeta.Name = cr.Name + "-event-logger"
-	dep.ObjectMeta.Namespace = cr.Namespace
-	dep.ObjectMeta.Labels = labels
-	dep.Spec.Replicas = &replicas
-	dep.Spec.Selector.MatchLabels = labels
-	dep.Spec.Template.ObjectMeta.Labels = labels
-	dep.Spec.Template.Spec.Containers[0].Name = "event-logger"
-	dep.Spec.Template.Spec.Containers[0].Image = "quay.io/bakito/k8s-event-logger"
-	dep.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
-		corev1.EnvVar{
-			Name:  "SLEEP",
-			Value: "1000",
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cr.Name + "-pod",
+			Namespace: cr.Namespace,
+			Labels:    labels,
 		},
-	}
-
-	dep.Spec.Template.Spec.Containers[0].VolumeMounts = []corev1.VolumeMount{
-		corev1.VolumeMount{
-			Name:      "config",
-			MountPath: "/opt/go/config",
-		},
-	}
-	dep.Spec.Template.Spec.Volumes = []corev1.Volume{
-		corev1.Volume{
-			Name: "config",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					DefaultMode: &defaultFileMode,
-					SecretName:  cr.Name + "-event-logger",
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "event-logger",
+					Image: "quay.io/bakito/k8s-event-logger",
+					Env: []corev1.EnvVar{
+						corev1.EnvVar{
+							Name:  "SLEEP",
+							Value: "1000",
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						corev1.VolumeMount{
+							Name:      "config",
+							MountPath: "/opt/go/config",
+						},
+					},
 				},
 			},
+			Volumes: []corev1.Volume{
+				corev1.Volume{
+					Name: "config",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							DefaultMode: &defaultFileMode,
+							SecretName:  cr.Name + "-event-logger",
+						},
+					},
+				},
+			},
+			ServiceAccountName: cr.Name,
 		},
 	}
-
-	return dep
 }
 
 func rbac(cr *eventloggerv1.EventLogger, scheme *runtime.Scheme) (*corev1.ServiceAccount, *rbacv1.Role, *rbacv1.RoleBinding, error) {

@@ -136,6 +136,13 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Error",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"operatorVersion", "lastProcessed"},
 			},
