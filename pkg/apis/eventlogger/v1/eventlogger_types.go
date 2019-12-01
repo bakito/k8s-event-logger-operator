@@ -43,10 +43,9 @@ type Kind struct {
 // EventLoggerStatus defines the observed state of EventLogger
 // +k8s:openapi-gen=true
 type EventLoggerStatus struct {
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	// OperatorVersion the version of the operator that processed the cr
 	OperatorVersion string `json:"operatorVersion"`
-	// LastProcessed the timestamp the cr was lats processed
+	// LastProcessed the timestamp the cr was last processed
 	LastProcessed string `json:"lastProcessed"`
 
 	// Error

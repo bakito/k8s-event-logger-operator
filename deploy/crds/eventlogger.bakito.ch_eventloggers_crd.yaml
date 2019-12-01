@@ -79,11 +79,11 @@ spec:
               description: Error
               type: string
             lastProcessed:
-              description: LastProcessed the timestamp the cr was lats processed
+              description: LastProcessed the timestamp the cr was last processed
               type: string
             operatorVersion:
-              description: 'Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-                OperatorVersion the version of the operator that processed the cr'
+              description: OperatorVersion the version of the operator that processed
+                the cr
               type: string
           required:
           - lastProcessed

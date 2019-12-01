@@ -124,14 +124,14 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref common.ReferenceCallba
 				Properties: map[string]spec.Schema{
 					"operatorVersion": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html OperatorVersion the version of the operator that processed the cr",
+							Description: "OperatorVersion the version of the operator that processed the cr",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"lastProcessed": {
 						SchemaProps: spec.SchemaProps{
-							Description: "LastProcessed the timestamp the cr was lats processed",
+							Description: "LastProcessed the timestamp the cr was last processed",
 							Type:        []string{"string"},
 							Format:      "",
 						},

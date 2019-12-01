@@ -2,8 +2,11 @@ package eventlogger
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
+	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -23,7 +26,6 @@ import (
 
 var (
 	log                   = logf.Log.WithName("controller_eventlogger")
-	replicas        int32 = 1
 	defaultFileMode int32 = 420
 )
 
@@ -94,82 +96,83 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
+		return r.updateCR(cr, err)
+	}
+
+	sec, err := secretForCR(cr)
+	// Check if this Secret already exists
+	secChanged, err := r.createIfNotExists(cr, sec, reqLogger)
+	if err != nil {
+		return r.updateCR(cr, err)
+	}
+
+	sacc, role, rb := rbacForCR(cr)
+	if err != nil {
+		return r.updateCR(cr, err)
+	}
+	saccChanged, err := r.createIfNotExists(cr, sacc, reqLogger)
+	if err != nil {
+		return r.updateCR(cr, err)
+	}
+	roleChanged, err := r.createIfNotExists(cr, role, reqLogger)
+	if err != nil {
+		return r.updateCR(cr, err)
+	}
+	rbChanged, err := r.createIfNotExists(cr, rb, reqLogger)
+	if err != nil {
+		return r.updateCR(cr, err)
 	}
 
 	// Define a new Pod object
 	pod := podForCR(cr)
-
-	// Set EventLogger cr as the owner and controller
-	if err := controllerutil.SetControllerReference(cr, pod, r.scheme); err != nil {
-		return reconcile.Result{}, err
-	}
-
 	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
-	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-
-		conf, err := yaml.Marshal(cr.Spec)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		sec := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      cr.Name + "-event-logger",
-				Namespace: cr.Namespace,
-				Labels: map[string]string{
-					"app": cr.Name,
-				},
-			},
-			Type: "github.com/bakito/k8s-event-logger-operator",
-			Data: map[string][]byte{
-				"event-listener": conf,
-			},
-		}
-		// Set EventLogger cr as the owner and controller
-		if err := controllerutil.SetControllerReference(cr, sec, r.scheme); err != nil {
-			return reconcile.Result{}, err
-		}
-
-		err = r.client.Create(context.TODO(), sec)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		sacc, role, rb, err := rbac(cr, r.scheme)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		err = r.client.Create(context.TODO(), sacc)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		err = r.client.Create(context.TODO(), role)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		err = r.client.Create(context.TODO(), rb)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		err = r.client.Create(context.TODO(), pod)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		// Pod created successfully - don't requeue
-		return reconcile.Result{}, nil
-	} else if err != nil {
-		return reconcile.Result{}, err
+	podChanged, err := r.createIfNotExists(cr, pod, reqLogger)
+	if err != nil {
+		return r.updateCR(cr, err)
 	}
 
-	// Pod already exists
+	if secChanged || saccChanged || roleChanged || rbChanged || podChanged {
+		return r.updateCR(cr, nil)
+	}
 
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileEventLogger) createIfNotExists(cr *eventloggerv1.EventLogger, res runtime.Object, reqLogger logr.Logger) (bool, error) {
+	query := res.DeepCopyObject()
+	mo := res.(metav1.Object)
+	// Check if this Resource already exists
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: mo.GetName(), Namespace: mo.GetNamespace()}, query)
+	if err != nil && errors.IsNotFound(err) {
+		// Set EventLogger cr as the owner and controller
+		if err := controllerutil.SetControllerReference(cr, mo, r.scheme); err != nil {
+			return false, err
+		}
+
+		reqLogger.Info(fmt.Sprintf("Creating a new %s", query.GetObjectKind().GroupVersionKind().Kind), "Namespace", mo.GetNamespace(), "Name", mo.GetName())
+		err = r.client.Create(context.TODO(), res.(runtime.Object))
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+
+	} else if err != nil {
+		return false, err
+	}
+
+	// Resource already exists
+	return false, nil
+}
+
+func (r *ReconcileEventLogger) updateCR(cr *eventloggerv1.EventLogger, err error) (reconcile.Result, error) {
+	if err != nil {
+		cr.Status.Error = err.Error()
+	} else {
+		cr.Status.Error = ""
+	}
+	cr.Status.LastProcessed = time.Now().Format(time.RFC3339)
+	updErr := r.client.Update(context.TODO(), cr)
+	return reconcile.Result{}, updErr
 }
 
 // podForCR returns a pod with the same name/namespace as the cr
@@ -179,6 +182,9 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	}
 
 	return &corev1.Pod{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Pod",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name + "-pod",
 			Namespace: cr.Namespace,
@@ -219,8 +225,36 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	}
 }
 
-func rbac(cr *eventloggerv1.EventLogger, scheme *runtime.Scheme) (*corev1.ServiceAccount, *rbacv1.Role, *rbacv1.RoleBinding, error) {
+func secretForCR(cr *eventloggerv1.EventLogger) (*corev1.Secret, error) {
+
+	conf, err := yaml.Marshal(cr.Spec)
+	if err != nil {
+		return nil, err
+	}
+	sec := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cr.Name + "-event-logger",
+			Namespace: cr.Namespace,
+			Labels: map[string]string{
+				"app": cr.Name,
+			},
+		},
+		Type: "github.com/bakito/k8s-event-logger-operator",
+		Data: map[string][]byte{
+			"event-listener": conf,
+		},
+	}
+	return sec, err
+}
+
+func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.Role, *rbacv1.RoleBinding) {
 	sacc := &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "ServiceAccount",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name,
 			Namespace: cr.Namespace,
@@ -230,12 +264,10 @@ func rbac(cr *eventloggerv1.EventLogger, scheme *runtime.Scheme) (*corev1.Servic
 		},
 	}
 
-	// Set EventLogger cr as the owner and controller
-	if err := controllerutil.SetControllerReference(cr, sacc, scheme); err != nil {
-		return nil, nil, nil, err
-	}
-
 	role := &rbacv1.Role{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Role",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name,
 			Namespace: cr.Namespace,
@@ -252,11 +284,10 @@ func rbac(cr *eventloggerv1.EventLogger, scheme *runtime.Scheme) (*corev1.Servic
 		},
 	}
 
-	// Set EventLogger cr as the owner and controller
-	if err := controllerutil.SetControllerReference(cr, role, scheme); err != nil {
-		return nil, nil, nil, err
-	}
 	rb := &rbacv1.RoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "RoleBinding",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cr.Name,
 			Namespace: cr.Namespace,
@@ -278,7 +309,5 @@ func rbac(cr *eventloggerv1.EventLogger, scheme *runtime.Scheme) (*corev1.Servic
 		},
 	}
 
-	// Set EventLogger cr as the owner and controller
-	err := controllerutil.SetControllerReference(cr, rb, scheme)
-	return sacc, role, rb, err
+	return sacc, role, rb
 }
