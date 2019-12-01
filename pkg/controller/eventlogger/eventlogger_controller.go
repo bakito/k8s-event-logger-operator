@@ -244,7 +244,7 @@ func secretForCR(cr *eventloggerv1.EventLogger) (*corev1.Secret, error) {
 		},
 		Type: "github.com/bakito/k8s-event-logger-operator",
 		Data: map[string][]byte{
-			"event-listener": conf,
+			"event-listener.conf": conf,
 		},
 	}
 	return sec, err
