@@ -89,6 +89,8 @@ spec:
           - lastProcessed
           - operatorVersion
           type: object
+      required:
+      - spec
       type: object
   version: v1
   versions:

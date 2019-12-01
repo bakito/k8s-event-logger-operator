@@ -171,7 +171,7 @@ func (r *ReconcileEventLogger) updateCR(cr *eventloggerv1.EventLogger, err error
 		cr.Status.Error = ""
 	}
 	cr.Status.LastProcessed = time.Now().Format(time.RFC3339)
-	updErr := r.client.Update(context.TODO(), cr)
+	updErr := r.client.Status().Update(context.TODO(), cr)
 	return reconcile.Result{}, updErr
 }
 

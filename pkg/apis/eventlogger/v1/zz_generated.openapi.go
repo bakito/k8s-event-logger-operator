@@ -55,6 +55,7 @@ func schema_pkg_apis_eventlogger_v1_EventLogger(ref common.ReferenceCallback) co
 						},
 					},
 				},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
