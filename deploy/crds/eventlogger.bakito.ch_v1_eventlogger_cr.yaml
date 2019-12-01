@@ -4,4 +4,4 @@ metadata:
   name: example-eventlogger
 spec:
   kinds:
-    - name: ConfigMap
+    - name: DeploymentConfig

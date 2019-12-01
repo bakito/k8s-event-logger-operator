@@ -9,6 +9,7 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
+	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/pkg/controller/event"
 	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -22,10 +23,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
-)
-
-const (
-	configConfigFilePath = "config/event-listener.conf"
 )
 
 // Change below variables to serve metrics on different host or port.
@@ -90,12 +87,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, err := os.Stat(configConfigFilePath); err != nil {
+	configFilePath, ok := os.LookupEnv(c.EnvConfigFilePath)
+	if !ok {
+		log.Error(fmt.Errorf("config path env variable '%s' not set", c.EnvConfigFilePath), "")
+		os.Exit(1)
+	}
+
+	if _, err := os.Stat(configFilePath); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
 	config := &eventloggerv1.EventLoggerSpec{}
-	configFile, _ := ioutil.ReadFile(configConfigFilePath)
+	configFile, _ := ioutil.ReadFile(configFilePath)
 	err = yaml.Unmarshal(configFile, &config)
 	if err != nil {
 		log.Error(err, "")

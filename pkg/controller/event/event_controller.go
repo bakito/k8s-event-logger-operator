@@ -55,20 +55,22 @@ func (p loggingPredicate) init(config *eventloggerv1.EventLoggerSpec) {
 // Create implements Predicate
 func (p loggingPredicate) Create(e event.CreateEvent) bool {
 	evt := e.Object.(*corev1.Event)
-	eventLogger := log.WithValues(
-		"Namespace", e.Meta.GetNamespace(),
-		"Name", e.Meta.GetName(),
-		"Reason", evt.Reason,
-		"Timestamp", evt.LastTimestamp,
-		"Type", evt.Type,
-		"InvolvedObject.Kind ", evt.InvolvedObject.Kind,
-		"InvolvedObject.Namespace ", evt.InvolvedObject.Namespace,
-		"InvolvedObject.Name ", evt.InvolvedObject.Name,
-		"ResourceVersion ", evt.ResourceVersion,
-		"ReportingController ", evt.ReportingController,
-		"Source ", evt.Source,
-	)
-	eventLogger.Info(evt.Message)
+	if p.shouldLog(evt) || true {
+		eventLogger := log.WithValues(
+			"Namespace", e.Meta.GetNamespace(),
+			"Name", e.Meta.GetName(),
+			"Reason", evt.Reason,
+			"Timestamp", evt.LastTimestamp,
+			"Type", evt.Type,
+			"InvolvedObject.Kind ", evt.InvolvedObject.Kind,
+			"InvolvedObject.Namespace ", evt.InvolvedObject.Namespace,
+			"InvolvedObject.Name ", evt.InvolvedObject.Name,
+			"ResourceVersion ", evt.ResourceVersion,
+			"ReportingController ", evt.ReportingController,
+			"Source ", evt.Source,
+		)
+		eventLogger.Info(evt.Message)
+	}
 	return false
 }
 

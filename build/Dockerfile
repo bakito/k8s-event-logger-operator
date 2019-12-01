@@ -16,10 +16,11 @@ RUN go build -a -installsuffix cgo -ldflags="-w -s" -o k8s-event-logger-operator
 # application image
 
 FROM scratch
+WORKDIR /opt/go
 
 LABEL maintainer="bakito <github@bakito.ch>"
 EXPOSE 8080
 USER 1001
-ENTRYPOINT ["/go/bin/k8s-event-logger-operator"]
+ENTRYPOINT ["/opt/go/k8s-event-logger-operator"]
 
-COPY --from=builder /build/k8s-event-logger-operator /go/bin/k8s-event-logger-operator
+COPY --from=builder /build/k8s-event-logger-operator /opt/go/k8s-event-logger-operator

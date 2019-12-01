@@ -6,6 +6,7 @@ import (
 	"time"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
+	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -22,6 +23,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
+)
+
+const (
+	elConfigFileName    = "event-listener.conf"
+	elAbsConfigDirPath  = "/opt/go/config"
+	elAbsConfigFilePath = elAbsConfigDirPath + "/" + elConfigFileName
 )
 
 var (
@@ -83,7 +90,6 @@ type ReconcileEventLogger struct {
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling EventLogger")
 
 	// Fetch the EventLogger cr
 	cr := &eventloggerv1.EventLogger{}
@@ -213,11 +219,15 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 								},
 							},
 						},
+						{
+							Name:  c.EnvConfigFilePath,
+							Value: elAbsConfigFilePath,
+						},
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      "config",
-							MountPath: "/opt/go/config",
+							MountPath: elAbsConfigDirPath,
 						},
 					},
 				},
@@ -229,6 +239,12 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 						Secret: &corev1.SecretVolumeSource{
 							DefaultMode: &defaultFileMode,
 							SecretName:  cr.Name + "-event-logger",
+							Items: []corev1.KeyToPath{
+								{
+									Key:  elConfigFileName,
+									Path: elConfigFileName,
+								},
+							},
 						},
 					},
 				},
@@ -257,7 +273,7 @@ func secretForCR(cr *eventloggerv1.EventLogger) (*corev1.Secret, error) {
 		},
 		Type: "github.com/bakito/k8s-event-logger-operator",
 		Data: map[string][]byte{
-			"event-listener.conf": conf,
+			elConfigFileName: conf,
 		},
 	}
 	return sec, err
