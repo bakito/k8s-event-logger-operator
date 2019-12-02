@@ -47,6 +47,7 @@ type loggingPredicate struct {
 }
 
 func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerSpec) {
+	// TODO pre init regex pattern
 	p.kinds = make(map[string]*eventloggerv1.Kind)
 	for _, k := range config.Kinds {
 		kp := &k

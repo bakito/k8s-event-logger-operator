@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
 	"reflect"
 	"time"
 
@@ -36,9 +37,10 @@ const (
 )
 
 var (
-	log                   = logf.Log.WithName("controller_eventlogger")
-	defaultFileMode int32 = 420
-	gracePeriod     int64
+	log                    = logf.Log.WithName("controller_eventlogger")
+	defaultFileMode  int32 = 420
+	gracePeriod      int64
+	eventLoggerImage = "quay.io/bakito/k8s-event-logger"
 )
 
 // Add creates a new EventLogger Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -49,6 +51,12 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+
+	podImage, ok := os.LookupEnv(c.EnvEventLoggerImage)
+	if ok {
+		eventLoggerImage = podImage
+	}
+
 	return &ReconcileEventLogger{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
@@ -301,7 +309,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 			Containers: []corev1.Container{
 				{
 					Name:            "event-logger",
-					Image:           "quay.io/bakito/k8s-event-logger",
+					Image:           eventLoggerImage,
 					ImagePullPolicy: corev1.PullAlways,
 					Env: []corev1.EnvVar{
 						{
