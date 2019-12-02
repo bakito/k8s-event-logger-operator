@@ -4,7 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EventLoggerSpec defines the desired state of EventLogger
+// EventLoggerConf defines the configuration of EventLogger
 // +k8s:openapi-gen=true
 type EventLoggerConf struct {
 
@@ -19,9 +19,6 @@ type EventLoggerConf struct {
 	// +kubebuilder:validation:UniqueItems=true
 	// +listType=set
 	EventTypes []string `json:"eventTypes,omitempty"`
-
-	// Labels additional labels for the logger pod
-	Labels map[string]string `json:"labels,omitempty"`
 }
 
 // EventLoggerSpec defines the desired state of EventLogger

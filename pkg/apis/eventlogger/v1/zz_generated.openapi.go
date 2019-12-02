@@ -68,7 +68,7 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerConf(ref common.ReferenceCallback
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "EventLoggerSpec defines the desired state of EventLogger",
+				Description: "EventLoggerConf defines the configuration of EventLogger",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kinds": {
@@ -99,21 +99,6 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerConf(ref common.ReferenceCallback
 							Description: "EventTypes the event types to log. If empty all events are logged.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"labels": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Labels additional labels for the logger pod",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Type:   []string{"string"},
@@ -167,21 +152,6 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 							Description: "EventTypes the event types to log. If empty all events are logged.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"labels": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Labels additional labels for the logger pod",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Type:   []string{"string"},
