@@ -26,52 +26,52 @@ func Test_contains(t *testing.T) {
 }
 
 var shouldLogData = []struct {
-	config   v1.EventLoggerSpec
+	config   v1.EventLoggerConf
 	event    corev1.Event
 	expected bool
 }{
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "Pod"}}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "Pod"}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 		true,
 	},
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "ConfigMap"}}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "ConfigMap"}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 		false,
 	},
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "Pod"}}, EventTypes: []string{"Normal"}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "Pod"}}, EventTypes: []string{"Normal"}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		true,
 	},
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "Pod"}}, EventTypes: []string{"Warning"}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "Pod"}}, EventTypes: []string{"Warning"}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		false,
 	},
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "Pod", EventTypes: []string{"Normal"}}}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "Pod", EventTypes: []string{"Normal"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		true,
 	},
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "Pod", EventTypes: []string{"Warning"}}}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "Pod", EventTypes: []string{"Warning"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		false,
 	},
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "Pod", EventTypes: []string{"Normal"}}}, EventTypes: []string{"Warning"}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "Pod", EventTypes: []string{"Normal"}}}, EventTypes: []string{"Warning"}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		true,
 	},
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "Pod", MatchingPatterns: []string{".*message.*"}}}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "Pod", MatchingPatterns: []string{".*message.*"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 		true,
 	},
 	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{v1.Kind{Name: "Pod", MatchingPatterns: []string{".*Message.*"}}}},
+		v1.EventLoggerConf{Kinds: []v1.Kind{v1.Kind{Name: "Pod", MatchingPatterns: []string{".*Message.*"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 		false,
 	},

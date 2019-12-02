@@ -8,13 +8,10 @@ import (
 	"runtime"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
-
 	"github.com/bakito/k8s-event-logger-operator/pkg/apis"
+	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/pkg/controller"
 	"github.com/bakito/k8s-event-logger-operator/version"
-
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -25,18 +22,14 @@ import (
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 )
 
-// Change below variables to serve metrics on different host or port.
-var (
-	metricsHost               = "0.0.0.0"
-	metricsPort         int32 = 8383
-	operatorMetricsPort int32 = 8686
-)
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
@@ -94,7 +87,7 @@ func main() {
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          "",
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		MetricsBindAddress: fmt.Sprintf("%s:%d", c.MetricsHost, c.MetricsPort),
 	})
 	if err != nil {
 		log.Error(err, "")
@@ -121,8 +114,8 @@ func main() {
 
 	// Add to the below struct any other metrics ports you want to expose.
 	servicePorts := []v1.ServicePort{
-		{Port: metricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: metricsPort}},
-		{Port: operatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: operatorMetricsPort}},
+		{Port: c.MetricsPort, Name: metrics.OperatorPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: c.MetricsPort}},
+		{Port: c.OperatorMetricsPort, Name: metrics.CRPortName, Protocol: v1.ProtocolTCP, TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: c.OperatorMetricsPort}},
 	}
 	// Create Service object to expose the metrics port(s).
 	service, err := metrics.CreateMetricsService(ctx, cfg, servicePorts)
@@ -169,7 +162,7 @@ func serveCRMetrics(cfg *rest.Config) error {
 	// To generate metrics in other namespaces, add the values below.
 	ns := []string{operatorNs}
 	// Generate and serve custom resource specific metrics.
-	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, metricsHost, operatorMetricsPort)
+	err = kubemetrics.GenerateAndServeCRMetrics(cfg, ns, filteredGVK, c.MetricsHost, c.OperatorMetricsPort)
 	if err != nil {
 		return err
 	}

@@ -10,10 +10,12 @@ import (
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -285,25 +287,38 @@ func (r *ReconcileEventLogger) updateCR(cr *eventloggerv1.EventLogger, logger lo
 		cr.Status.Error = ""
 	}
 	cr.Status.LastProcessed = time.Now().Format(time.RFC3339)
+	cr.Status.OperatorVersion = version.Version
 	updErr := r.client.Status().Update(context.TODO(), cr)
 	return reconcile.Result{}, updErr
 }
 
 // podForCR returns a pod with the same name/namespace as the cr
 func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
-	labels := map[string]string{
-		"app":        cr.Name,
-		"created-by": "eventlogger",
+	labels := make(map[string]string)
+	for k, v := range cr.Spec.Labels {
+		labels[k] = v
+	}
+	labels["app"] = cr.Name
+	labels["created-by"] = "eventlogger"
+
+	annotations := make(map[string]string)
+	for k, v := range cr.Spec.Annotations {
+		annotations[k] = v
+	}
+	if cr.Spec.ScrapeMetrics != nil && *cr.Spec.ScrapeMetrics {
+		labels["prometheus.io/port"] = string(c.MetricsPort)
+		labels["prometheus.io/scrape"] = "true"
 	}
 
-	return &corev1.Pod{
+	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Pod",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-" + randString(),
-			Namespace: cr.Namespace,
-			Labels:    labels,
+			Name:        cr.Name + "-" + randString(),
+			Namespace:   cr.Namespace,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
@@ -343,6 +358,16 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 							MountPath: elAbsConfigDirPath,
 						},
 					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceRequestsCPU:    resource.MustParse("100m"),
+							corev1.ResourceRequestsMemory: resource.MustParse("128Mi"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceLimitsCPU:      resource.MustParse("200m"),
+							corev1.ResourceRequestsMemory: resource.MustParse("256Mi"),
+						},
+					},
 				},
 			},
 			Volumes: []corev1.Volume{
@@ -365,11 +390,12 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 			ServiceAccountName: cr.Name,
 		},
 	}
+	return pod
 }
 
 func secretForCR(cr *eventloggerv1.EventLogger) (*corev1.Secret, error) {
 
-	conf, err := yaml.Marshal(cr.Spec)
+	conf, err := yaml.Marshal(cr.Spec.EventLoggerConf)
 	if err != nil {
 		return nil, err
 	}

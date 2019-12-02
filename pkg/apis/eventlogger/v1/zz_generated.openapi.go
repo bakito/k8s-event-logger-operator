@@ -12,6 +12,7 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLogger":       schema_pkg_apis_eventlogger_v1_EventLogger(ref),
+		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerConf":   schema_pkg_apis_eventlogger_v1_EventLoggerConf(ref),
 		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerSpec":   schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref),
 		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerStatus": schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref),
 		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.Kind":              schema_pkg_apis_eventlogger_v1_Kind(ref),
@@ -63,6 +64,74 @@ func schema_pkg_apis_eventlogger_v1_EventLogger(ref common.ReferenceCallback) co
 	}
 }
 
+func schema_pkg_apis_eventlogger_v1_EventLoggerConf(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "EventLoggerSpec defines the desired state of EventLogger",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kinds": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Kinds the kinds to logg the events for",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.Kind"),
+									},
+								},
+							},
+						},
+					},
+					"eventTypes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "EventTypes the event types to log. If empty all events are logged.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Labels additional labels for the logger pod",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"kinds"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.Kind"},
+	}
+}
+
 func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -105,6 +174,58 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 									},
 								},
 							},
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Labels additional labels for the logger pod",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"labels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Labels additional labels for the logger pod",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"annotations": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Labels additional annotations for the logger pod",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"scrapeMetrics": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ScrapeMetrics if true, prometheus scrape annotations are added to the pod",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},

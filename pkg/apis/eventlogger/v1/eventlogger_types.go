@@ -6,7 +6,7 @@ import (
 
 // EventLoggerSpec defines the desired state of EventLogger
 // +k8s:openapi-gen=true
-type EventLoggerSpec struct {
+type EventLoggerConf struct {
 
 	// Kinds the kinds to logg the events for
 	// +kubebuilder:validation:MinItems=1
@@ -19,6 +19,24 @@ type EventLoggerSpec struct {
 	// +kubebuilder:validation:UniqueItems=true
 	// +listType=set
 	EventTypes []string `json:"eventTypes,omitempty"`
+
+	// Labels additional labels for the logger pod
+	Labels map[string]string `json:"labels,omitempty"`
+}
+
+// EventLoggerSpec defines the desired state of EventLogger
+// +k8s:openapi-gen=true
+type EventLoggerSpec struct {
+	EventLoggerConf `json:",inline"`
+
+	// Labels additional labels for the logger pod
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Labels additional annotations for the logger pod
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// ScrapeMetrics if true, prometheus scrape annotations are added to the pod
+	ScrapeMetrics *bool `json:"scrapeMetrics,omitempty"`
 }
 
 // Kind defines a kind to loge events for

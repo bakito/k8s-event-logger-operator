@@ -25,12 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 )
 
-// Change below variables to serve metrics on different host or port.
-var (
-	metricsHost               = "0.0.0.0"
-	metricsPort         int32 = 8383
-	operatorMetricsPort int32 = 8686
-)
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
@@ -80,7 +74,7 @@ func main() {
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
-		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
+		MetricsBindAddress: fmt.Sprintf("%s:%d", c.MetricsHost, c.MetricsPort),
 	})
 	if err != nil {
 		log.Error(err, "")
@@ -97,7 +91,7 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-	config := &eventloggerv1.EventLoggerSpec{}
+	config := &eventloggerv1.EventLoggerConf{}
 	configFile, err := ioutil.ReadFile(configFilePath)
 	if err != nil {
 		log.Error(err, "")

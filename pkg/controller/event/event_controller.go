@@ -22,7 +22,7 @@ var eventLog = logf.Log.WithName("event")
 
 // Add creates a new Event Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, config *eventloggerv1.EventLoggerSpec) error {
+func Add(mgr manager.Manager, config *eventloggerv1.EventLoggerConf) error {
 	// Create a new controller
 	c, err := controller.New("event-controller", mgr, controller.Options{Reconciler: reconcile.Func(nil)})
 	if err != nil {
@@ -47,7 +47,7 @@ type loggingPredicate struct {
 	kinds map[string]*filter
 }
 
-func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerSpec) {
+func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerConf) {
 	p.kinds = make(map[string]*filter)
 	for _, k := range config.Kinds {
 		kp := &k
