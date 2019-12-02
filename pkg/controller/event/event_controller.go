@@ -18,6 +18,7 @@ import (
 )
 
 var log = logf.Log.WithName("controller_event")
+var eventLog = logf.Log.WithName("event")
 
 // Add creates a new Event Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -89,18 +90,14 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 	evt := e.(*corev1.Event)
 	if p.shouldLog(evt) {
-		eventLogger := log.WithValues(
-			"Namespace", mo.GetNamespace(),
-			"Name", mo.GetName(),
-			"Reason", evt.Reason,
-			"Timestamp", evt.LastTimestamp,
-			"Type", evt.Type,
-			"InvolvedObject.Kind ", evt.InvolvedObject.Kind,
-			"InvolvedObject.Namespace ", evt.InvolvedObject.Namespace,
-			"InvolvedObject.Name ", evt.InvolvedObject.Name,
-			"ResourceVersion ", evt.ResourceVersion,
-			"ReportingController ", evt.ReportingController,
-			"Source ", evt.Source,
+		eventLogger := eventLog.WithValues(
+			"namespace", mo.GetNamespace(),
+			"name", mo.GetName(),
+			"reason", evt.Reason,
+			"timestamp", evt.LastTimestamp,
+			"type", evt.Type,
+			"involvedObject ", evt.InvolvedObject,
+			"source ", evt.Source,
 		)
 		eventLogger.Info(evt.Message)
 	}

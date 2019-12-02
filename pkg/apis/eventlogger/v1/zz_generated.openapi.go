@@ -15,7 +15,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerSpec":   schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref),
 		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerStatus": schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref),
 		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.Kind":              schema_pkg_apis_eventlogger_v1_Kind(ref),
-		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.MatchingPattern":   schema_pkg_apis_eventlogger_v1_MatchingPattern(ref),
 	}
 }
 
@@ -196,44 +195,22 @@ func schema_pkg_apis_eventlogger_v1_Kind(ref common.ReferenceCallback) common.Op
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.MatchingPattern"),
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
 						},
 					},
-				},
-				Required: []string{"name"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.MatchingPattern"},
-	}
-}
-
-func schema_pkg_apis_eventlogger_v1_MatchingPattern(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "MatchingPattern defines a message matching pattern",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"pattern": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Pattern the match regex pattern",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"skip": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Skip skip the entry if matched",
+							Description: "SkipOnMatch skip the entry if matched",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"pattern"},
+				Required: []string{"name"},
 			},
 		},
 	}
