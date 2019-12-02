@@ -361,11 +361,11 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{
 							corev1.ResourceRequestsCPU:    resource.MustParse("100m"),
-							corev1.ResourceRequestsMemory: resource.MustParse("128Mi"),
+							corev1.ResourceRequestsMemory: resource.MustParse("64Mi"),
 						},
 						Limits: corev1.ResourceList{
 							corev1.ResourceLimitsCPU:      resource.MustParse("200m"),
-							corev1.ResourceRequestsMemory: resource.MustParse("256Mi"),
+							corev1.ResourceRequestsMemory: resource.MustParse("128Mi"),
 						},
 					},
 				},
