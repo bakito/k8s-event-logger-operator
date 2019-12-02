@@ -12,6 +12,97 @@ spec:
   scope: Namespaced
   subresources:
     status: {}
+  validation:
+    openAPIV3Schema:
+      description: EventLogger is the Schema for the eventloggers API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: EventLoggerSpec defines the desired state of EventLogger
+          properties:
+            eventTypes:
+              description: EventTypes the event types to log. If empty all events
+                are logged.
+              items:
+                type: string
+              minItems: 0
+              type: array
+              uniqueItems: true
+            kinds:
+              description: Kinds the kinds to logg the events for
+              items:
+                description: Kind defines a kind to loge events for
+                properties:
+                  eventTypes:
+                    description: EventTypes the event types to log. If empty events
+                      are logged as defined in spec.
+                    items:
+                      type: string
+                    minItems: 0
+                    type: array
+                    uniqueItems: true
+                  matchingPatterns:
+                    description: MatchingPatterns optional regex pattern that must
+                      be contained in the message to be logged
+                    items:
+                      description: MatchingPattern defines a message matching pattern
+                      properties:
+                        pattern:
+                          description: Pattern the match regex pattern
+                          minLength: 3
+                          type: string
+                        skip:
+                          description: Skip skip the entry if matched
+                          type: boolean
+                      required:
+                      - pattern
+                      type: object
+                    minItems: 0
+                    type: array
+                    uniqueItems: true
+                  name:
+                    minLength: 3
+                    type: string
+                required:
+                - name
+                type: object
+              minItems: 1
+              type: array
+              uniqueItems: true
+          required:
+          - kinds
+          type: object
+        status:
+          description: EventLoggerStatus defines the observed state of EventLogger
+          properties:
+            error:
+              description: Error
+              type: string
+            lastProcessed:
+              description: LastProcessed the timestamp the cr was last processed
+              type: string
+            operatorVersion:
+              description: OperatorVersion the version of the operator that processed
+                the cr
+              type: string
+          required:
+          - lastProcessed
+          - operatorVersion
+          type: object
+      required:
+      - spec
+      type: object
   version: v1
   versions:
   - name: v1

@@ -43,17 +43,30 @@ type loggingPredicate struct {
 	predicate.Funcs
 	lastVersion string
 
-	kinds map[string]*eventloggerv1.Kind
+	kinds map[string]*filter
 }
 
 func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerSpec) {
-	// TODO pre init regex pattern
-	p.kinds = make(map[string]*eventloggerv1.Kind)
+	p.kinds = make(map[string]*filter)
 	for _, k := range config.Kinds {
 		kp := &k
-		p.kinds[k.Name] = kp
+		p.kinds[k.Name] = &filter{
+			matchingPatterns: []*regexp.Regexp{},
+		}
 		if kp.EventTypes == nil {
-			kp.EventTypes = config.EventTypes
+			p.kinds[k.Name].eventTypes = config.EventTypes
+		} else {
+			p.kinds[k.Name].eventTypes = kp.EventTypes
+		}
+
+		if k.MatchingPatterns != nil {
+			if k.SkipOnMatch != nil && *k.SkipOnMatch {
+				p.kinds[k.Name].skipOnMatch = true
+			}
+			for _, mp := range k.MatchingPatterns {
+
+				p.kinds[k.Name].matchingPatterns = append(p.kinds[k.Name].matchingPatterns, regexp.MustCompile(mp))
+			}
 		}
 	}
 }
@@ -95,29 +108,28 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 }
 
 func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
-	k, ok := p.kinds[e.InvolvedObject.Kind]
+	f, ok := p.kinds[e.InvolvedObject.Kind]
 	if !ok {
 		return false
 	}
 
-	if !p.contains(k.EventTypes, e.Type) {
+	if !p.contains(f.eventTypes, e.Type) {
 		return false
 	}
 
-	return p.matches(k.MatchingPatterns, e.Message)
+	return p.matches(f.matchingPatterns, f.skipOnMatch, e.Message)
 }
 
-func (p *loggingPredicate) matches(list []string, val string) bool {
-	if len(list) == 0 {
+func (p *loggingPredicate) matches(patterns []*regexp.Regexp, skipOnMatch bool, val string) bool {
+	if len(patterns) == 0 {
 		return true
 	}
-	for _, v := range list {
-		var p = regexp.MustCompile(v)
+	for _, p := range patterns {
 		if p.MatchString(val) {
-			return true
+			return !skipOnMatch
 		}
 	}
-	return false
+	return skipOnMatch
 }
 
 func (p *loggingPredicate) contains(list []string, val string) bool {
@@ -130,4 +142,10 @@ func (p *loggingPredicate) contains(list []string, val string) bool {
 		}
 	}
 	return false
+}
+
+type filter struct {
+	eventTypes       []string
+	matchingPatterns []*regexp.Regexp
+	skipOnMatch      bool
 }

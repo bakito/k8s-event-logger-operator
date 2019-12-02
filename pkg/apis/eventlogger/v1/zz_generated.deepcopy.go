@@ -126,6 +126,11 @@ func (in *Kind) DeepCopyInto(out *Kind) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.SkipOnMatch != nil {
+		in, out := &in.SkipOnMatch, &out.SkipOnMatch
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 

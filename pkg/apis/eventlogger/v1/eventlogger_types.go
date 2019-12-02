@@ -38,6 +38,9 @@ type Kind struct {
 	// +kubebuilder:validation:UniqueItems=true
 	// +listType=set
 	MatchingPatterns []string `json:"matchingPatterns,omitempty"`
+
+	// SkipOnMatch skip the entry if matched
+	SkipOnMatch *bool `json:"skip,omitempty"`
 }
 
 // EventLoggerStatus defines the observed state of EventLogger

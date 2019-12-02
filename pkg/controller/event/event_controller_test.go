@@ -1,6 +1,7 @@
 package event
 
 import (
+	"regexp"
 	"testing"
 
 	v1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
@@ -11,9 +12,9 @@ import (
 func Test_matches(t *testing.T) {
 	lp := &loggingPredicate{}
 
-	Assert(t, lp.matches([]string{"abc", "xyz"}, "abc"))
-	Assert(t, lp.matches([]string{"abc", "xyz"}, "^abc$"))
-	Assert(t, !lp.matches([]string{"abc", "xyz"}, "^ab$"))
+	Assert(t, lp.matches([]*regexp.Regexp{regexp.MustCompile("abc")}, false, "abc"))
+	Assert(t, lp.matches([]*regexp.Regexp{regexp.MustCompile("^abc$")}, false, "abc"))
+	Assert(t, !lp.matches([]*regexp.Regexp{regexp.MustCompile("^ab$")}, false, "abc"))
 }
 
 func Test_contains(t *testing.T) {

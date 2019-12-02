@@ -11,10 +11,11 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"./pkg/apis/eventlogger/v1.EventLogger":       schema_pkg_apis_eventlogger_v1_EventLogger(ref),
-		"./pkg/apis/eventlogger/v1.EventLoggerSpec":   schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref),
-		"./pkg/apis/eventlogger/v1.EventLoggerStatus": schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref),
-		"./pkg/apis/eventlogger/v1.Kind":              schema_pkg_apis_eventlogger_v1_Kind(ref),
+		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLogger":       schema_pkg_apis_eventlogger_v1_EventLogger(ref),
+		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerSpec":   schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref),
+		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerStatus": schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref),
+		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.Kind":              schema_pkg_apis_eventlogger_v1_Kind(ref),
+		"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.MatchingPattern":   schema_pkg_apis_eventlogger_v1_MatchingPattern(ref),
 	}
 }
 
@@ -46,12 +47,12 @@ func schema_pkg_apis_eventlogger_v1_EventLogger(ref common.ReferenceCallback) co
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/eventlogger/v1.EventLoggerSpec"),
+							Ref: ref("github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("./pkg/apis/eventlogger/v1.EventLoggerStatus"),
+							Ref: ref("github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerStatus"),
 						},
 					},
 				},
@@ -59,7 +60,7 @@ func schema_pkg_apis_eventlogger_v1_EventLogger(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/eventlogger/v1.EventLoggerSpec", "./pkg/apis/eventlogger/v1.EventLoggerStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerSpec", "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.EventLoggerStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -82,7 +83,7 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("./pkg/apis/eventlogger/v1.Kind"),
+										Ref: ref("github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.Kind"),
 									},
 								},
 							},
@@ -112,7 +113,7 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"./pkg/apis/eventlogger/v1.Kind"},
+			"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.Kind"},
 	}
 }
 
@@ -195,8 +196,7 @@ func schema_pkg_apis_eventlogger_v1_Kind(ref common.ReferenceCallback) common.Op
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
+										Ref: ref("github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.MatchingPattern"),
 									},
 								},
 							},
@@ -204,6 +204,36 @@ func schema_pkg_apis_eventlogger_v1_Kind(ref common.ReferenceCallback) common.Op
 					},
 				},
 				Required: []string{"name"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1.MatchingPattern"},
+	}
+}
+
+func schema_pkg_apis_eventlogger_v1_MatchingPattern(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "MatchingPattern defines a message matching pattern",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"pattern": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pattern the match regex pattern",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"skip": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Skip skip the entry if matched",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"pattern"},
 			},
 		},
 	}
