@@ -1,0 +1,43 @@
+{{- if .Values.rbac.create -}}
+# extend edit and view cluster roles
+# see documentation: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: eventlogger-bakito-ch-edit
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+{{ include "k8s-event-logger-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - eventlogger.bakito.ch
+  resources:
+  - eventloggers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: eventlogger-bakito-ch-view
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+    
+{{ include "k8s-event-logger-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - eventlogger.bakito.ch
+  resources:
+  - eventloggers
+  verbs:
+  - get
+  - list
+{{- end -}}
