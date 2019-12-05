@@ -43,6 +43,10 @@ var (
 	defaultFileMode  int32 = 420
 	gracePeriod      int64
 	eventLoggerImage = "quay.io/bakito/k8s-event-logger"
+	podReqCPU        = resource.MustParse("100m")
+	podReqMem        = resource.MustParse("64Mi")
+	podMaxCPU        = resource.MustParse("200m")
+	podMaxMem        = resource.MustParse("128Mi")
 )
 
 // Add creates a new EventLogger Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -54,9 +58,20 @@ func Add(mgr manager.Manager) error {
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 
-	podImage, ok := os.LookupEnv(c.EnvEventLoggerImage)
-	if ok {
+	if podImage, ok := os.LookupEnv(c.EnvEventLoggerImage); ok {
 		eventLoggerImage = podImage
+	}
+	if cpu, ok := os.LookupEnv(c.EnvLoggerPodReqCPU); ok {
+		podReqCPU = resource.MustParse(cpu)
+	}
+	if mem, ok := os.LookupEnv(c.EnvLoggerPodReqMem); ok {
+		podReqMem = resource.MustParse(mem)
+	}
+	if cpu, ok := os.LookupEnv(c.EnvLoggerPodMaxCPU); ok {
+		podMaxMem = resource.MustParse(cpu)
+	}
+	if mem, ok := os.LookupEnv(c.EnvLoggerPodMaxCPU); ok {
+		podMaxMem = resource.MustParse(mem)
 	}
 
 	return &ReconcileEventLogger{client: mgr.GetClient(), scheme: mgr.GetScheme()}
@@ -369,12 +384,12 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					},
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{
-							corev1.ResourceRequestsCPU:    resource.MustParse("100m"),
-							corev1.ResourceRequestsMemory: resource.MustParse("64Mi"),
+							corev1.ResourceRequestsCPU:    podReqCPU,
+							corev1.ResourceRequestsMemory: podReqMem,
 						},
 						Limits: corev1.ResourceList{
-							corev1.ResourceLimitsCPU:      resource.MustParse("200m"),
-							corev1.ResourceRequestsMemory: resource.MustParse("128Mi"),
+							corev1.ResourceLimitsCPU:      podMaxCPU,
+							corev1.ResourceRequestsMemory: podMaxMem,
 						},
 					},
 				},

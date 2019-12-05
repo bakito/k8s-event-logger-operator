@@ -41,7 +41,6 @@ spec:
                 type: string
               minItems: 0
               type: array
-              uniqueItems: true
             kinds:
               description: Kinds the kinds to logg the events for
               items:
@@ -54,7 +53,6 @@ spec:
                       type: string
                     minItems: 0
                     type: array
-                    uniqueItems: true
                   matchingPatterns:
                     description: MatchingPatterns optional regex pattern that must
                       be contained in the message to be logged
@@ -62,7 +60,6 @@ spec:
                       type: string
                     minItems: 0
                     type: array
-                    uniqueItems: true
                   name:
                     minLength: 3
                     type: string
@@ -74,7 +71,6 @@ spec:
                 type: object
               minItems: 1
               type: array
-              uniqueItems: true
             labels:
               additionalProperties:
                 type: string

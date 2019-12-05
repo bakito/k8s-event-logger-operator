@@ -20,8 +20,6 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: EVENT_LOGGER_IMAGE
-              value: "{{ .Values.eventLogger.image.repository }}:{{ .Chart.AppVersion }}"
             - name: OPERATOR_NAME
               value: {{ include "k8s-event-logger-operator.fullname" . }}
             - name: WATCH_NAMESPACE
@@ -34,7 +32,16 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.name
-             
+            - name: EVENT_LOGGER_IMAGE
+              value: "{{ .Values.eventLogger.image.repository }}:{{ .Chart.AppVersion }}"
+            - name: LOGGER_POD_REQUEST_CPU
+              value: "{{ .Values.eventLogger.resources.requests.cpu }}"
+            - name: LOGGER_POD_REQUEST_MEM
+              value: "{{ .Values.eventLogger.resources.requests.memory }}"
+            - name: LOGGER_POD_LIMIT_CPU
+              value: "{{ .Values.eventLogger.resources.limits.cpu }}"
+            - name: LOGGER_POD_LIMIT_MEM
+              value: "{{ .Values.eventLogger.resources.limits.memory }}"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
