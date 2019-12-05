@@ -109,7 +109,6 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerConf(ref common.ReferenceCallback
 						},
 					},
 				},
-				Required: []string{"kinds"},
 			},
 		},
 		Dependencies: []string{
@@ -199,7 +198,6 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 						},
 					},
 				},
-				Required: []string{"kinds"},
 			},
 		},
 		Dependencies: []string{
@@ -293,7 +291,7 @@ func schema_pkg_apis_eventlogger_v1_Kind(ref common.ReferenceCallback) common.Op
 							},
 						},
 					},
-					"skip": {
+					"skipOnMatch": {
 						SchemaProps: spec.SchemaProps{
 							Description: "SkipOnMatch skip the entry if matched",
 							Type:        []string{"boolean"},

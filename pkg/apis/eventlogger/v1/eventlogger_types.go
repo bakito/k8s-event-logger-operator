@@ -12,7 +12,7 @@ type EventLoggerConf struct {
 	// +kubebuilder:validation:MinItems=1
 	// +kubebuilder:validation:UniqueItems=true
 	// +listType=set
-	Kinds []Kind `json:"kinds"`
+	Kinds []Kind `json:"kinds,omitempty"`
 
 	// EventTypes the event types to log. If empty all events are logged.
 	// +kubebuilder:validation:MinItems=0
@@ -55,7 +55,7 @@ type Kind struct {
 	MatchingPatterns []string `json:"matchingPatterns,omitempty"`
 
 	// SkipOnMatch skip the entry if matched
-	SkipOnMatch *bool `json:"skip,omitempty"`
+	SkipOnMatch *bool `json:"skipOnMatch,omitempty"`
 }
 
 // EventLoggerStatus defines the observed state of EventLogger
@@ -74,7 +74,6 @@ type EventLoggerStatus struct {
 
 // EventLogger is the Schema for the eventloggers API
 // +k8s:openapi-gen=true
-// +kubebuilder:subresource:status
 // +kubebuilder:resource:path=eventloggers,scope=Namespaced
 type EventLogger struct {
 	metav1.TypeMeta   `json:",inline"`

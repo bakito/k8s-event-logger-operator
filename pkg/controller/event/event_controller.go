@@ -44,10 +44,12 @@ type loggingPredicate struct {
 	predicate.Funcs
 	lastVersion string
 
-	kinds map[string]*filter
+	kinds      map[string]*filter
+	eventTypes []string
 }
 
 func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerConf) {
+	p.eventTypes = config.EventTypes
 	p.kinds = make(map[string]*filter)
 	for _, k := range config.Kinds {
 		kp := &k
@@ -61,11 +63,8 @@ func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerConf) {
 		}
 
 		if k.MatchingPatterns != nil {
-			if k.SkipOnMatch != nil && *k.SkipOnMatch {
-				p.kinds[k.Name].skipOnMatch = true
-			}
+			p.kinds[k.Name].skipOnMatch = k.SkipOnMatch != nil && *k.SkipOnMatch
 			for _, mp := range k.MatchingPatterns {
-
 				p.kinds[k.Name].matchingPatterns = append(p.kinds[k.Name].matchingPatterns, regexp.MustCompile(mp))
 			}
 		}
@@ -105,16 +104,21 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 }
 
 func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
-	f, ok := p.kinds[e.InvolvedObject.Kind]
+
+	if len(p.kinds) == 0 {
+		return len(p.eventTypes) == 0 || p.contains(p.eventTypes, e.Type)
+	}
+
+	k, ok := p.kinds[e.InvolvedObject.Kind]
 	if !ok {
 		return false
 	}
 
-	if !p.contains(f.eventTypes, e.Type) {
+	if len(k.eventTypes) != 0 && !p.contains(k.eventTypes, e.Type) {
 		return false
 	}
 
-	return p.matches(f.matchingPatterns, f.skipOnMatch, e.Message)
+	return p.matches(k.matchingPatterns, k.skipOnMatch, e.Message)
 }
 
 func (p *loggingPredicate) matches(patterns []*regexp.Regexp, skipOnMatch bool, val string) bool {
@@ -130,9 +134,6 @@ func (p *loggingPredicate) matches(patterns []*regexp.Regexp, skipOnMatch bool, 
 }
 
 func (p *loggingPredicate) contains(list []string, val string) bool {
-	if len(list) == 0 {
-		return true
-	}
 	for _, v := range list {
 		if v == val {
 			return true
