@@ -34,6 +34,13 @@ type EventLoggerSpec struct {
 
 	// ScrapeMetrics if true, prometheus scrape annotations are added to the pod
 	ScrapeMetrics *bool `json:"scrapeMetrics,omitempty"`
+
+	// Namespace the namespace to watch on, may be an empty string
+	// +nullable
+	Namespace *string `json:"namespace"`
+
+	// ServiceAccount the service account to use for the logger pod
+	ServiceAccount string `json:"serviceAccount,omitempty"`
 }
 
 // Kind defines a kind to loge events for

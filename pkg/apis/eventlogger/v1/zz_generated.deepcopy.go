@@ -120,6 +120,11 @@ func (in *EventLoggerSpec) DeepCopyInto(out *EventLoggerSpec) {
 		*out = new(bool)
 		**out = **in
 	}
+	if in.Namespace != nil {
+		in, out := &in.Namespace, &out.Namespace
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

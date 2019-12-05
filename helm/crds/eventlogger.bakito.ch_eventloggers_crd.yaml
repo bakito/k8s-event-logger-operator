@@ -80,10 +80,20 @@ spec:
                 type: string
               description: Labels additional labels for the logger pod
               type: object
+            namespace:
+              description: Namespace the namespace to watch on, may be an empty string
+              nullable: true
+              type: string
             scrapeMetrics:
               description: ScrapeMetrics if true, prometheus scrape annotations are
                 added to the pod
               type: boolean
+            serviceAccount:
+              description: ServiceAccount the service account to use for the logger
+                pod
+              type: string
+          required:
+          - namespace
           type: object
         status:
           description: EventLoggerStatus defines the observed state of EventLogger

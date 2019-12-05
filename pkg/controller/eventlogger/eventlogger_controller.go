@@ -141,30 +141,33 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 		return r.updateCR(cr, reqLogger, err)
 	}
 
-	sacc, role, rb := rbacForCR(cr)
-	if err != nil {
-		return r.updateCR(cr, reqLogger, err)
-	}
-	saccChanged, err := r.createOrReplace(cr, sacc, reqLogger, nil)
-	if err != nil {
-		return r.updateCR(cr, reqLogger, err)
-	}
-	roleChanged, err := r.createOrReplace(cr, role, reqLogger, func(curr runtime.Object, next runtime.Object) updateReplace {
-		o1 := curr.(*rbacv1.Role)
-		o2 := next.(*rbacv1.Role)
-		if reflect.DeepEqual(o1.Rules, o2.Rules) {
-			return no
-		}
-		return update
-	})
-	if err != nil {
-		return r.updateCR(cr, reqLogger, err)
-	}
-	rbChanged, err := r.createOrReplace(cr, rb, reqLogger, nil)
-	if err != nil {
-		return r.updateCR(cr, reqLogger, err)
-	}
+	var saccChanged, roleChanged, rbChanged bool
+	if cr.Spec.ServiceAccount != "" {
 
+		sacc, role, rb := rbacForCR(cr)
+		if err != nil {
+			return r.updateCR(cr, reqLogger, err)
+		}
+		saccChanged, err = r.createOrReplace(cr, sacc, reqLogger, nil)
+		if err != nil {
+			return r.updateCR(cr, reqLogger, err)
+		}
+		roleChanged, err = r.createOrReplace(cr, role, reqLogger, func(curr runtime.Object, next runtime.Object) updateReplace {
+			o1 := curr.(*rbacv1.Role)
+			o2 := next.(*rbacv1.Role)
+			if reflect.DeepEqual(o1.Rules, o2.Rules) {
+				return no
+			}
+			return update
+		})
+		if err != nil {
+			return r.updateCR(cr, reqLogger, err)
+		}
+		rbChanged, err = r.createOrReplace(cr, rb, reqLogger, nil)
+		if err != nil {
+			return r.updateCR(cr, reqLogger, err)
+		}
+	}
 	// Define a new Pod object
 	pod := podForCR(cr)
 	// Check if this Pod already exists
@@ -310,6 +313,16 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		labels["prometheus.io/scrape"] = "true"
 	}
 
+	watchNamespace := cr.GetNamespace()
+	if cr.Spec.Namespace != nil {
+		watchNamespace = *cr.Spec.Namespace
+	}
+
+	saccName := cr.Name
+	if cr.Spec.ServiceAccount != "" {
+		saccName = cr.Spec.ServiceAccount
+	}
+
 	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Pod",
@@ -328,12 +341,8 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					ImagePullPolicy: corev1.PullAlways,
 					Env: []corev1.EnvVar{
 						{
-							Name: "WATCH_NAMESPACE",
-							ValueFrom: &corev1.EnvVarSource{
-								FieldRef: &corev1.ObjectFieldSelector{
-									FieldPath: "metadata.namespace",
-								},
-							},
+							Name:  "WATCH_NAMESPACE",
+							Value: watchNamespace,
 						},
 						{
 							Name: "POD_NAME",
@@ -387,7 +396,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					},
 				},
 			},
-			ServiceAccountName: cr.Name,
+			ServiceAccountName: saccName,
 		},
 	}
 	return pod

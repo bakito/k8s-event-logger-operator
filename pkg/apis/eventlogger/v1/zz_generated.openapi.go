@@ -197,7 +197,22 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 							Format:      "",
 						},
 					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace the namespace to watch on, may be an empty string",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"serviceAccount": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ServiceAccount the service account to use for the logger pod",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
+				Required: []string{"namespace"},
 			},
 		},
 		Dependencies: []string{
