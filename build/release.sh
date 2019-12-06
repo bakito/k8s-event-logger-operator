@@ -10,7 +10,7 @@ fi
 
 RELEASE=${1}
 
-sed -i "s/Version = \".*\"/Version = \"${RELEASE}\"/" version/version.go
+sed -i "s/Version = \".*\"/Version = \"v${RELEASE}\"/" version/version.go
 sed -i "s/version: .*/version: ${RELEASE}/" helm/Chart.yaml
 sed -i "s/appVersion: .*/appVersion: v${RELEASE}/" helm/Chart.yaml
 operator-sdk generate openapi

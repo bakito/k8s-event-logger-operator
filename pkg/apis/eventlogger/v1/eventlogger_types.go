@@ -83,6 +83,7 @@ type EventLogger struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// +optional
 	Spec   EventLoggerSpec   `json:"spec"`
 	Status EventLoggerStatus `json:"status,omitempty"`
 }

@@ -27,27 +27,27 @@ metadata:
 spec:
   kinds:
     - name: DeploymentConfig # the kind of the event source to be loggeed
-        eventTypes: # optional
-         - Noramal
-         - Warning
-        matchingPatterns: # optional - regexp pattern to match event messages
-         - .*
-        skipOnMatch: false # optional - skip events where messages match the pattern. Default false
+      eventTypes: # optional
+       - Noramal
+       - Warning
+      matchingPatterns: # optional - regexp pattern to match event messages
+       - .*
+      skipOnMatch: false # optional - skip events where messages match the pattern. Default false
 
 
   eventTypes: # optional - define the event types to log. If no types are defined, all events are logged
     - Noramal
     - Warning
 
-   labels: # optional - additional labels for the pod
-    - name: value
+  labels: # optional - additional labels for the pod
+    name: value
 
-   annotations: # optional - additional annotations for the pod
-    - name: value
+  annotations: # optional - additional annotations for the pod
+    name: value
 
-   scrapeMetrics: false # optional att prometeus scrape metrics annotation to the pod. Default false
+  scrapeMetrics: false # optional att prometeus scrape metrics annotation to the pod. Default false
 
-   namespace: "ns" # optional - the namespace to lsten the events on. Default the current namespace
+  namespace: "ns" # optional - the namespace to lsten the events on. Default the current namespace
 
-   serviceAccount: # optional - if a custom ServiceAccount should be used for the pod. Default ServiceAccount is automatically created
+  serviceAccount: "sa" # optional - if a custom ServiceAccount should be used for the pod. Default ServiceAccount is automatically created
 ```
