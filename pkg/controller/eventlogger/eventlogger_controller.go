@@ -141,6 +141,9 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 		// Error reading the object - requeue the request.
 		return r.updateCR(cr, reqLogger, err)
 	}
+
+	// TODO check for changes and abort if error
+
 	sec, err := secretForCR(cr)
 	// Check if this Secret already exists
 	secChanged, err := r.createOrReplace(cr, sec, reqLogger, func(curr runtime.Object, next runtime.Object) updateReplace {
@@ -183,10 +186,13 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 			return r.updateCR(cr, reqLogger, err)
 		}
 	} else {
-		err = r.client.Delete(context.TODO(), sacc)
-		if err != nil {
-			if !errors.IsNotFound(err) {
-				return r.updateCR(cr, reqLogger, err)
+		// Only delete sa if the name is different than the configured
+		if cr.Spec.ServiceAccount != sacc.GetName() {
+			err = r.client.Delete(context.TODO(), sacc)
+			if err != nil {
+				if !errors.IsNotFound(err) {
+					return r.updateCR(cr, reqLogger, err)
+				}
 			}
 		}
 		err = r.client.Delete(context.TODO(), role)
@@ -360,7 +366,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		watchNamespace = *cr.Spec.Namespace
 	}
 
-	saccName := cr.Name
+	saccName := loggerName(cr)
 	if cr.Spec.ServiceAccount != "" {
 		saccName = cr.Spec.ServiceAccount
 	}
@@ -438,7 +444,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					},
 				},
 			},
-			ServiceAccountName: "event-logger-" + saccName,
+			ServiceAccountName: saccName,
 		},
 	}
 	return pod
