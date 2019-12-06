@@ -23,5 +23,3 @@ git push
 
 git tag -a v${1} -m "release ${1}"
 git push origin v${1}
-
-goreleaser --rm-dist
