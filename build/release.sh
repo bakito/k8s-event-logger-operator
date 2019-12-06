@@ -26,7 +26,7 @@ git tag -a v${RELEASE} -m "release ${RELEASE}"
 git push origin v${RELEASE}
 
 curl --header "Content-Type: application/json" \
-  --header "Authorization: token ${GITHUB_TOKEN}}" \
+  --header "Authorization: token ${GITHUB_TOKEN}" \
   --request POST \
   --data "{
   \"tag_name\": \"v${RELEASE}\",
