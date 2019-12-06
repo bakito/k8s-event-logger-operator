@@ -1,12 +1,15 @@
 package event
 
 import (
+	"context"
+	"fmt"
 	"regexp"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -17,8 +20,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_event")
-var eventLog = logf.Log.WithName("event")
+var (
+	log      = logf.Log.WithName("controller_event")
+	eventLog = logf.Log.WithName("event")
+)
 
 // Add creates a new Event Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -37,7 +42,8 @@ func Add(mgr manager.Manager, config *eventloggerv1.EventLoggerConf) error {
 		return err
 	}
 
-	return nil
+	p.lastVersion, err = getLatestRevision(mgr)
+	return err
 }
 
 type loggingPredicate struct {
@@ -88,6 +94,11 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 
 func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 	evt := e.(*corev1.Event)
+	if evt.ResourceVersion <= p.lastVersion {
+		return false
+	}
+	p.lastVersion = evt.ResourceVersion
+
 	if p.shouldLog(evt) {
 		eventLogger := eventLog.WithValues(
 			"namespace", mo.GetNamespace(),
@@ -146,4 +157,26 @@ type filter struct {
 	eventTypes       []string
 	matchingPatterns []*regexp.Regexp
 	skipOnMatch      bool
+}
+
+func getLatestRevision(mgr manager.Manager) (string, error) {
+
+	eventList := &corev1.EventList{}
+	opts := []client.ListOption{
+		client.Limit(0),
+	}
+	dc, ok := mgr.GetClient().(*client.DelegatingClient)
+
+	if !ok {
+		return "", fmt.Errorf("Error casting client to DelegatingClient")
+	}
+	cr, ok := dc.Reader.(*client.DelegatingReader)
+	if !ok {
+		return "", fmt.Errorf("Error casting client reader to DelegatingReader")
+	}
+	err := cr.ClientReader.List(context.TODO(), eventList, opts...)
+	if err != nil {
+		return "", err
+	}
+	return eventList.ResourceVersion, nil
 }
