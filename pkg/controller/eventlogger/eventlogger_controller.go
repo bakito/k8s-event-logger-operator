@@ -157,12 +157,13 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	var saccChanged, roleChanged, rbChanged bool
-	if cr.Spec.ServiceAccount != "" {
 
-		sacc, role, rb := rbacForCR(cr)
-		if err != nil {
-			return r.updateCR(cr, reqLogger, err)
-		}
+	sacc, role, rb := rbacForCR(cr)
+	if err != nil {
+		return r.updateCR(cr, reqLogger, err)
+	}
+
+	if cr.Spec.ServiceAccount != "" {
 		saccChanged, err = r.createOrReplace(cr, sacc, reqLogger, nil)
 		if err != nil {
 			return r.updateCR(cr, reqLogger, err)
@@ -182,7 +183,27 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 		if err != nil {
 			return r.updateCR(cr, reqLogger, err)
 		}
+	} else {
+		err = r.client.Delete(context.TODO(), sacc)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				return r.updateCR(cr, reqLogger, err)
+			}
+		}
+		err = r.client.Delete(context.TODO(), role)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				return r.updateCR(cr, reqLogger, err)
+			}
+		}
+		err = r.client.Delete(context.TODO(), rb)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				return r.updateCR(cr, reqLogger, err)
+			}
+		}
 	}
+
 	// Define a new Pod object
 	pod := podForCR(cr)
 	// Check if this Pod already exists
@@ -316,7 +337,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	for k, v := range cr.Spec.Labels {
 		labels[k] = v
 	}
-	labels["app"] = cr.Name
+	labels["app"] = "event-logger-" + cr.Name
 	labels["created-by"] = "eventlogger"
 
 	annotations := make(map[string]string)
@@ -343,7 +364,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 			Kind: "Pod",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        cr.Name + "-" + randString(),
+			Name:        "event-logger-" + cr.Name + "-" + randString(),
 			Namespace:   cr.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
@@ -400,7 +421,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							DefaultMode: &defaultFileMode,
-							SecretName:  cr.Name + "-event-logger",
+							SecretName:  "event-logger-" + cr.Name,
 							Items: []corev1.KeyToPath{
 								{
 									Key:  elConfigFileName,
@@ -411,7 +432,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					},
 				},
 			},
-			ServiceAccountName: saccName,
+			ServiceAccountName: "event-logger-" + saccName,
 		},
 	}
 	return pod
@@ -428,10 +449,10 @@ func secretForCR(cr *eventloggerv1.EventLogger) (*corev1.Secret, error) {
 			Kind: "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-event-logger",
+			Name:      "event-logger-" + cr.Name,
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
-				"app": cr.Name,
+				"app": "event-logger-" + cr.Name,
 			},
 		},
 		Type: "github.com/bakito/k8s-event-logger-operator",
@@ -448,10 +469,10 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 			Kind: "ServiceAccount",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name,
+			Name:      "event-logger-" + cr.Name,
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
-				"app": cr.Name,
+				"app": "event-logger-" + cr.Name,
 			},
 		},
 	}
@@ -461,10 +482,10 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 			Kind: "Role",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name,
+			Name:      "event-logger-" + cr.Name,
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
-				"app": cr.Name,
+				"app": "event-logger-" + cr.Name,
 			},
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -481,23 +502,23 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 			Kind: "RoleBinding",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name,
+			Name:      "event-logger-" + cr.Name,
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
-				"app": cr.Name,
+				"app": "event-logger-" + cr.Name,
 			},
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      cr.Name,
+				Name:      "event-logger-" + cr.Name,
 				Namespace: cr.Namespace,
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
 			Kind:     "Role",
 			APIGroup: "rbac.authorization.k8s.io",
-			Name:     cr.Name,
+			Name:     "event-logger-" + cr.Name,
 		},
 	}
 
