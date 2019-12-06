@@ -35,7 +35,8 @@ type EventLoggerSpec struct {
 
 	// Namespace the namespace to watch on, may be an empty string
 	// +nullable
-	Namespace *string `json:"namespace"`
+	// +optional
+	Namespace *string `json:"namespace,omitempty"`
 
 	// ServiceAccount the service account to use for the logger pod
 	ServiceAccount string `json:"serviceAccount,omitempty"`
@@ -67,7 +68,7 @@ type EventLoggerStatus struct {
 	// OperatorVersion the version of the operator that processed the cr
 	OperatorVersion string `json:"operatorVersion"`
 	// LastProcessed the timestamp the cr was last processed
-	LastProcessed string `json:"lastProcessed"`
+	LastProcessed metav1.Time `json:"lastProcessed"`
 
 	// Error
 	Error string `json:"error,omitempty"`

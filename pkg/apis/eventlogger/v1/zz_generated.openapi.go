@@ -212,7 +212,6 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerSpec(ref common.ReferenceCallback
 						},
 					},
 				},
-				Required: []string{"namespace"},
 			},
 		},
 		Dependencies: []string{
@@ -237,8 +236,7 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref common.ReferenceCallba
 					"lastProcessed": {
 						SchemaProps: spec.SchemaProps{
 							Description: "LastProcessed the timestamp the cr was last processed",
-							Type:        []string{"string"},
-							Format:      "",
+							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
 					"error": {
@@ -252,6 +250,8 @@ func schema_pkg_apis_eventlogger_v1_EventLoggerStatus(ref common.ReferenceCallba
 				Required: []string{"operatorVersion", "lastProcessed"},
 			},
 		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
 	}
 }
 

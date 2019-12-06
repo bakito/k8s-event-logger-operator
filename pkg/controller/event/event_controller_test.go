@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"encoding/json"
+
 	v1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	. "gotest.tools/assert"
 	is "gotest.tools/assert/cmp"

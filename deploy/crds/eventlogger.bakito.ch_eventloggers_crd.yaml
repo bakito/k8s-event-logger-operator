@@ -88,8 +88,6 @@ spec:
               description: ServiceAccount the service account to use for the logger
                 pod
               type: string
-          required:
-          - namespace
           type: object
         status:
           description: EventLoggerStatus defines the observed state of EventLogger
@@ -99,6 +97,7 @@ spec:
               type: string
             lastProcessed:
               description: LastProcessed the timestamp the cr was last processed
+              format: date-time
               type: string
             operatorVersion:
               description: OperatorVersion the version of the operator that processed

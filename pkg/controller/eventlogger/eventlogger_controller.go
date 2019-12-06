@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
-	"time"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
@@ -68,9 +67,9 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		podReqMem = resource.MustParse(mem)
 	}
 	if cpu, ok := os.LookupEnv(c.EnvLoggerPodMaxCPU); ok {
-		podMaxMem = resource.MustParse(cpu)
+		podMaxCPU = resource.MustParse(cpu)
 	}
-	if mem, ok := os.LookupEnv(c.EnvLoggerPodMaxCPU); ok {
+	if mem, ok := os.LookupEnv(c.EnvLoggerPodMaxMem); ok {
 		podMaxMem = resource.MustParse(mem)
 	}
 
@@ -163,7 +162,7 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 		return r.updateCR(cr, reqLogger, err)
 	}
 
-	if cr.Spec.ServiceAccount != "" {
+	if cr.Spec.ServiceAccount == "" {
 		saccChanged, err = r.createOrReplace(cr, sacc, reqLogger, nil)
 		if err != nil {
 			return r.updateCR(cr, reqLogger, err)
@@ -226,7 +225,7 @@ func (r *ReconcileEventLogger) createOrReplacePod(cr *eventloggerv1.EventLogger,
 	opts := []client.ListOption{
 		client.InNamespace(cr.Namespace),
 		client.MatchingLabels(map[string]string{
-			"app":        cr.Name,
+			"app":        loggerName(cr),
 			"created-by": "eventlogger"}),
 	}
 	err := r.client.List(context.TODO(), podList, opts...)
@@ -235,7 +234,13 @@ func (r *ReconcileEventLogger) createOrReplacePod(cr *eventloggerv1.EventLogger,
 		return false, err
 	}
 
-	if replace || len(podList.Items) > 1 {
+	replacePod := false
+	if !replace && len(podList.Items) == 1 {
+		op := podList.Items[0]
+		replacePod = podChanged(&op, pod)
+	}
+
+	if replace || replacePod || len(podList.Items) > 1 {
 
 		for _, p := range podList.Items {
 			reqLogger.Info(fmt.Sprintf("Deleting %s", pod.Kind), "Namespace", pod.GetNamespace(), "Name", pod.GetName())
@@ -325,9 +330,10 @@ func (r *ReconcileEventLogger) updateCR(cr *eventloggerv1.EventLogger, logger lo
 	} else {
 		cr.Status.Error = ""
 	}
-	cr.Status.LastProcessed = time.Now().Format(time.RFC3339)
+	cr.Status.LastProcessed = metav1.Now()
 	cr.Status.OperatorVersion = version.Version
-	updErr := r.client.Status().Update(context.TODO(), cr)
+
+	updErr := r.client.Update(context.TODO(), cr)
 	return reconcile.Result{}, updErr
 }
 
@@ -337,7 +343,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	for k, v := range cr.Spec.Labels {
 		labels[k] = v
 	}
-	labels["app"] = "event-logger-" + cr.Name
+	labels["app"] = loggerName(cr)
 	labels["created-by"] = "eventlogger"
 
 	annotations := make(map[string]string)
@@ -364,7 +370,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 			Kind: "Pod",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        "event-logger-" + cr.Name + "-" + randString(),
+			Name:        loggerName(cr) + "-" + randString(),
 			Namespace:   cr.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
@@ -405,12 +411,12 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					},
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{
-							corev1.ResourceRequestsCPU:    podReqCPU,
-							corev1.ResourceRequestsMemory: podReqMem,
+							corev1.ResourceCPU:    podReqCPU,
+							corev1.ResourceMemory: podReqMem,
 						},
 						Limits: corev1.ResourceList{
-							corev1.ResourceLimitsCPU:      podMaxCPU,
-							corev1.ResourceRequestsMemory: podMaxMem,
+							corev1.ResourceCPU:    podMaxCPU,
+							corev1.ResourceMemory: podMaxMem,
 						},
 					},
 				},
@@ -421,7 +427,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
 							DefaultMode: &defaultFileMode,
-							SecretName:  "event-logger-" + cr.Name,
+							SecretName:  loggerName(cr),
 							Items: []corev1.KeyToPath{
 								{
 									Key:  elConfigFileName,
@@ -449,10 +455,10 @@ func secretForCR(cr *eventloggerv1.EventLogger) (*corev1.Secret, error) {
 			Kind: "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "event-logger-" + cr.Name,
+			Name:      loggerName(cr),
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
-				"app": "event-logger-" + cr.Name,
+				"app": loggerName(cr),
 			},
 		},
 		Type: "github.com/bakito/k8s-event-logger-operator",
@@ -469,10 +475,10 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 			Kind: "ServiceAccount",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "event-logger-" + cr.Name,
+			Name:      loggerName(cr),
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
-				"app": "event-logger-" + cr.Name,
+				"app": loggerName(cr),
 			},
 		},
 	}
@@ -482,10 +488,10 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 			Kind: "Role",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "event-logger-" + cr.Name,
+			Name:      loggerName(cr),
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
-				"app": "event-logger-" + cr.Name,
+				"app": loggerName(cr),
 			},
 		},
 		Rules: []rbacv1.PolicyRule{
@@ -502,23 +508,23 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 			Kind: "RoleBinding",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "event-logger-" + cr.Name,
+			Name:      loggerName(cr),
 			Namespace: cr.Namespace,
 			Labels: map[string]string{
-				"app": "event-logger-" + cr.Name,
+				"app": loggerName(cr),
 			},
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",
-				Name:      "event-logger-" + cr.Name,
+				Name:      loggerName(cr),
 				Namespace: cr.Namespace,
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
 			Kind:     "Role",
 			APIGroup: "rbac.authorization.k8s.io",
-			Name:     "event-logger-" + cr.Name,
+			Name:     loggerName(cr),
 		},
 	}
 
@@ -565,4 +571,26 @@ func (p deletedPredicate) Update(e event.UpdateEvent) bool {
 // Generic implements Predicate
 func (p deletedPredicate) Generic(e event.GenericEvent) bool {
 	return false
+}
+
+func loggerName(cr *eventloggerv1.EventLogger) string {
+	return "event-logger-" + cr.Name
+}
+
+func podChanged(old, new *corev1.Pod) bool {
+	if old.Spec.ServiceAccountName != new.Spec.ServiceAccountName {
+		return true
+	}
+
+	return podEnv(old, "WATCH_NAMESPACE") != podEnv(new, "WATCH_NAMESPACE")
+}
+
+func podEnv(pod *corev1.Pod, name string) string {
+
+	for _, env := range pod.Spec.Containers[0].Env {
+		if env.Name == name {
+			return env.Value
+		}
+	}
+	return "N/A"
 }
