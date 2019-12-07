@@ -29,7 +29,7 @@ spec:
   kinds:
     - name: DeploymentConfig # the kind of the event source to be loggeed
       eventTypes: # optional
-       - Noramal
+       - Normal
        - Warning
       matchingPatterns: # optional - regexp pattern to match event messages
        - .*
@@ -37,7 +37,7 @@ spec:
 
 
   eventTypes: # optional - define the event types to log. If no types are defined, all events are logged
-    - Noramal
+    - Normal
     - Warning
 
   labels: # optional - additional labels for the pod
