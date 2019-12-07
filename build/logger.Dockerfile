@@ -11,8 +11,7 @@ ENV GOPROXY=https://goproxy.io \
     GOOS=linux \
     GOARCH=amd64
 RUN go test ./...
-RUN go build -a -installsuffix cgo -ldflags="-w -s" -o k8s-event-logger cmd/logger/main.go && \
-    upx -q k8s-event-logger
+RUN ./build/build.sh k8s-event-logger cmd/logger/main.go
 
 # application image
 
