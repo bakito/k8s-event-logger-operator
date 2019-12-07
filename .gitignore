@@ -78,3 +78,4 @@ tags
 ocp-event-logger
 __debug_bin
 six.yaml
+k8s-event-logger-operator-*.tgz
