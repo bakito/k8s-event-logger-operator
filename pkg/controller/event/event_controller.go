@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -161,9 +162,12 @@ type filter struct {
 
 func getLatestRevision(mgr manager.Manager) (string, error) {
 
+	namespace, _ := k8sutil.GetWatchNamespace()
+
 	eventList := &corev1.EventList{}
 	opts := []client.ListOption{
 		client.Limit(0),
+		client.InNamespace(namespace),
 	}
 	dc, ok := mgr.GetClient().(*client.DelegatingClient)
 
