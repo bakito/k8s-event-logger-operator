@@ -12,7 +12,7 @@ RELEASE=${1}
 
 sed -i "s/Version = \".*\"/Version = \"v${RELEASE}\"/" version/version.go
 sed -i "s/version: .*/version: ${RELEASE}/" helm/Chart.yaml
-sed -i "s/appVersion: .*/appVersion: ${RELEASE}/" helm/Chart.yaml
+sed -i "s/appVersion: .*/appVersion: v${RELEASE}/" helm/Chart.yaml
 operator-sdk generate openapi
 operator-sdk generate k8s
 
@@ -33,7 +33,7 @@ RELEASE_ID=$(curl --header "Content-Type: application/json" \
   \"prerelease\": false
 }" https://api.github.com/repos/bakito/k8s-event-logger-operator/releases)
 
-helm package ./helm/ --version ${RELEASE} --app-version ${RELEASE}
+helm package ./helm/ --version ${RELEASE} --app-version v${RELEASE}
 
 curl \
   -H "Authorization: token $GITHUB_TOKEN" \
