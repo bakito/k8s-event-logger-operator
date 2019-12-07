@@ -19,6 +19,11 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /opt/go/k8s-event-logger-operator
+          args:
+            - "--zap-level={{ .Values.logging.level }}"
+            - "--zap-time-encoding={{ .Values.logging.timeEncoding }}"
           env:
             - name: OPERATOR_NAME
               value: {{ include "k8s-event-logger-operator.fullname" . }}

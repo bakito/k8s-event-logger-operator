@@ -387,6 +387,8 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					Name:            "event-logger",
 					Image:           eventLoggerImage,
 					ImagePullPolicy: corev1.PullAlways,
+					Command:         []string{"/opt/go/k8s-event-logger"},
+					Args:            os.Args[1:], // pass on the operator args
 					Env: []corev1.EnvVar{
 						{
 							Name:  "WATCH_NAMESPACE",
