@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
@@ -162,23 +161,19 @@ type filter struct {
 
 func getLatestRevision(mgr manager.Manager) (string, error) {
 
-	namespace, _ := k8sutil.GetWatchNamespace()
+	cl, err := client.New(mgr.GetConfig(), client.Options{})
+	if err != nil {
+		return "", err
+	}
 
+	namespace, _ := k8sutil.GetWatchNamespace()
 	eventList := &corev1.EventList{}
 	opts := []client.ListOption{
 		client.Limit(0),
 		client.InNamespace(namespace),
 	}
-	dc, ok := mgr.GetClient().(*client.DelegatingClient)
 
-	if !ok {
-		return "", fmt.Errorf("Error casting client to DelegatingClient")
-	}
-	cr, ok := dc.Reader.(*client.DelegatingReader)
-	if !ok {
-		return "", fmt.Errorf("Error casting client reader to DelegatingReader")
-	}
-	err := cr.ClientReader.List(context.TODO(), eventList, opts...)
+	err = cl.List(context.TODO(), eventList, opts...)
 	if err != nil {
 		return "", err
 	}
