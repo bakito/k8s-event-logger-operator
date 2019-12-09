@@ -15,8 +15,7 @@ RUN ./build/build.sh k8s-event-logger-operator cmd/manager/main.go
 
 
 # application image
-
-FROM scratch
+FROM registry.access.redhat.com/ubi8/ubi-minimal
 WORKDIR /opt/go
 
 LABEL maintainer="bakito <github@bakito.ch>"
