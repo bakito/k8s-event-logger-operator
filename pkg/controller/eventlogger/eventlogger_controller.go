@@ -408,7 +408,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 						},
 						{
 							Name:  "DEBUG_CONFIG",
-							Value: "true",
+							Value: "false",
 						},
 					},
 					VolumeMounts: []corev1.VolumeMount{

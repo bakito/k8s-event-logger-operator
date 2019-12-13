@@ -97,14 +97,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, ok := os.LookupEnv("DEBUG_CONFIG"); ok {
-		log.WithValues("file", configFilePath).Info(string(configFile))
-	}
-
 	err = yaml.Unmarshal(configFile, &config)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
+	}
+
+	if _, ok := os.LookupEnv("DEBUG_CONFIG"); ok {
+		log.WithValues("file", configFilePath, "config", config).Info("Current configuration")
 	}
 
 	log.Info("Registering Components.")
