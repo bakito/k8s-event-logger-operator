@@ -2,6 +2,11 @@
 
 set -e
 
+if [[ $# -ne 1 ]] ; then
+    echo 'please use version as argument'
+    exit 1
+fi
+
 CHANGED=$(git diff-index --name-only HEAD --)
 if [[ ! -z $CHANGED ]]; then
     echo "Please commit your local changes first"
