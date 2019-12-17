@@ -13,7 +13,7 @@ RELEASE=${1}
 sed -i "s/Version = \".*\"/Version = \"v${RELEASE}\"/" version/version.go
 sed -i "s/version: .*/version: ${RELEASE}/" helm/Chart.yaml
 sed -i "s/appVersion: .*/appVersion: v${RELEASE}/" helm/Chart.yaml
-operator-sdk generate openapi
+operator-sdk generate crds
 operator-sdk generate k8s
 
 cp deploy/crds/*crd.yaml helm/crds/
@@ -22,6 +22,7 @@ git add .
 git commit -m "prepare release ${RELEASE}"
 git push
 
+echo "Create Release"
 RELEASE_ID=$(curl --header "Content-Type: application/json" \
   --header "Authorization: token ${GITHUB_TOKEN}" \
   --request POST \
@@ -31,14 +32,19 @@ RELEASE_ID=$(curl --header "Content-Type: application/json" \
   \"body\": \"Release v${RELEASE}\n\nHelm Chart: [k8s-event-logger-operator-${RELEASE}.tgz](https://github.com/bakito/k8s-event-logger-operator/releases/download/v${RELEASE}/k8s-event-logger-operator-${RELEASE}.tgz) \",
   \"draft\": false,
   \"prerelease\": false
-}" https://api.github.com/repos/bakito/k8s-event-logger-operator/releases)
+}" https://api.github.com/repos/bakito/k8s-event-logger-operator/releases | jq '.id')
+
+echo "Release Id: ${RELEASE_ID}"
 
 helm package ./helm/ --version ${RELEASE} --app-version v${RELEASE}
 
+FILE=k8s-event-logger-operator-${RELEASE}.tgz
+
+echo "Upload Helm Chart: ${FILE}"
 curl \
   -H "Authorization: token $GITHUB_TOKEN" \
   -H "Content-Type: $(file -b --mime-type ${FILE})" \
   --data-binary @${FILE} \
-  "https://uploads.github.com/repos/bakito/k8s-event-logger-operator/releases/${RELEASE_ID}/assets?name=$(basename ${FILE})"
+  "https://uploads.github.com/repos/bakito/k8s-event-logger-operator/releases/${RELEASE_ID}/assets?name=${FILE}"
 
 rm -Rf ${FILE}
