@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/bakito/k8s-event-logger-operator/cmd/cli"
@@ -11,7 +10,7 @@ import (
 	"github.com/bakito/k8s-event-logger-operator/pkg/controller/event"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
-	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/util/yaml"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -62,13 +61,12 @@ func main() {
 		os.Exit(1)
 	}
 	config := &eventloggerv1.EventLoggerConf{}
-	configFile, err := ioutil.ReadFile(configFilePath)
+	configFile, err := os.Open(configFilePath)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-
-	err = yaml.Unmarshal(configFile, &config)
+	err = yaml.NewYAMLOrJSONDecoder(configFile, 20).Decode(&config)
 	if err != nil {
 		log.Error(err, "")
 		os.Exit(1)
@@ -78,7 +76,7 @@ func main() {
 		log.WithValues("file", configFilePath, "config", config).Info("Current configuration")
 	}
 
-	log.Info("Registering Components.")
+	log.V(4).Info("Registering Components.")
 
 	// Setup all Controllers
 	if err := event.Add(mgr, config); err != nil {
@@ -86,7 +84,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("Starting the Cmd.")
+	log.V(4).Info("Starting the Cmd.")
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
