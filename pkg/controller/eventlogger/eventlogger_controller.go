@@ -18,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/workqueue"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -25,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"sigs.k8s.io/yaml"
@@ -91,10 +91,12 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to secondary resource Pod and requeue the owner EventLogger
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &eventloggerv1.EventLogger{},
-	}, &deletedPredicate{})
+	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &enqueueDeletedRequestForOwner{
+		EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &eventloggerv1.EventLogger{},
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -557,28 +559,25 @@ func randString() string {
 	return string(b)
 }
 
-type deletedPredicate struct {
-	predicate.Funcs
+type enqueueDeletedRequestForOwner struct {
+	handler.EnqueueRequestForOwner
 }
 
 // Create implements Predicate
-func (p deletedPredicate) Create(e event.CreateEvent) bool {
-	return false
+func (h enqueueDeletedRequestForOwner) Create(event.CreateEvent, workqueue.RateLimitingInterface) {
 }
 
 // Delete implements Predicate
-func (p deletedPredicate) Delete(e event.DeleteEvent) bool {
-	return true
+func (h enqueueDeletedRequestForOwner) Delete(e event.DeleteEvent, rli workqueue.RateLimitingInterface) {
+	h.EnqueueRequestForOwner.Delete(e, rli)
 }
 
 // Update implements Predicate
-func (p deletedPredicate) Update(e event.UpdateEvent) bool {
-	return false
+func (h enqueueDeletedRequestForOwner) Update(event.UpdateEvent, workqueue.RateLimitingInterface) {
 }
 
 // Generic implements Predicate
-func (p deletedPredicate) Generic(e event.GenericEvent) bool {
-	return false
+func (h enqueueDeletedRequestForOwner) Generic(event.GenericEvent, workqueue.RateLimitingInterface) {
 }
 
 func loggerName(cr *eventloggerv1.EventLogger) string {
