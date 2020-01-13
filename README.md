@@ -27,7 +27,7 @@ metadata:
   name: example-eventlogger
 spec:
   kinds:
-    - name: DeploymentConfig # the kind of the event source to be loggeed
+    - name: DeploymentConfig # the kind of the event source to be logged
       eventTypes: # optional
        - Normal
        - Warning
