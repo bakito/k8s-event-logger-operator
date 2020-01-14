@@ -12,12 +12,12 @@ env:
 
 
 before_script:
-  - curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.12.0/operator-sdk-v0.12.0-x86_64-linux-gnu --output operator-sdk
+  - curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.14.0/operator-sdk-v0.14.0-x86_64-linux-gnu --output operator-sdk
   - chmod +x operator-sdk
   - export PATH=$PATH:/$(pwd)
 
 script:
   - go test ./... -cover
   - go build ./...
-  - operator-sdk generate openapi
+  - operator-sdk generate crds
   - operator-sdk generate k8s
