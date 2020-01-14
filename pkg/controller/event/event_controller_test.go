@@ -193,21 +193,7 @@ func Test_logEvent_true(t *testing.T) {
 	parent := logr.NewMockLogger(ctrl)
 	child := logr.NewMockLogger(ctrl)
 	eventLog = parent
-	parent.EXPECT().WithValues(
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any()).Times(1).Return(child)
+	parent.EXPECT().WithValues(repeat(gomock.Any(), 14)...).Times(1).Return(child)
 	child.EXPECT().Info(gomock.Any()).Times(1)
 
 	lp := &loggingPredicate{
@@ -278,4 +264,12 @@ func Test_Reconcile_deleted(t *testing.T) {
 	Assert(t, is.Nil(err))
 
 	Assert(t, is.Nil(filter))
+}
+
+func repeat(m gomock.Matcher, times int) []interface{} {
+	var list []interface{}
+	for i := 0; i < times; i++ {
+		list = append(list, m)
+	}
+	return list
 }
