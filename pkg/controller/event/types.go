@@ -26,7 +26,7 @@ func (f *Filter) Equals(o *Filter) bool {
 	return cmp.Equal(f, o, cmpopts.EquateEmpty())
 }
 
-func newFilter(c eventloggerv1.EventLoggerConf) *Filter {
+func newFilter(c eventloggerv1.EventLoggerSpec) *Filter {
 	f := &Filter{}
 	f.EventTypes = c.EventTypes
 	f.Kinds = make(map[string]*KindFilter)

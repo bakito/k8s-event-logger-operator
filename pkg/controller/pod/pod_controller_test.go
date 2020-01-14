@@ -167,11 +167,6 @@ func testReconcile(t *testing.T, intitialObjects ...runtime.Object) (client.Clie
 
 	cl := fake.NewFakeClient(intitialObjects...)
 
-	elList := &eventloggerv1.EventLoggerList{}
-	err := cl.List(context.TODO(), elList)
-
-	Assert(t, is.Nil(err))
-
 	r := newReconciler(cl, s)
 
 	req := reconcile.Request{
