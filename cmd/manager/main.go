@@ -9,7 +9,7 @@ import (
 	"github.com/bakito/k8s-event-logger-operator/pkg/apis"
 	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/pkg/controller/event"
-	"github.com/bakito/k8s-event-logger-operator/pkg/controller/eventlogger"
+	"github.com/bakito/k8s-event-logger-operator/pkg/controller/pod"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
@@ -70,7 +70,7 @@ func main() {
 
 	// Setup all Controllers
 	if namespace == "" {
-		if err := eventlogger.Add(mgr); err != nil {
+		if err := pod.Add(mgr); err != nil {
 			log.Error(err, "")
 			os.Exit(1)
 		}
