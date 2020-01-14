@@ -5,8 +5,10 @@ import (
 	"regexp"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
+	"github.com/go-logr/logr"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -23,58 +25,107 @@ import (
 var (
 	log      = logf.Log.WithName("controller_event")
 	eventLog = logf.Log.WithName("event")
+	config   *eventloggerv1.EventLoggerConf
+	filter   *Filter
 )
 
 // Add creates a new Event Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, config *eventloggerv1.EventLoggerConf) error {
+func Add(mgr manager.Manager, name string) error {
+
+	return add(mgr, newReconciler(mgr, name))
+}
+
+// newReconciler returns a new reconcile.Reconciler
+func newReconciler(mgr manager.Manager, name string) reconcile.Reconciler {
+	return &ReconcileConfig{client: mgr.GetClient(), scheme: mgr.GetScheme(), name: name}
+}
+
+// add adds a new Controller to mgr with r as the reconcile.Reconciler
+func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("event-controller", mgr, controller.Options{Reconciler: reconcile.Func(nil)})
+	c, err := controller.New("event-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
+
+	// Watch for changes to primary resource EventLogger
+	err = c.Watch(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{})
 
 	// Watch for changes to primary resource Event
 	p := &loggingPredicate{}
-	p.init(config)
-	err = c.Watch(&source.Kind{Type: &corev1.Event{}}, &handler.Funcs{}, p)
+	p.lastVersion, err = getLatestRevision(mgr)
+
 	if err != nil {
 		return err
 	}
 
-	p.lastVersion, err = getLatestRevision(mgr)
-	return err
+	return c.Watch(&source.Kind{Type: &corev1.Event{}}, &handler.Funcs{}, p)
+}
+
+// blank assignment to verify that ReconcileConfig implements reconcile.Reconciler
+var _ reconcile.Reconciler = &ReconcileConfig{}
+
+// ReconcileConfig reconciles a EventLogger object
+type ReconcileConfig struct {
+	// This client, initialized using mgr.Client() above, is a split client
+	// that reads objects from the cache and writes to the apiserver
+	client client.Client
+	scheme *runtime.Scheme
+	name   string
+}
+
+// Reconcile reads that state of the cluster for a EventLogger object and makes changes based on the state read
+// and what is in the EventLogger.Spec
+// The Controller will requeue the Request to be processed again if the returned error is non-nil or
+// Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
+func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name, "CR.Name", r.name)
+
+	if r.name != "" && r.name != request.Name {
+		reqLogger.V(4).Info("ignore this event logger config")
+		return reconcile.Result{}, nil
+	}
+
+	if r.name == "" {
+		r.name = request.Name
+		reqLogger = log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name, "CR.Name", r.name)
+	}
+
+	// Fetch the EventLogger cr
+	cr := &eventloggerv1.EventLogger{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, cr)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			filter = nil
+			reqLogger.Info("cr was deleted, removing filter")
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return r.updateCR(cr, reqLogger, err)
+	}
+
+	newFilter := newFilter(cr.Spec.EventLoggerConf)
+	if filter == nil || !filter.Equals(newFilter) {
+		filter = newFilter
+		reqLogger.WithValues("filter", filter).Info("apply new filter")
+		return r.updateCR(cr, reqLogger, nil)
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileConfig) updateCR(cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
+	updErr := cr.UpdateStatus(logger, err, r.client)
+	return reconcile.Result{}, updErr
 }
 
 type loggingPredicate struct {
 	predicate.Funcs
 	lastVersion string
-
-	kinds      map[string]*filter
-	eventTypes []string
-}
-
-func (p *loggingPredicate) init(config *eventloggerv1.EventLoggerConf) {
-	p.eventTypes = config.EventTypes
-	p.kinds = make(map[string]*filter)
-	for _, k := range config.Kinds {
-		kp := &k
-		p.kinds[k.Name] = &filter{
-			matchingPatterns: []*regexp.Regexp{},
-		}
-		if kp.EventTypes == nil {
-			p.kinds[k.Name].eventTypes = config.EventTypes
-		} else {
-			p.kinds[k.Name].eventTypes = kp.EventTypes
-		}
-
-		if k.MatchingPatterns != nil {
-			p.kinds[k.Name].skipOnMatch = k.SkipOnMatch != nil && *k.SkipOnMatch
-			for _, mp := range k.MatchingPatterns {
-				p.kinds[k.Name].matchingPatterns = append(p.kinds[k.Name].matchingPatterns, regexp.MustCompile(mp))
-			}
-		}
-	}
 }
 
 // Create implements Predicate
@@ -116,11 +167,15 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 
 func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
 
-	if len(p.kinds) == 0 {
-		return len(p.eventTypes) == 0 || p.contains(p.eventTypes, e.Type)
+	if filter == nil {
+		return false
 	}
 
-	k, ok := p.kinds[e.InvolvedObject.Kind]
+	if len(filter.Kinds) == 0 {
+		return len(filter.EventTypes) == 0 || p.contains(filter.EventTypes, e.Type)
+	}
+
+	k, ok := filter.Kinds[e.InvolvedObject.Kind]
 	if !ok {
 		return false
 	}
@@ -151,12 +206,6 @@ func (p *loggingPredicate) contains(list []string, val string) bool {
 		}
 	}
 	return false
-}
-
-type filter struct {
-	eventTypes       []string
-	matchingPatterns []*regexp.Regexp
-	skipOnMatch      bool
 }
 
 func getLatestRevision(mgr manager.Manager) (string, error) {
