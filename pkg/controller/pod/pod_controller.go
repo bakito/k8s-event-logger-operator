@@ -43,11 +43,11 @@ var (
 // Add creates a new EventLogger Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+	return add(mgr, newReconciler(mgr.GetClient(), mgr.GetScheme()))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newReconciler(client client.Client, scheme *runtime.Scheme) reconcile.Reconciler {
 
 	if podImage, ok := os.LookupEnv(c.EnvEventLoggerImage); ok {
 		eventLoggerImage = podImage
@@ -65,7 +65,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 		podMaxMem = resource.MustParse(mem)
 	}
 
-	return &ReconcileEventLogger{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileEventLogger{client: client, scheme: scheme}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -328,8 +328,8 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		annotations[k] = v
 	}
 	if cr.Spec.ScrapeMetrics != nil && *cr.Spec.ScrapeMetrics {
-		labels["prometheus.io/port"] = string(c.MetricsPort)
-		labels["prometheus.io/scrape"] = "true"
+		annotations["prometheus.io/port"] = string(c.MetricsPort)
+		annotations["prometheus.io/scrape"] = "true"
 	}
 
 	watchNamespace := cr.GetNamespace()
