@@ -1,24 +1,15 @@
-language: go
-go:
-  - 1.13.x
-os:
-  - linux
-dist: trusty
-sudo: false
-install: true
+language: generic
 
-env:
-  - GO111MODULE=on
-
-
-before_script:
-  - curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.14.0/operator-sdk-v0.14.0-x86_64-linux-gnu --output operator-sdk
-  - chmod +x operator-sdk
-  - export PATH=$PATH:/$(pwd)
+services:
+  - docker
 
 script:
-  - go test -coverprofile=coverage.out  ./...
-  - go tool cover -func=coverage.out
-  - go build ./...
-  - operator-sdk generate crds
-  - operator-sdk generate k8s
+  - docker build -t quay.io/bakito/k8s-event-logger-operator:$TRAVIS_BRANCH -f build/Dockerfile .
+  - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH          -f build/logger.Dockerfile   .
+
+deploy:
+  provider: script
+  script: build/push-to-quay.sh quay.io/bakito/k8s-event-logger-operator quay.io/bakito/k8s-event-logger
+  on:
+    all_branches: true
+    condition: $TRAVIS_BRANCH =~ ^(master|v\d+.\d+.\d+)$
