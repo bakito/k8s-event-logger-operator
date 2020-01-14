@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
@@ -70,9 +71,10 @@ var _ reconcile.Reconciler = &ReconcileConfig{}
 type ReconcileConfig struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
-	name   string
+	client  client.Client
+	scheme  *runtime.Scheme
+	name    string
+	ignored map[string]bool
 }
 
 // Reconcile reads that state of the cluster for a EventLogger object and makes changes based on the state read
@@ -83,7 +85,11 @@ func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name, "CR.Name", r.name)
 
 	if r.name != "" && r.name != request.Name {
-		reqLogger.V(4).Info("ignore this event logger config")
+		if _, ok := r.ignored[request.Name]; ok {
+			reqLogger.V(4).Info("ignore this event logger config")
+		} else {
+			reqLogger.Error(fmt.Errorf(""), "ignore this event logger config due to a different event logger config in the same namespace")
+		}
 		return reconcile.Result{}, nil
 	}
 
@@ -180,11 +186,11 @@ func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
 		return false
 	}
 
-	if len(k.eventTypes) != 0 && !p.contains(k.eventTypes, e.Type) {
+	if len(k.EventTypes) != 0 && !p.contains(k.EventTypes, e.Type) {
 		return false
 	}
 
-	return p.matches(k.matchingPatterns, k.skipOnMatch, e.Message)
+	return p.matches(k.MatchingPatterns, k.SkipOnMatch, e.Message)
 }
 
 func (p *loggingPredicate) matches(patterns []*regexp.Regexp, skipOnMatch bool, val string) bool {

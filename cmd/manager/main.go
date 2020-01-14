@@ -8,7 +8,9 @@ import (
 	"github.com/bakito/k8s-event-logger-operator/cmd/cli"
 	"github.com/bakito/k8s-event-logger-operator/pkg/apis"
 	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
-	"github.com/bakito/k8s-event-logger-operator/pkg/controller"
+	"github.com/bakito/k8s-event-logger-operator/pkg/controller/event"
+	"github.com/bakito/k8s-event-logger-operator/pkg/controller/eventlogger"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -25,6 +27,12 @@ func main() {
 	cli.InitLogging()
 
 	cli.PrintVersion(log)
+
+	namespace, err := k8sutil.GetWatchNamespace()
+	if err != nil {
+		log.Error(err, "Failed to get watch namespace")
+		os.Exit(1)
+	}
 
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
@@ -43,7 +51,7 @@ func main() {
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
-		Namespace:          "",
+		Namespace:          namespace,
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", c.MetricsHost, c.MetricsPort),
 	})
@@ -52,7 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("Registering Components.")
+	log.V(4).Info("Registering Components.")
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
@@ -61,12 +69,19 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr); err != nil {
-		log.Error(err, "")
-		os.Exit(1)
+	if namespace == "" {
+		if err := eventlogger.Add(mgr); err != nil {
+			log.Error(err, "")
+			os.Exit(1)
+		}
+	} else {
+		if err := event.Add(mgr, ""); err != nil {
+			log.Error(err, "")
+			os.Exit(1)
+		}
 	}
 
-	log.Info("Starting the Cmd.")
+	log.V(4).Info("Starting the Cmd.")
 
 	// Start the Cmd
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
