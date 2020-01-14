@@ -1,5 +1,9 @@
-language: generic
-
+language: go
+go:
+  - 1.13.x
+os:
+  - linux
+  
 services:
   - docker
 
