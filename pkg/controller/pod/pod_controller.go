@@ -1,4 +1,4 @@
-package eventlogger
+package pod
 
 import (
 	"context"
@@ -29,14 +29,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-const (
-	elConfigFileName    = "event-listener.conf"
-	elAbsConfigDirPath  = "/opt/go/config"
-	elAbsConfigFilePath = elAbsConfigDirPath + "/" + elConfigFileName
-)
-
 var (
-	log                    = logf.Log.WithName("controller_eventlogger")
+	log                    = logf.Log.WithName("controller_pod")
 	defaultFileMode  int32 = 420
 	gracePeriod      int64
 	eventLoggerImage = "quay.io/bakito/k8s-event-logger"
@@ -77,7 +71,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("eventlogger-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("pod-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
@@ -513,6 +507,9 @@ func loggerName(cr *eventloggerv1.EventLogger) string {
 
 func podChanged(old, new *corev1.Pod) bool {
 	if old.Spec.ServiceAccountName != new.Spec.ServiceAccountName {
+		return true
+	}
+	if len(old.Spec.Containers) > 0 && len(new.Spec.Containers) > 0 && old.Spec.Containers[0].Image != new.Spec.Containers[0].Image {
 		return true
 	}
 
