@@ -24,7 +24,7 @@ operator-sdk generate k8s
 cp deploy/crds/*crd.yaml helm/crds/
 
 git add . 
-git commit -m "prepare release ${RELEASE}"
+git diff-index --quiet HEAD || git commit -m "prepare release ${RELEASE}"
 git push
 
 echo "Create Release"

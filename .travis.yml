@@ -8,8 +8,13 @@ script:
   - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH          -f build/logger.Dockerfile   .
 
 deploy:
-  provider: script
-  script: build/push-to-quay.sh quay.io/bakito/k8s-event-logger-operator quay.io/bakito/k8s-event-logger
-  on:
-    all_branches: true
-    condition: $TRAVIS_BRANCH =~ ^(master|v\d+.\d+.\d+)$
+
+deploy:
+  - provider: script
+    script: build/push-to-quay.sh quay.io/bakito/k8s-event-logger-operator quay.io/bakito/k8s-event-logger
+    on:
+      branch: "master"
+  - provider: script
+    script: build/push-to-quay.sh quay.io/bakito/k8s-event-logger-operator quay.io/bakito/k8s-event-logger
+    on:
+      tags: true
