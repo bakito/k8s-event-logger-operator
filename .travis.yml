@@ -10,6 +10,8 @@ install: true
 env:
   - GO111MODULE=on
 
+services:
+  - docker
 
 before_script:
   - curl -L https://github.com/operator-framework/operator-sdk/releases/download/v0.14.0/operator-sdk-v0.14.0-x86_64-linux-gnu --output operator-sdk
@@ -22,3 +24,6 @@ script:
   - go build ./...
   - operator-sdk generate crds
   - operator-sdk generate k8s
+  - docker build -t quay.io/bakito/k8s-event-logger-operator:$TRAVIS_BRANCH -f build/Dockerfile .
+  - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH -f build/logger.Dockerfile .
+
