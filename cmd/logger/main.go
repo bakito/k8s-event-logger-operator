@@ -5,12 +5,11 @@ import (
 	"os"
 
 	"github.com/bakito/k8s-event-logger-operator/cmd/cli"
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
+	"github.com/bakito/k8s-event-logger-operator/pkg/apis"
 	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/pkg/controller/event"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/restmapper"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -50,36 +49,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	configFilePath, ok := os.LookupEnv(c.EnvConfigFilePath)
-	if !ok {
-		log.Error(fmt.Errorf("config path env variable '%s' not set", c.EnvConfigFilePath), "")
+	log.Info("Registering Components.")
+
+	// Setup Scheme for all resources
+	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
 		os.Exit(1)
 	}
 
-	if _, err := os.Stat(configFilePath); err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-	config := &eventloggerv1.EventLoggerConf{}
-	configFile, err := os.Open(configFilePath)
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
-	err = yaml.NewYAMLOrJSONDecoder(configFile, 20).Decode(&config)
-	if err != nil {
-		log.Error(err, "")
-		os.Exit(1)
-	}
+	configName := os.Getenv(c.EnvConfigName)
 
 	if _, ok := os.LookupEnv("DEBUG_CONFIG"); ok {
-		log.WithValues("file", configFilePath, "config", config).Info("Current configuration")
+		log.WithValues("configName", configName).Info("Current configuration")
 	}
 
 	log.V(4).Info("Registering Components.")
 
 	// Setup all Controllers
-	if err := event.Add(mgr, config); err != nil {
+	if err := event.Add(mgr, configName); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

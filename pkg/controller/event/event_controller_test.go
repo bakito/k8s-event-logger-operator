@@ -133,7 +133,7 @@ var shouldLogData = []struct {
 func Test_shouldLog(t *testing.T) {
 	for i, data := range shouldLogData {
 		lp := &loggingPredicate{}
-		lp.init(&data.Config)
+		filter = newFilter(data.Config)
 
 		dStr, err := json.Marshal(&shouldLogData[i])
 		Assert(t, is.Nil(err))

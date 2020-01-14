@@ -1,7 +1,12 @@
 package v1
 
 import (
+	"context"
+
+	"github.com/bakito/k8s-event-logger-operator/version"
+	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // EventLoggerConf defines the configuration of EventLogger
@@ -99,4 +104,18 @@ type EventLoggerList struct {
 
 func init() {
 	SchemeBuilder.Register(&EventLogger{}, &EventLoggerList{})
+}
+
+// UpdateStatus update the status of the current event logger
+func (el *EventLogger) UpdateStatus(logger logr.Logger, err error, c client.Client) error {
+	if err != nil {
+		logger.Error(err, "")
+		el.Status.Error = err.Error()
+	} else {
+		el.Status.Error = ""
+	}
+	el.Status.LastProcessed = metav1.Now()
+	el.Status.OperatorVersion = version.Version
+
+	return c.Update(context.TODO(), el)
 }
