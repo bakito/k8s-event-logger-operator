@@ -11,7 +11,7 @@ ENV GOPROXY=https://goproxy.io \
     GOARCH=amd64
 COPY . .
 
-RUN go test ./...
+RUN go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
 RUN ./build/build.sh k8s-event-logger cmd/logger/main.go
 
 # application image
