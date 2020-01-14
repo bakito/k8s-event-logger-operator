@@ -10,9 +10,9 @@ import (
 
 // KindFilter filter for kind
 type KindFilter struct {
-	eventTypes       []string
-	matchingPatterns []*regexp.Regexp
-	skipOnMatch      bool
+	EventTypes       []string
+	MatchingPatterns []*regexp.Regexp
+	SkipOnMatch      bool
 }
 
 // Filter event filter
@@ -33,18 +33,18 @@ func newFilter(c eventloggerv1.EventLoggerConf) *Filter {
 	for _, k := range c.Kinds {
 		kp := &k
 		f.Kinds[k.Name] = &KindFilter{
-			matchingPatterns: []*regexp.Regexp{},
+			MatchingPatterns: []*regexp.Regexp{},
 		}
 		if kp.EventTypes == nil {
-			f.Kinds[k.Name].eventTypes = c.EventTypes
+			f.Kinds[k.Name].EventTypes = c.EventTypes
 		} else {
-			f.Kinds[k.Name].eventTypes = kp.EventTypes
+			f.Kinds[k.Name].EventTypes = kp.EventTypes
 		}
 
 		if k.MatchingPatterns != nil {
-			f.Kinds[k.Name].skipOnMatch = k.SkipOnMatch != nil && *k.SkipOnMatch
+			f.Kinds[k.Name].SkipOnMatch = k.SkipOnMatch != nil && *k.SkipOnMatch
 			for _, mp := range k.MatchingPatterns {
-				f.Kinds[k.Name].matchingPatterns = append(f.Kinds[k.Name].matchingPatterns, regexp.MustCompile(mp))
+				f.Kinds[k.Name].MatchingPatterns = append(f.Kinds[k.Name].MatchingPatterns, regexp.MustCompile(mp))
 			}
 		}
 	}

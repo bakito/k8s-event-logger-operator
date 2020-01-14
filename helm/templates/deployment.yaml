@@ -28,10 +28,7 @@ spec:
             - name: OPERATOR_NAME
               value: {{ include "k8s-event-logger-operator.fullname" . }}
             - name: WATCH_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: metadata.namespace
+              value: ""
             - name: POD_NAME
               valueFrom:
                 fieldRef:
