@@ -17,7 +17,8 @@ before_script:
   - export PATH=$PATH:/$(pwd)
 
 script:
-  - go test ./... -cover
+  - go test -coverprofile=coverage.out  ./...
+  - go tool cover -func=coverage.out
   - go build ./...
   - operator-sdk generate crds
   - operator-sdk generate k8s
