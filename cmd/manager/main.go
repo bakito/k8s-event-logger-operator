@@ -74,11 +74,13 @@ func main() {
 			log.Error(err, "")
 			os.Exit(1)
 		}
+		log.Info("Running in global mode.")
 	} else {
 		if err := event.Add(mgr, ""); err != nil {
 			log.Error(err, "")
 			os.Exit(1)
 		}
+		log.WithValues("namespace", namespace).Info("Running in single namespace mode.")
 	}
 
 	log.V(4).Info("Starting the Cmd.")
