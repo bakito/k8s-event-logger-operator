@@ -9,9 +9,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// EventLoggerConf defines the configuration of EventLogger
+// EventLoggerSpec defines the desired state of EventLogger
 // +k8s:openapi-gen=true
-type EventLoggerConf struct {
+type EventLoggerSpec struct {
 
 	// Kinds the kinds to logg the events for
 	// +kubebuilder:validation:MinItems=1
@@ -22,12 +22,6 @@ type EventLoggerConf struct {
 	// +kubebuilder:validation:MinItems=0
 	// +listType=set
 	EventTypes []string `json:"eventTypes,omitempty"`
-}
-
-// EventLoggerSpec defines the desired state of EventLogger
-// +k8s:openapi-gen=true
-type EventLoggerSpec struct {
-	EventLoggerConf `json:",inline"`
 
 	// Labels additional labels for the logger pod
 	Labels map[string]string `json:"labels,omitempty"`

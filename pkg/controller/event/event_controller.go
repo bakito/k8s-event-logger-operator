@@ -26,20 +26,18 @@ import (
 var (
 	log      = logf.Log.WithName("controller_event")
 	eventLog = logf.Log.WithName("event")
-	config   *eventloggerv1.EventLoggerConf
 	filter   *Filter
 )
 
 // Add creates a new Event Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, name string) error {
-
-	return add(mgr, newReconciler(mgr, name))
+	return add(mgr, newReconciler(mgr.GetClient(), mgr.GetScheme(), name))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager, name string) reconcile.Reconciler {
-	return &ReconcileConfig{client: mgr.GetClient(), scheme: mgr.GetScheme(), name: name}
+func newReconciler(client client.Client, scheme *runtime.Scheme, name string) reconcile.Reconciler {
+	return &ReconcileConfig{client: client, scheme: scheme, name: name}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -114,7 +112,7 @@ func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result
 		return r.updateCR(cr, reqLogger, err)
 	}
 
-	newFilter := newFilter(cr.Spec.EventLoggerConf)
+	newFilter := newFilter(cr.Spec)
 	if filter == nil || !filter.Equals(newFilter) {
 		filter = newFilter
 		reqLogger.WithValues("filter", filter).Info("apply new filter")
@@ -150,6 +148,10 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 }
 
 func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
+	if filter == nil {
+		return false
+	}
+
 	evt := e.(*corev1.Event)
 	if evt.ResourceVersion <= p.lastVersion {
 		return false
@@ -172,10 +174,6 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 }
 
 func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
-
-	if filter == nil {
-		return false
-	}
 
 	if len(filter.Kinds) == 0 {
 		return len(filter.EventTypes) == 0 || p.contains(filter.EventTypes, e.Type)
