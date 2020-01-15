@@ -136,51 +136,9 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 		return r.updateCR(cr, reqLogger, err)
 	}
 
-	// TODO check for changes and abort if error
-
-	var saccChanged, roleChanged, rbChanged bool
-
-	sacc, role, rb := rbacForCR(cr)
+	saccChanged, roleChanged, rbChanged, err := r.setupRbac(cr, reqLogger)
 	if err != nil {
 		return r.updateCR(cr, reqLogger, err)
-	}
-
-	if cr.Spec.ServiceAccount == "" {
-		saccChanged, err = r.createOrReplace(cr, sacc, reqLogger, nil)
-		if err != nil {
-			return r.updateCR(cr, reqLogger, err)
-		}
-		roleChanged, err = r.createOrReplace(cr, role, reqLogger, func(curr runtime.Object, next runtime.Object) updateReplace {
-			o1 := curr.(*rbacv1.Role)
-			o2 := next.(*rbacv1.Role)
-			if reflect.DeepEqual(o1.Rules, o2.Rules) {
-				return no
-			}
-			return update
-		})
-		if err != nil {
-			return r.updateCR(cr, reqLogger, err)
-		}
-		rbChanged, err = r.createOrReplace(cr, rb, reqLogger, nil)
-		if err != nil {
-			return r.updateCR(cr, reqLogger, err)
-		}
-	} else {
-		// Only delete sa if the name is different than the configured
-		if cr.Spec.ServiceAccount != sacc.GetName() {
-			err = r.saveDelete(sacc)
-			if err != nil {
-				return r.updateCR(cr, reqLogger, err)
-			}
-		}
-		err = r.saveDelete(role)
-		if err != nil {
-			return r.updateCR(cr, reqLogger, err)
-		}
-		err = r.saveDelete(rb)
-		if err != nil {
-			return r.updateCR(cr, reqLogger, err)
-		}
 	}
 
 	// Define a new Pod object
@@ -246,6 +204,51 @@ func (r *ReconcileEventLogger) createOrReplacePod(cr *eventloggerv1.EventLogger,
 	}
 
 	return false, nil
+}
+
+func (r *ReconcileEventLogger) setupRbac(cr *eventloggerv1.EventLogger, reqLogger logr.Logger) (bool, bool, bool, error) {
+	var saccChanged, roleChanged, rbChanged bool
+	var err error
+	sacc, role, rb := rbacForCR(cr)
+
+	if cr.Spec.ServiceAccount == "" {
+		saccChanged, err = r.createOrReplace(cr, sacc, reqLogger, nil)
+		if err != nil {
+			return saccChanged, roleChanged, rbChanged, err
+		}
+		roleChanged, err = r.createOrReplace(cr, role, reqLogger, func(curr runtime.Object, next runtime.Object) updateReplace {
+			o1 := curr.(*rbacv1.Role)
+			o2 := next.(*rbacv1.Role)
+			if reflect.DeepEqual(o1.Rules, o2.Rules) {
+				return no
+			}
+			return update
+		})
+		if err != nil {
+			return saccChanged, roleChanged, rbChanged, err
+		}
+		rbChanged, err = r.createOrReplace(cr, rb, reqLogger, nil)
+		if err != nil {
+			return saccChanged, roleChanged, rbChanged, err
+		}
+	} else {
+		// Only delete sa if the name is different than the configured
+		if cr.Spec.ServiceAccount != sacc.GetName() {
+			err = r.saveDelete(sacc)
+			if err != nil {
+				return saccChanged, roleChanged, rbChanged, err
+			}
+		}
+		err = r.saveDelete(role)
+		if err != nil {
+			return saccChanged, roleChanged, rbChanged, err
+		}
+		err = r.saveDelete(rb)
+		if err != nil {
+			return saccChanged, roleChanged, rbChanged, err
+		}
+	}
+	return saccChanged, roleChanged, rbChanged, nil
 }
 
 func (r *ReconcileEventLogger) createOrReplace(cr *eventloggerv1.EventLogger,

@@ -57,7 +57,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to primary resource Event
 	p := &loggingPredicate{}
 	p.lastVersion, err = getLatestRevision(mgr)
-
+	if err != nil {
+		return err
+	}
 	return c.Watch(&source.Kind{Type: &corev1.Event{}}, &handler.Funcs{}, p)
 }
 
