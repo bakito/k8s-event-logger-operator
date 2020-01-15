@@ -36,6 +36,7 @@ Common labels
 */}}
 {{- define "k8s-event-logger-operator.labels" -}}
 helm.sh/chart: {{ include "k8s-event-logger-operator.chart" . }}
+helm.sh/namespace: {{ .Release.Namespace }}
 {{ include "k8s-event-logger-operator.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

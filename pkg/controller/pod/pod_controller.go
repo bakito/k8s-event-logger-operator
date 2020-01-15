@@ -168,24 +168,18 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 	} else {
 		// Only delete sa if the name is different than the configured
 		if cr.Spec.ServiceAccount != sacc.GetName() {
-			err = r.client.Delete(context.TODO(), sacc)
+			err = r.saveDelete(sacc)
 			if err != nil {
-				if !errors.IsNotFound(err) {
-					return r.updateCR(cr, reqLogger, err)
-				}
-			}
-		}
-		err = r.client.Delete(context.TODO(), role)
-		if err != nil {
-			if !errors.IsNotFound(err) {
 				return r.updateCR(cr, reqLogger, err)
 			}
 		}
-		err = r.client.Delete(context.TODO(), rb)
+		err = r.saveDelete(role)
 		if err != nil {
-			if !errors.IsNotFound(err) {
-				return r.updateCR(cr, reqLogger, err)
-			}
+			return r.updateCR(cr, reqLogger, err)
+		}
+		err = r.saveDelete(rb)
+		if err != nil {
+			return r.updateCR(cr, reqLogger, err)
 		}
 	}
 
@@ -314,6 +308,16 @@ func (r *ReconcileEventLogger) updateCR(cr *eventloggerv1.EventLogger, logger lo
 	return reconcile.Result{}, updErr
 }
 
+func (r *ReconcileEventLogger) saveDelete(obj runtime.Object) error {
+	err := r.client.Delete(context.TODO(), obj)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+	}
+	return nil
+}
+
 // podForCR returns a pod with the same name/namespace as the cr
 func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	labels := make(map[string]string)
@@ -431,9 +435,13 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 				Resources: []string{"events", "pods"},
 				Verbs:     []string{"watch", "get", "list"},
 			},
+			{
+				APIGroups: []string{"eventlogger.bakito.ch"},
+				Resources: []string{"eventloggers"},
+				Verbs:     []string{"get", "list", "patch", "update", "watch"},
+			},
 		},
 	}
-
 	rb := &rbacv1.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "RoleBinding",
