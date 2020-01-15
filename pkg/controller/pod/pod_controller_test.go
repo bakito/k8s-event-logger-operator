@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
+	v1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/version"
 	. "gotest.tools/assert"
@@ -36,12 +36,12 @@ func TestPodController(t *testing.T) {
 	ns2 := "eventlogger-operators"
 
 	scrape := true
-	el := &eventloggerv1.EventLogger{
+	el := &v1.EventLogger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "eventlogger",
 			Namespace: testNamespace,
 		},
-		Spec: eventloggerv1.EventLoggerSpec{
+		Spec: v1.EventLoggerSpec{
 			Labels:        map[string]string{"test-label": "foo"},
 			Annotations:   map[string]string{"test-annotation": "bar"},
 			ScrapeMetrics: &scrape,
@@ -54,7 +54,7 @@ func TestPodController(t *testing.T) {
 	Assert(t, !res.Requeue)
 
 	// check updated status
-	updated := &eventloggerv1.EventLogger{}
+	updated := &v1.EventLogger{}
 	err := cl.Get(context.TODO(), types.NamespacedName{
 		Name:      "eventlogger",
 		Namespace: testNamespace,
@@ -127,12 +127,12 @@ func TestPodController(t *testing.T) {
 
 func TestPodController_changed_image(t *testing.T) {
 	eventLoggerImage = "quay.io/bakito/k8s-event-logger"
-	el := &eventloggerv1.EventLogger{
+	el := &v1.EventLogger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "eventlogger",
 			Namespace: testNamespace,
 		},
-		Spec: eventloggerv1.EventLoggerSpec{},
+		Spec: v1.EventLoggerSpec{},
 	}
 	pod := newPod()
 	pod.Spec.Containers[0].Image = "foo"
@@ -147,12 +147,12 @@ func TestPodController_changed_image(t *testing.T) {
 }
 
 func TestPodController_extnernal_serviceaccount(t *testing.T) {
-	el := &eventloggerv1.EventLogger{
+	el := &v1.EventLogger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "eventlogger",
 			Namespace: testNamespace,
 		},
-		Spec: eventloggerv1.EventLoggerSpec{
+		Spec: v1.EventLoggerSpec{
 			ServiceAccount: "foo",
 		},
 	}
@@ -174,7 +174,7 @@ func TestPodController_extnernal_serviceaccount(t *testing.T) {
 func testReconcile(t *testing.T, intitialObjects ...runtime.Object) (client.Client, reconcile.Result) {
 
 	s := scheme.Scheme
-	eventloggerv1.SchemeBuilder.AddToScheme(s)
+	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
 
 	cl := fake.NewFakeClient(intitialObjects...)
 

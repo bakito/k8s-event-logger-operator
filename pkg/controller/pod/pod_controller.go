@@ -30,8 +30,7 @@ import (
 )
 
 var (
-	log                    = logf.Log.WithName("controller_pod")
-	defaultFileMode  int32 = 420
+	log              = logf.Log.WithName("controller_pod")
 	gracePeriod      int64
 	eventLoggerImage = "quay.io/bakito/k8s-event-logger"
 	podReqCPU        = resource.MustParse("100m")

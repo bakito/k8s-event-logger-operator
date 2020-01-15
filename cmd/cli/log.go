@@ -19,7 +19,7 @@ func InitLogging() {
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 	klog.InitFlags(fs)
 	// do not log klog to std error
-	fs.Set("logtostderr", "false")
+	_ = fs.Set("logtostderr", "false")
 
 	// Add the zap logger flag set to the CLI. The flag set must
 	// be added before calling pflag.Parse().

@@ -212,7 +212,7 @@ func Test_Reconcile_existing(t *testing.T) {
 	Assert(t, is.Nil(filter))
 
 	s := scheme.Scheme
-	v1.SchemeBuilder.AddToScheme(s)
+	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
 	el := &v1.EventLogger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "eventlogger",
@@ -248,7 +248,7 @@ func Test_Reconcile_deleted(t *testing.T) {
 	Assert(t, filter != nil)
 
 	s := scheme.Scheme
-	v1.SchemeBuilder.AddToScheme(s)
+	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
 
 	cl := fake.NewFakeClient()
 
