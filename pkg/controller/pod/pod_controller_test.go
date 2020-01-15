@@ -92,15 +92,26 @@ func TestPodController(t *testing.T) {
 	Assert(t, is.Equal(evars[c.EnvConfigName].Value, el.GetName()))
 	Assert(t, is.Equal(evars["WATCH_NAMESPACE"].Value, ns2))
 
-	// role, service account and rolebinding
+	// service account
 	saccList := &corev1.ServiceAccountList{}
 	assertEntrySize(t, cl, saccList, 1)
 	Assert(t, is.Equal(saccList.Items[0].ObjectMeta.Name, loggerName(el)))
 
+	// role
 	roleList := &rbacv1.RoleList{}
 	assertEntrySize(t, cl, roleList, 1)
-	Assert(t, is.Equal(roleList.Items[0].ObjectMeta.Name, loggerName(el)))
+	role := roleList.Items[0]
+	Assert(t, is.Equal(role.ObjectMeta.Name, loggerName(el)))
+	Assert(t, is.Len(role.Rules, 2))
+	Assert(t, is.DeepEqual(role.Rules[0].APIGroups, []string{""}))
+	Assert(t, is.DeepEqual(role.Rules[0].Resources, []string{"events", "pods"}))
+	Assert(t, is.DeepEqual(role.Rules[0].Verbs, []string{"watch", "get", "list"}))
 
+	Assert(t, is.DeepEqual(role.Rules[1].APIGroups, []string{"eventlogger.bakito.ch"}))
+	Assert(t, is.DeepEqual(role.Rules[1].Resources, []string{"eventloggers"}))
+	Assert(t, is.DeepEqual(role.Rules[1].Verbs, []string{"get", "list", "patch", "update", "watch"}))
+
+	// rolebinding
 	rbList := &rbacv1.RoleBindingList{}
 	assertEntrySize(t, cl, rbList, 1)
 	Assert(t, is.Equal(rbList.Items[0].ObjectMeta.Name, loggerName(el)))

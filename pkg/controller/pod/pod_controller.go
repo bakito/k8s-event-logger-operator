@@ -431,9 +431,13 @@ func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.R
 				Resources: []string{"events", "pods"},
 				Verbs:     []string{"watch", "get", "list"},
 			},
+			{
+				APIGroups: []string{"eventlogger.bakito.ch"},
+				Resources: []string{"eventloggers"},
+				Verbs:     []string{"get", "list", "patch", "update", "watch"},
+			},
 		},
 	}
-
 	rb := &rbacv1.RoleBinding{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "RoleBinding",
