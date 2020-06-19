@@ -45,9 +45,9 @@ spec:
   annotations: # optional - additional annotations for the pod
     name: value
 
-  scrapeMetrics: false # optional att prometeus scrape metrics annotation to the pod. Default false
+  scrapeMetrics: false # optional att prometheus scrape metrics annotation to the pod. Default false
 
-  namespace: "ns" # optional - the namespace to lsten the events on. Default the current namespace
+  namespace: "ns" # optional - the namespace to listen the events on. Default the current namespace
 
   serviceAccount: "sa" # optional - if a custom ServiceAccount should be used for the pod. Default ServiceAccount is automatically created
 ```

@@ -74,7 +74,7 @@ func main() {
 		}
 		log.Info("Running in global mode.")
 	} else {
-		if err := event.Add(mgr, ""); err != nil {
+		if err := event.Add(mgr, namespace, ""); err != nil {
 			log.Error(err, "")
 			os.Exit(1)
 		}

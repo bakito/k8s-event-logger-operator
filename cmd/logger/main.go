@@ -64,7 +64,7 @@ func main() {
 	log.V(4).Info("Registering Components.")
 
 	// Setup all Controllers
-	if err := event.Add(mgr, configName); err != nil {
+	if err := event.Add(mgr, namespace, configName); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

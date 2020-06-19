@@ -1,6 +1,7 @@
 package event
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"regexp"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
@@ -49,4 +50,13 @@ func newFilter(c eventloggerv1.EventLoggerSpec) *Filter {
 		}
 	}
 	return f
+}
+
+type config struct {
+	namespace string
+	name      string
+}
+
+func (c config) matches(meta metav1.Object) bool {
+	return c.namespace == meta.GetNamespace() && (c.name == meta.GetName() || c.name == "")
 }

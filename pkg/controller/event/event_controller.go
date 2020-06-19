@@ -30,17 +30,21 @@ var (
 
 // Add creates a new Event Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager, name string) error {
-	return add(mgr, newReconciler(mgr.GetClient(), mgr.GetScheme()), name)
+func Add(mgr manager.Manager, namespace string, name string) error {
+	cfg := &config{
+		namespace: namespace,
+		name:      name,
+	}
+	return add(mgr, newReconciler(mgr.GetClient(), mgr.GetScheme(), cfg), cfg)
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(client client.Client, scheme *runtime.Scheme) reconcile.Reconciler {
-	return &ReconcileConfig{client: client, scheme: scheme}
+func newReconciler(client client.Client, scheme *runtime.Scheme, cfg *config) reconcile.Reconciler {
+	return &ReconcileConfig{client: client, scheme: scheme, cfg: cfg}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler, name string) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, cfg *config) error {
 	// Create a new controller
 	c, err := controller.New("event-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -48,7 +52,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, name string) error {
 	}
 
 	// Watch for changes to primary resource EventLogger
-	err = c.Watch(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{}, eventLoggerPredicate{name: name})
+	err = c.Watch(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{}, eventLoggerPredicate{cfg: cfg})
 	if err != nil {
 		return err
 	}
@@ -71,6 +75,7 @@ type ReconcileConfig struct {
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
+	cfg    *config
 }
 
 // Reconcile reads that state of the cluster for a EventLogger object and makes changes based on the state read
@@ -78,7 +83,11 @@ type ReconcileConfig struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+
+	if r.cfg.name == "" {
+		r.cfg.name = request.Name
+	}
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name, "CR.Name", r.cfg.name)
 
 	// Fetch the EventLogger cr
 	cr := &eventloggerv1.EventLogger{}
@@ -219,15 +228,15 @@ func getLatestRevision(mgr manager.Manager) (string, error) {
 
 type eventLoggerPredicate struct {
 	predicate.Funcs
-	name string
+	cfg *config
 }
 
 // Create implements Predicate
 func (p eventLoggerPredicate) Create(e event.CreateEvent) bool {
-	return e.Meta.GetName() == p.name
+	return p.cfg.matches(e.Meta)
 }
 
 // Update implements Predicate
 func (p eventLoggerPredicate) Update(e event.UpdateEvent) bool {
-	return e.MetaNew.GetName() == p.name
+	return p.cfg.matches(e.MetaNew)
 }

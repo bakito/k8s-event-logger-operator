@@ -229,7 +229,7 @@ func Test_Reconcile_existing(t *testing.T) {
 
 	cl := fake.NewFakeClientWithScheme(s, el)
 
-	r := newReconciler(cl, s)
+	r := newReconciler(cl, s, &config{})
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -252,7 +252,7 @@ func Test_Reconcile_deleted(t *testing.T) {
 
 	cl := fake.NewFakeClientWithScheme(s)
 
-	r := newReconciler(cl, s)
+	r := newReconciler(cl, s, &config{})
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
