@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
@@ -32,16 +31,16 @@ var (
 // Add creates a new Event Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager, name string) error {
-	return add(mgr, newReconciler(mgr.GetClient(), mgr.GetScheme(), name))
+	return add(mgr, newReconciler(mgr.GetClient(), mgr.GetScheme()), name)
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(client client.Client, scheme *runtime.Scheme, name string) reconcile.Reconciler {
-	return &ReconcileConfig{client: client, scheme: scheme, name: name}
+func newReconciler(client client.Client, scheme *runtime.Scheme) reconcile.Reconciler {
+	return &ReconcileConfig{client: client, scheme: scheme}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r reconcile.Reconciler, name string) error {
 	// Create a new controller
 	c, err := controller.New("event-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -49,7 +48,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource EventLogger
-	err = c.Watch(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{}, eventLoggerPredicate{name: name})
 	if err != nil {
 		return err
 	}
@@ -70,10 +69,8 @@ var _ reconcile.Reconciler = &ReconcileConfig{}
 type ReconcileConfig struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client  client.Client
-	scheme  *runtime.Scheme
-	name    string
-	ignored map[string]bool
+	client client.Client
+	scheme *runtime.Scheme
 }
 
 // Reconcile reads that state of the cluster for a EventLogger object and makes changes based on the state read
@@ -81,21 +78,7 @@ type ReconcileConfig struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name, "CR.Name", r.name)
-
-	if r.name != "" && r.name != request.Name {
-		if _, ok := r.ignored[request.Name]; ok {
-			reqLogger.V(4).Info("ignore this event logger config")
-		} else {
-			reqLogger.Error(fmt.Errorf(""), "ignore this event logger config due to a different event logger config in the same namespace")
-		}
-		return reconcile.Result{}, nil
-	}
-
-	if r.name == "" {
-		r.name = request.Name
-		reqLogger = log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name, "CR.Name", r.name)
-	}
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 
 	// Fetch the EventLogger cr
 	cr := &eventloggerv1.EventLogger{}
@@ -232,4 +215,19 @@ func getLatestRevision(mgr manager.Manager) (string, error) {
 		return "", err
 	}
 	return eventList.ResourceVersion, nil
+}
+
+type eventLoggerPredicate struct {
+	predicate.Funcs
+	name string
+}
+
+// Create implements Predicate
+func (p eventLoggerPredicate) Create(e event.CreateEvent) bool {
+	return e.Meta.GetName() == p.name
+}
+
+// Update implements Predicate
+func (p eventLoggerPredicate) Update(e event.UpdateEvent) bool {
+	return e.MetaNew.GetName() == p.name
 }
