@@ -8,7 +8,7 @@ import (
 	"reflect"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
-	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -48,19 +48,19 @@ func Add(mgr manager.Manager) error {
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(client client.Client, scheme *runtime.Scheme) reconcile.Reconciler {
 
-	if podImage, ok := os.LookupEnv(c.EnvEventLoggerImage); ok {
+	if podImage, ok := os.LookupEnv(cnst.EnvEventLoggerImage); ok {
 		eventLoggerImage = podImage
 	}
-	if cpu, ok := os.LookupEnv(c.EnvLoggerPodReqCPU); ok {
+	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodReqCPU); ok {
 		podReqCPU = resource.MustParse(cpu)
 	}
-	if mem, ok := os.LookupEnv(c.EnvLoggerPodReqMem); ok {
+	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodReqMem); ok {
 		podReqMem = resource.MustParse(mem)
 	}
-	if cpu, ok := os.LookupEnv(c.EnvLoggerPodMaxCPU); ok {
+	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodMaxCPU); ok {
 		podMaxCPU = resource.MustParse(cpu)
 	}
-	if mem, ok := os.LookupEnv(c.EnvLoggerPodMaxMem); ok {
+	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodMaxMem); ok {
 		podMaxMem = resource.MustParse(mem)
 	}
 
@@ -334,7 +334,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		annotations[k] = v
 	}
 	if cr.Spec.ScrapeMetrics != nil && *cr.Spec.ScrapeMetrics {
-		annotations["prometheus.io/port"] = string(c.MetricsPort)
+		annotations["prometheus.io/port"] = string(cnst.MetricsPort)
 		annotations["prometheus.io/scrape"] = "true"
 	}
 
@@ -380,7 +380,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 							},
 						},
 						{
-							Name:  c.EnvConfigName,
+							Name:  cnst.EnvConfigName,
 							Value: cr.Name,
 						},
 						{
