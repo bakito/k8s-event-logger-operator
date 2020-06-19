@@ -45,7 +45,7 @@ spec:
                 type: array
                 x-kubernetes-list-type: set
               kinds:
-                description: Kinds the kinds to logg the events for
+                description: Kinds the kinds to log the events for
                 items:
                   description: Kind defines a kind to loge events for
                   properties:

@@ -13,14 +13,12 @@ import (
 // +k8s:openapi-gen=true
 type EventLoggerSpec struct {
 
-	// Kinds the kinds to logg the events for
+	// Kinds the kinds to log the events for
 	// +kubebuilder:validation:MinItems=1
-	// +listType=set
 	Kinds []Kind `json:"kinds,omitempty"`
 
 	// EventTypes the event types to log. If empty all events are logged.
 	// +kubebuilder:validation:MinItems=0
-	// +listType=set
 	EventTypes []string `json:"eventTypes,omitempty"`
 
 	// Labels additional labels for the logger pod
@@ -49,12 +47,10 @@ type Kind struct {
 
 	// EventTypes the event types to log. If empty events are logged as defined in spec.
 	// +kubebuilder:validation:MinItems=0
-	// +listType=set
 	EventTypes []string `json:"eventTypes,omitempty"`
 
 	// MatchingPatterns optional regex pattern that must be contained in the message to be logged
 	// +kubebuilder:validation:MinItems=0
-	// +listType=set
 	MatchingPatterns []string `json:"matchingPatterns,omitempty"`
 
 	// SkipOnMatch skip the entry if matched

@@ -178,7 +178,6 @@ func (r *ReconcileEventLogger) createOrReplacePod(cr *eventloggerv1.EventLogger,
 	}
 
 	if replacePod || len(podList.Items) > 1 {
-
 		for _, p := range podList.Items {
 			reqLogger.Info(fmt.Sprintf("Deleting %s", pod.Kind), "Namespace", pod.GetNamespace(), "Name", pod.GetName())
 			err = r.client.Delete(context.TODO(), &p, &client.DeleteOptions{GracePeriodSeconds: &gracePeriod})
@@ -367,36 +366,14 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					Command:         []string{"/opt/go/k8s-event-logger"},
 					Args:            os.Args[1:], // pass on the operator args
 					Env: []corev1.EnvVar{
-						{
-							Name:  "WATCH_NAMESPACE",
-							Value: watchNamespace,
-						},
-						{
-							Name: "POD_NAME",
-							ValueFrom: &corev1.EnvVarSource{
-								FieldRef: &corev1.ObjectFieldSelector{
-									FieldPath: "metadata.name",
-								},
-							},
-						},
-						{
-							Name:  cnst.EnvConfigName,
-							Value: cr.Name,
-						},
-						{
-							Name:  "DEBUG_CONFIG",
-							Value: "false",
-						},
+						{Name: "WATCH_NAMESPACE", Value: watchNamespace},
+						{Name: cnst.EnvConfigName, Value: cr.Name},
+						{Name: "DEBUG_CONFIG", Value: "false"},
+						{Name: "POD_NAME", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.name"}}},
 					},
 					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU:    podReqCPU,
-							corev1.ResourceMemory: podReqMem,
-						},
-						Limits: corev1.ResourceList{
-							corev1.ResourceCPU:    podMaxCPU,
-							corev1.ResourceMemory: podMaxMem,
-						},
+						Requests: corev1.ResourceList{corev1.ResourceCPU: podReqCPU, corev1.ResourceMemory: podReqMem},
+						Limits:   corev1.ResourceList{corev1.ResourceCPU: podMaxCPU, corev1.ResourceMemory: podMaxMem},
 					},
 				},
 			},
