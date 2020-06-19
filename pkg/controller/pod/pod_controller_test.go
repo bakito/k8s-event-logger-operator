@@ -176,7 +176,7 @@ func testReconcile(t *testing.T, intitialObjects ...runtime.Object) (client.Clie
 	s := scheme.Scheme
 	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
 
-	cl := fake.NewFakeClient(intitialObjects...)
+	cl := fake.NewFakeClientWithScheme(s, intitialObjects...)
 
 	r := newReconciler(cl, s)
 

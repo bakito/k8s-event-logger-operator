@@ -227,7 +227,7 @@ func Test_Reconcile_existing(t *testing.T) {
 		},
 	}
 
-	cl := fake.NewFakeClient(el)
+	cl := fake.NewFakeClientWithScheme(s, el)
 
 	r := newReconciler(cl, s, el.GetObjectMeta().GetName())
 
@@ -250,7 +250,7 @@ func Test_Reconcile_deleted(t *testing.T) {
 	s := scheme.Scheme
 	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
 
-	cl := fake.NewFakeClient()
+	cl := fake.NewFakeClientWithScheme(s)
 
 	r := newReconciler(cl, s, "foo")
 
