@@ -6,7 +6,7 @@ import (
 
 	"github.com/bakito/k8s-event-logger-operator/cmd/cli"
 	"github.com/bakito/k8s-event-logger-operator/pkg/apis"
-	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/pkg/controller/event"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -30,6 +30,16 @@ func main() {
 		os.Exit(1)
 	}
 
+	opNamespace, err := k8sutil.GetOperatorNamespace()
+	if err != nil {
+		if err == k8sutil.ErrRunLocal {
+			opNamespace = os.Getenv(cnst.EnvDevOperatorNamespace)
+		} else {
+			log.Error(err, "Failed to get operator namespace")
+			os.Exit(1)
+		}
+	}
+	
 	// Get a config to talk to the apiserver
 	cfg, err := config.GetConfig()
 	if err != nil {
@@ -40,7 +50,7 @@ func main() {
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
 		Namespace:          namespace,
-		MetricsBindAddress: fmt.Sprintf("%s:%d", c.MetricsHost, c.MetricsPort),
+		MetricsBindAddress: fmt.Sprintf("%s:%d", cnst.MetricsHost, cnst.MetricsPort),
 	})
 	if err != nil {
 		log.Error(err, "")
@@ -55,16 +65,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	configName := os.Getenv(c.EnvConfigName)
+	configName := os.Getenv(cnst.EnvConfigName)
 
-	if _, ok := os.LookupEnv("DEBUG_CONFIG"); ok {
+	if _, ok := os.LookupEnv(cnst.EnvDebugConfig); ok {
 		log.WithValues("configName", configName).Info("Current configuration")
 	}
 
 	log.V(4).Info("Registering Components.")
 
 	// Setup all Controllers
-	if err := event.Add(mgr, namespace, configName); err != nil {
+	if err := event.Add(mgr, opNamespace, configName); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

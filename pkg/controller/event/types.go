@@ -1,8 +1,9 @@
 package event
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"regexp"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
 	"github.com/google/go-cmp/cmp"
@@ -55,6 +56,7 @@ func newFilter(c eventloggerv1.EventLoggerSpec) *Filter {
 type config struct {
 	namespace string
 	name      string
+	filter    *Filter
 }
 
 func (c config) matches(meta metav1.Object) bool {

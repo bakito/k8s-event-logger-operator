@@ -25,7 +25,6 @@ import (
 var (
 	log      = logf.Log.WithName("controller_event")
 	eventLog = logf.Log.WithName("event")
-	filter   *Filter
 )
 
 // Add creates a new Event Controller and adds it to the Manager. The Manager will set fields on the Controller
@@ -58,7 +57,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler, cfg *config) error {
 	}
 
 	// Watch for changes to primary resource Event
-	p := &loggingPredicate{}
+	p := &loggingPredicate{cfg: cfg}
 	p.lastVersion, err = getLatestRevision(mgr)
 	if err != nil {
 		return err
@@ -97,7 +96,7 @@ func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			filter = nil
+			r.cfg.filter = nil
 			reqLogger.Info("cr was deleted, removing filter")
 			return reconcile.Result{}, nil
 		}
@@ -106,9 +105,9 @@ func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	newFilter := newFilter(cr.Spec)
-	if filter == nil || !filter.Equals(newFilter) {
-		filter = newFilter
-		reqLogger.WithValues("filter", filter).Info("apply new filter")
+	if r.cfg.filter == nil || !r.cfg.filter.Equals(newFilter) {
+		r.cfg.filter = newFilter
+		reqLogger.WithValues("filter", r.cfg.filter).Info("apply new filter")
 		return r.updateCR(cr, reqLogger, nil)
 	}
 
@@ -123,6 +122,7 @@ func (r *ReconcileConfig) updateCR(cr *eventloggerv1.EventLogger, logger logr.Lo
 type loggingPredicate struct {
 	predicate.Funcs
 	lastVersion string
+	cfg         *config
 }
 
 // Create implements Predicate
@@ -141,7 +141,7 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 }
 
 func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
-	if filter == nil {
+	if p.cfg == nil || p.cfg.filter == nil {
 		return false
 	}
 
@@ -168,11 +168,11 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 
 func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
 
-	if len(filter.Kinds) == 0 {
-		return len(filter.EventTypes) == 0 || p.contains(filter.EventTypes, e.Type)
+	if len(p.cfg.filter.Kinds) == 0 {
+		return len(p.cfg.filter.EventTypes) == 0 || p.contains(p.cfg.filter.EventTypes, e.Type)
 	}
 
-	k, ok := filter.Kinds[e.InvolvedObject.Kind]
+	k, ok := p.cfg.filter.Kinds[e.InvolvedObject.Kind]
 	if !ok {
 		return false
 	}

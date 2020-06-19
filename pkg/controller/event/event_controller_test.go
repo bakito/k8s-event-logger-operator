@@ -142,8 +142,7 @@ var shouldLogData = []struct {
 
 func Test_shouldLog(t *testing.T) {
 	for i, data := range shouldLogData {
-		lp := &loggingPredicate{}
-		filter = newFilter(data.Config)
+		lp := &loggingPredicate{cfg: &config{filter: newFilter(data.Config)}}
 
 		dStr, err := json.Marshal(&shouldLogData[i])
 		Assert(t, is.Nil(err))
@@ -153,7 +152,6 @@ func Test_shouldLog(t *testing.T) {
 }
 
 func Test_logEvent_no_filter(t *testing.T) {
-	filter = nil
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -166,7 +164,6 @@ func Test_logEvent_no_filter(t *testing.T) {
 }
 
 func Test_logEvent_wrong_resource_version(t *testing.T) {
-	filter = &Filter{}
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -186,7 +183,6 @@ func Test_logEvent_wrong_resource_version(t *testing.T) {
 }
 
 func Test_logEvent_true(t *testing.T) {
-	filter = &Filter{}
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -198,6 +194,7 @@ func Test_logEvent_true(t *testing.T) {
 
 	lp := &loggingPredicate{
 		lastVersion: "2",
+		cfg:         &config{filter: &Filter{}},
 	}
 
 	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{
@@ -208,9 +205,6 @@ func Test_logEvent_true(t *testing.T) {
 }
 
 func Test_Reconcile_existing(t *testing.T) {
-	filter = nil
-	Assert(t, is.Nil(filter))
-
 	s := scheme.Scheme
 	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
 	el := &v1.EventLogger{
@@ -228,8 +222,8 @@ func Test_Reconcile_existing(t *testing.T) {
 	}
 
 	cl := fake.NewFakeClientWithScheme(s, el)
-
-	r := newReconciler(cl, s, &config{})
+	cfg := &config{}
+	r := newReconciler(cl, s, cfg)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -239,13 +233,11 @@ func Test_Reconcile_existing(t *testing.T) {
 	}
 	_, err := r.Reconcile(req)
 	Assert(t, is.Nil(err))
+	Assert(t, cfg.filter != nil)
 
-	Assert(t, filter != nil)
 }
 
 func Test_Reconcile_deleted(t *testing.T) {
-	filter = &Filter{}
-	Assert(t, filter != nil)
 
 	s := scheme.Scheme
 	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
@@ -262,8 +254,6 @@ func Test_Reconcile_deleted(t *testing.T) {
 	}
 	_, err := r.Reconcile(req)
 	Assert(t, is.Nil(err))
-
-	Assert(t, is.Nil(filter))
 }
 
 func repeat(m gomock.Matcher, times int) []interface{} {

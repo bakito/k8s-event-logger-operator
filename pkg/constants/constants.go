@@ -24,4 +24,10 @@ const (
 
 	// MetricsPort port for the metrics
 	MetricsPort int32 = 8383
+
+	// EnvDebugConfig debug config output
+	EnvDebugConfig = "DEBUG_CONFIG"
+
+	// EnvDevOperatorNamespace operator namespace for localb development
+	EnvDevOperatorNamespace = "DEV_OPERATOR_NAMESPACE"
 )
