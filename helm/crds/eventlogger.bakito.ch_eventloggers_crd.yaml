@@ -43,7 +43,6 @@ spec:
                   type: string
                 minItems: 0
                 type: array
-                x-kubernetes-list-type: set
               kinds:
                 description: Kinds the kinds to log the events for
                 items:
@@ -56,7 +55,6 @@ spec:
                         type: string
                       minItems: 0
                       type: array
-                      x-kubernetes-list-type: set
                     matchingPatterns:
                       description: MatchingPatterns optional regex pattern that must
                         be contained in the message to be logged
@@ -64,7 +62,6 @@ spec:
                         type: string
                       minItems: 0
                       type: array
-                      x-kubernetes-list-type: set
                     name:
                       minLength: 3
                       type: string
@@ -76,7 +73,6 @@ spec:
                   type: object
                 minItems: 1
                 type: array
-                x-kubernetes-list-type: set
               labels:
                 additionalProperties:
                   type: string
