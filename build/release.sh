@@ -23,8 +23,8 @@ operator-sdk generate k8s
 
 GO_VERSION=$(cat go.mod | grep -a "^go.*" | awk '{print $2}')
 
-sed -i "s/golang:.*/golang:${GO_VERSION}/" build/Dockerfile
-sed -i "s/golang:.*/golang:${GO_VERSION}/" build/logger.Dockerfile
+sed -i "s/golang:.*/golang:${GO_VERSION} as builder/" build/Dockerfile
+sed -i "s/golang:.*/golang:${GO_VERSION} as builder/" build/logger.Dockerfile
 sed -i "s/golang:.*/golang:${GO_VERSION}/" build/build-images.sh
 
 cp deploy/crds/*crd.yaml helm/crds/

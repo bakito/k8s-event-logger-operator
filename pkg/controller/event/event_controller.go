@@ -2,14 +2,17 @@ package event
 
 import (
 	"context"
+	"reflect"
 	"regexp"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/pkg/apis/eventlogger/v1"
+	"github.com/fatih/structs"
 	"github.com/go-logr/logr"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -104,10 +107,21 @@ func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result
 		return r.updateCR(cr, reqLogger, err)
 	}
 
+	needUpdate := false
+	if !reflect.DeepEqual(r.cfg.logFields, cr.Spec.LogFields) {
+		r.cfg.logFields = cr.Spec.LogFields
+		reqLogger.WithValues("logFields", r.cfg.logFields).Info("apply new log fields")
+		needUpdate = true
+	}
+
 	newFilter := newFilter(cr.Spec)
 	if r.cfg.filter == nil || !r.cfg.filter.Equals(newFilter) {
 		r.cfg.filter = newFilter
 		reqLogger.WithValues("filter", r.cfg.filter).Info("apply new filter")
+		needUpdate = true
+	}
+
+	if needUpdate {
 		return r.updateCR(cr, reqLogger, nil)
 	}
 
@@ -152,15 +166,28 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 	p.lastVersion = evt.ResourceVersion
 
 	if p.shouldLog(evt) {
-		eventLogger := eventLog.WithValues(
-			"namespace", mo.GetNamespace(),
-			"name", mo.GetName(),
-			"reason", evt.Reason,
-			"timestamp", evt.LastTimestamp,
-			"type", evt.Type,
-			"involvedObject ", evt.InvolvedObject,
-			"source ", evt.Source,
-		)
+		var eventLogger logr.Logger
+		if len(p.cfg.logFields) == 0 {
+			eventLogger = eventLog.WithValues(
+				"namespace", evt.ObjectMeta.Namespace,
+				"name", evt.ObjectMeta.Name,
+				"reason", evt.Reason,
+				"timestamp", evt.LastTimestamp,
+				"type", evt.Type,
+				"involvedObject ", evt.InvolvedObject,
+				"source ", evt.Source,
+			)
+		} else {
+			m := structs.Map(evt)
+			eventLogger = eventLog
+			for k, v := range p.cfg.logFields {
+				val, ok, err := unstructured.NestedFieldNoCopy(m, v...)
+				if ok && err == nil {
+					eventLogger = eventLogger.WithValues(k, val)
+				}
+			}
+		}
+
 		eventLogger.Info(evt.Message)
 	}
 	return false

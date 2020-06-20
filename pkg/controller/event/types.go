@@ -56,6 +56,7 @@ func newFilter(c eventloggerv1.EventLoggerSpec) *Filter {
 type config struct {
 	namespace string
 	name      string
+	logFields map[string][]string
 	filter    *Filter
 }
 

@@ -37,6 +37,11 @@ type EventLoggerSpec struct {
 
 	// ServiceAccount the service account to use for the logger pod
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// LogFields fields ot the event to be logged.
+	// Key: the log field name
+	// Value: fields path within the corev1.Event https://github.com/kubernetes/api/blob/master/core/v1/types.go
+	LogFields map[string][]string `json:"logFields,omitempty"`
 }
 
 // Kind defines a kind to loge events for

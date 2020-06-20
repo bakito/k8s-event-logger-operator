@@ -78,6 +78,14 @@ spec:
                   type: string
                 description: Labels additional labels for the logger pod
                 type: object
+              logFields:
+                additionalProperties:
+                  items:
+                    type: string
+                  type: array
+                description: 'LogFields fields ot the event to be logged. Key: the
+                  log field name Value: fields path within the corev1.Event https://github.com/kubernetes/api/blob/master/core/v1/types.go'
+                type: object
               namespace:
                 description: Namespace the namespace to watch on, may be an empty
                   string

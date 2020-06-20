@@ -50,6 +50,18 @@ spec:
   namespace: "ns" # optional - the namespace to listen the events on. Default the current namespace
 
   serviceAccount: "sa" # optional - if a custom ServiceAccount should be used for the pod. Default ServiceAccount is automatically created
+  
+  logFields: # optional - map if custom log field names. Key then log field name / Value: the reflection fields to the value within the struct corev1.Event https://github.com/kubernetes/api/blob/master/core/v1/types.go 
+    kind:
+      - InvolvedObject
+      - Kind
+    name:
+      - ObjectMeta
+      - Name
+    type:
+      - Type
+
+  https://github.com/kubernetes/api/blob/master/core/v1/types.go
 ```
 
 

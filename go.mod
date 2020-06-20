@@ -3,6 +3,7 @@ module github.com/bakito/k8s-event-logger-operator
 go 1.13
 
 require (
+	github.com/fatih/structs v1.1.0
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.3
 	github.com/golang/mock v1.3.1
