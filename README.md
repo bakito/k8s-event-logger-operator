@@ -51,15 +51,18 @@ spec:
 
   serviceAccount: "sa" # optional - if a custom ServiceAccount should be used for the pod. Default ServiceAccount is automatically created
   
-  logFields: # optional - map if custom log field names. Key then log field name / Value: the reflection fields to the value within the struct corev1.Event https://github.com/kubernetes/api/blob/master/core/v1/types.go 
-    kind:
-      - InvolvedObject
-      - Kind
-    name:
-      - ObjectMeta
-      - Name
-    type:
-      - Type
+  logFields: # optional - map if custom log field names. Key then log field name / Value: the reflection fields to the value within the struct corev1.Event https://github.com/kubernetes/api/blob/master/core/v1/types.go
+    - name: name
+      path:
+        - ObjectMeta
+        - Name 
+    - name: kind
+      path:
+        - InvolvedObject
+        - Kind
+    - name: type
+      path:
+        - Type
 
   https://github.com/kubernetes/api/blob/master/core/v1/types.go
 ```
