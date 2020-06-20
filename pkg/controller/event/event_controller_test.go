@@ -204,6 +204,34 @@ func Test_logEvent_true(t *testing.T) {
 	})
 }
 
+func Test_logEvent_true_custom_fields(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	parent := logr.NewMockLogger(ctrl)
+	child := logr.NewMockLogger(ctrl)
+	eventLog = parent
+	parent.EXPECT().WithValues(gomock.Any(), gomock.Any()).Times(1).Return(child)
+	child.EXPECT().WithValues(gomock.Any(), gomock.Any()).Times(2).Return(child)
+	child.EXPECT().Info(gomock.Any()).Times(1)
+
+	lp := &loggingPredicate{
+		lastVersion: "2",
+		cfg: &config{filter: &Filter{},
+			logFields: []v1.LogField{
+				{Name: "type", Path: []string{"Type"}},
+				{Name: "name", Path: []string{"ObjectMeta", "Name"}},
+				{Name: "kind", Path: []string{"InvolvedObject", "Kind"}},
+			},
+		},
+	}
+
+	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{
+		ObjectMeta: metav1.ObjectMeta{ResourceVersion: "3"}, Type: "test-type",
+		InvolvedObject: corev1.ObjectReference{Kind: "test-kind"},
+	})
+}
+
 func Test_Reconcile_existing(t *testing.T) {
 	s := scheme.Scheme
 	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))

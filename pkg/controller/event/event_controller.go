@@ -180,10 +180,12 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 		} else {
 			m := structs.Map(evt)
 			eventLogger = eventLog
-			for k, v := range p.cfg.logFields {
-				val, ok, err := unstructured.NestedFieldNoCopy(m, v...)
-				if ok && err == nil {
-					eventLogger = eventLogger.WithValues(k, val)
+			for _, lf := range p.cfg.logFields {
+				if len(lf.Path) > 0 {
+					val, ok, err := unstructured.NestedFieldNoCopy(m, lf.Path...)
+					if ok && err == nil {
+						eventLogger = eventLogger.WithValues(lf.Name, val)
+					}
 				}
 			}
 		}

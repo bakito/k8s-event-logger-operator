@@ -39,9 +39,7 @@ type EventLoggerSpec struct {
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 
 	// LogFields fields ot the event to be logged.
-	// Key: the log field name
-	// Value: fields path within the corev1.Event https://github.com/kubernetes/api/blob/master/core/v1/types.go
-	LogFields map[string][]string `json:"logFields,omitempty"`
+	LogFields []LogField `json:"logFields,omitempty"`
 }
 
 // Kind defines a kind to loge events for
@@ -60,6 +58,16 @@ type Kind struct {
 
 	// SkipOnMatch skip the entry if matched
 	SkipOnMatch *bool `json:"skipOnMatch,omitempty"`
+}
+
+// Kind defines a kind to loge events for
+// +k8s:openapi-gen=true
+type LogField struct {
+	// Name of the log field
+	Name string `json:"name"`
+	// Path within the corev1.Event struct https://github.com/kubernetes/api/blob/master/core/v1/types.go
+	// +kubebuilder:validation:MinItems=1
+	Path []string `json:"path,omitempty"`
 }
 
 // EventLoggerStatus defines the observed state of EventLogger
