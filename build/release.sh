@@ -25,7 +25,7 @@ GO_VERSION=$(cat go.mod | grep -a "^go.*" | awk '{print $2}')
 
 sed -i "s/golang:.*/golang:${GO_VERSION} as builder/" build/Dockerfile
 sed -i "s/golang:.*/golang:${GO_VERSION} as builder/" build/logger.Dockerfile
-sed -i "s/golang:.*/golang:${GO_VERSION}/" build/build-images.sh
+sed -i "s/golang:.*/golang:${GO_VERSION} || true/" build/build-images.sh
 
 cp deploy/crds/*crd.yaml helm/crds/
 

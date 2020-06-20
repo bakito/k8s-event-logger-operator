@@ -12,15 +12,15 @@ import (
 
 // KindFilter filter for kind
 type KindFilter struct {
-	EventTypes       []string
-	MatchingPatterns []*regexp.Regexp
-	SkipOnMatch      bool
+	EventTypes       []string         `json:"eventTypes,omitempty"`
+	MatchingPatterns []*regexp.Regexp `json:"matchingPatterns,omitempty"`
+	SkipOnMatch      bool             `json:"skipOnMatch,omitempty"`
 }
 
 // Filter event filter
 type Filter struct {
-	Kinds      map[string]*KindFilter
-	EventTypes []string
+	Kinds      map[string]*KindFilter `json:"kinds,omitempty"`
+	EventTypes []string               `json:"eventTypes,omitempty"`
 }
 
 // Equals check if the filter equals the other
