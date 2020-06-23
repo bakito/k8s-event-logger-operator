@@ -119,7 +119,7 @@ type ReconcileEventLogger struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger := log.WithValues("Namespace", request.Namespace, "Name", request.Name)
 
 	// Fetch the EventLogger cr
 	cr := &eventloggerv1.EventLogger{}
@@ -134,6 +134,8 @@ func (r *ReconcileEventLogger) Reconcile(request reconcile.Request) (reconcile.R
 		// Error reading the object - requeue the request.
 		return r.updateCR(cr, reqLogger, err)
 	}
+
+	reqLogger.Info("Reconciling event logger")
 
 	saccChanged, roleChanged, rbChanged, err := r.setupRbac(cr, reqLogger)
 	if err != nil {
@@ -367,6 +369,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					Args:            os.Args[1:], // pass on the operator args
 					Env: []corev1.EnvVar{
 						{Name: "WATCH_NAMESPACE", Value: watchNamespace},
+						{Name: cnst.EnvEventLoggerMode, Value: cnst.ModeLogger},
 						{Name: cnst.EnvConfigName, Value: cr.Name},
 						{Name: "DEBUG_CONFIG", Value: "false"},
 						{Name: "POD_NAME", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.name"}}},

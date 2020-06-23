@@ -28,6 +28,12 @@ const (
 	// EnvDebugConfig debug config output
 	EnvDebugConfig = "DEBUG_CONFIG"
 
+	// EnvEventLoggerMode the mode to run
+	EnvEventLoggerMode = "EVENT_LOGGER_MODE"
+
+	// ModeLogger logger mode
+	ModeLogger = "logger"
+
 	// EnvDevOperatorNamespace operator namespace for localb development
 	EnvDevOperatorNamespace = "DEV_OPERATOR_NAMESPACE"
 )

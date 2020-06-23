@@ -13,4 +13,4 @@ echo "Building with version ${VERSION}"
 
 go build -a -installsuffix cgo -ldflags="-w -s -X github.com/bakito/k8s-event-logger-operator/version.Version=${VERSION}" -o ${1} ${2}
 
-upx -q ${1}
+upx -q ${1} 

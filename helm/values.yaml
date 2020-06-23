@@ -4,12 +4,10 @@
 
 
 image:
-  repository: quay.io/bakito/k8s-event-logger-operator
+  repository: quay.io/bakito/k8s-event-logger
   pullPolicy: Always
 
 eventLogger:
-  image:
-    repository: quay.io/bakito/k8s-event-logger
   resources:
     requests:
       cpu: 100m

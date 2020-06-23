@@ -89,7 +89,9 @@ func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result
 	if r.cfg.name == "" {
 		r.cfg.name = request.Name
 	}
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name, "CR.Name", r.cfg.name)
+
+	reqLogger := log.WithValues("Namespace", request.Namespace, "Name", request.Name)
+	reqLogger.Info("Reconciling event logger")
 
 	// Fetch the EventLogger cr
 	cr := &eventloggerv1.EventLogger{}

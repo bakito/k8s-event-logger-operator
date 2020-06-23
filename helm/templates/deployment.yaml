@@ -35,7 +35,7 @@ spec:
                   apiVersion: v1
                   fieldPath: metadata.name
             - name: EVENT_LOGGER_IMAGE
-              value: "{{ .Values.eventLogger.image.repository }}:{{ .Chart.AppVersion }}"
+              value: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
             - name: LOGGER_POD_REQUEST_CPU
               value: "{{ .Values.eventLogger.resources.requests.cpu }}"
             - name: LOGGER_POD_REQUEST_MEM

@@ -12,7 +12,7 @@ ENV GOPROXY=https://goproxy.io \
 COPY . .
 
 RUN go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
-RUN ./build/build.sh k8s-event-logger-operator cmd/manager/main.go
+RUN ./build/build.sh k8s-event-logger ./cmd/manager/
 
 # application image
 FROM registry.access.redhat.com/ubi8/ubi-minimal
@@ -23,4 +23,4 @@ EXPOSE 8080
 USER 1001
 ENTRYPOINT ["/opt/go/k8s-event-logger-operator"]
 
-COPY --from=builder /build/k8s-event-logger-operator /opt/go/k8s-event-logger-operator
+COPY --from=builder /build/k8s-event-logger /opt/go/k8s-event-logger
