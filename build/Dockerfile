@@ -21,6 +21,6 @@ WORKDIR /opt/go
 LABEL maintainer="bakito <github@bakito.ch>"
 EXPOSE 8080
 USER 1001
-ENTRYPOINT ["/opt/go/k8s-event-logger-operator"]
+ENTRYPOINT ["/opt/go/k8s-event-logger"]
 
 COPY --from=builder /build/k8s-event-logger /opt/go/k8s-event-logger

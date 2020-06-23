@@ -20,7 +20,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
-            - /opt/go/k8s-event-logger-operator
+            - /opt/go/k8s-event-logger
           args:
             - "--zap-level={{ .Values.logging.level }}"
             - "--zap-time-encoding={{ .Values.logging.timeEncoding }}"
