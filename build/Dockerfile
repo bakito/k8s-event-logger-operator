@@ -15,7 +15,7 @@ RUN go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
 RUN ./build/build.sh k8s-event-logger ./cmd/manager/
 
 # application image
-FROM registry.access.redhat.com/ubi8/ubi-minimal
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest 
 WORKDIR /opt/go
 
 LABEL maintainer="bakito <github@bakito.ch>"
