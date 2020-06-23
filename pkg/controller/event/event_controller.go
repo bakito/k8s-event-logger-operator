@@ -91,7 +91,7 @@ func (r *ReconcileConfig) Reconcile(request reconcile.Request) (reconcile.Result
 	}
 
 	reqLogger := log.WithValues("Namespace", request.Namespace, "Name", request.Name)
-	reqLogger.Info("Reconciling event logger")
+	reqLogger.V(2).Info("Reconciling event logger")
 
 	// Fetch the EventLogger cr
 	cr := &eventloggerv1.EventLogger{}
