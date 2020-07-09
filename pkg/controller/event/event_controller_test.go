@@ -211,24 +211,34 @@ func Test_logEvent_true_custom_fields(t *testing.T) {
 	parent := logr.NewMockLogger(ctrl)
 	child := logr.NewMockLogger(ctrl)
 	eventLog = parent
-	parent.EXPECT().WithValues(gomock.Any(), gomock.Any()).Times(1).Return(child)
-	child.EXPECT().WithValues(gomock.Any(), gomock.Any()).Times(2).Return(child)
+	parent.EXPECT().WithValues("type", "test-type").Times(1).Return(child)
+	child.EXPECT().WithValues("name", "test-io-name").Times(1).Return(child)
+	child.EXPECT().WithValues("kind", "test-kind").Times(1).Return(child)
+	child.EXPECT().WithValues("reason", "").Times(1).Return(child)
 	child.EXPECT().Info(gomock.Any()).Times(1)
 
 	lp := &loggingPredicate{
-		lastVersion: "2",
 		cfg: &config{filter: &Filter{},
 			logFields: []v1.LogField{
 				{Name: "type", Path: []string{"Type"}},
-				{Name: "name", Path: []string{"ObjectMeta", "Name"}},
+				{Name: "name", Path: []string{"InvolvedObject", "Name"}},
 				{Name: "kind", Path: []string{"InvolvedObject", "Kind"}},
+				{Name: "reason", Path: []string{"Reason"}},
 			},
 		},
 	}
 
 	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{
-		ObjectMeta: metav1.ObjectMeta{ResourceVersion: "3"}, Type: "test-type",
-		InvolvedObject: corev1.ObjectReference{Kind: "test-kind"},
+		ObjectMeta: metav1.ObjectMeta{
+			ResourceVersion: "3",
+			Name:            "test-event-name",
+		},
+		Type: "test-type",
+		InvolvedObject: corev1.ObjectReference{
+			Kind: "test-kind",
+			Name: "test-io-name",
+		},
+		Reason: "",
 	})
 }
 
