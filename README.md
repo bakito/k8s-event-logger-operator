@@ -1,7 +1,6 @@
 [![Build Status](https://travis-ci.com/bakito/k8s-event-logger-operator.svg?branch=master)](https://travis-ci.com/bakito/k8s-event-logger-operator) [![Go Report Card](https://goreportcard.com/badge/github.com/bakito/k8s-event-logger-operator)](https://goreportcard.com/report/github.com/bakito/k8s-event-logger-operator)
 
 [![GitHub Release](https://img.shields.io/github/release/bakito/k8s-event-logger-operator.svg?style=flat)](https://github.com/bakito/k8s-event-logger-operator/releases)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fbakito%2Fk8s-event-logger-operator.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fbakito%2Fk8s-event-logger-operator?ref=badge_shield)
 
 # k8s event logger operator
 
