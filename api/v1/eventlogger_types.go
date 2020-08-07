@@ -17,25 +17,77 @@ limitations under the License.
 package v1
 
 import (
+	"github.com/bakito/k8s-event-logger-operator/version"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // EventLoggerSpec defines the desired state of EventLogger
 type EventLoggerSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of EventLogger. Edit EventLogger_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Kinds the kinds to log the events for
+	// +kubebuilder:validation:MinItems=1
+	Kinds []Kind `json:"kinds,omitempty"`
+
+	// EventTypes the event types to log. If empty all events are logged.
+	// +kubebuilder:validation:MinItems=0
+	EventTypes []string `json:"eventTypes,omitempty"`
+
+	// Labels additional labels for the logger pod
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Labels additional annotations for the logger pod
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// ScrapeMetrics if true, prometheus scrape annotations are added to the pod
+	ScrapeMetrics *bool `json:"scrapeMetrics,omitempty"`
+
+	// Namespace the namespace to watch on, may be an empty string
+	// +nullable
+	// +optional
+	Namespace *string `json:"namespace,omitempty"`
+
+	// ServiceAccount the service account to use for the logger pod
+	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// LogFields fields ot the event to be logged.
+	LogFields []LogField `json:"logFields,omitempty"`
+}
+
+// Kind defines a kind to loge events for
+type Kind struct {
+	// +kubebuilder:validation:MinLength=3
+	Name string `json:"name"`
+
+	// EventTypes the event types to log. If empty events are logged as defined in spec.
+	// +kubebuilder:validation:MinItems=0
+	EventTypes []string `json:"eventTypes,omitempty"`
+
+	// MatchingPatterns optional regex pattern that must be contained in the message to be logged
+	// +kubebuilder:validation:MinItems=0
+	MatchingPatterns []string `json:"matchingPatterns,omitempty"`
+
+	// SkipOnMatch skip the entry if matched
+	SkipOnMatch *bool `json:"skipOnMatch,omitempty"`
+}
+
+// Kind defines a kind to loge events for
+type LogField struct {
+	// Name of the log field
+	Name string `json:"name"`
+	// Path within the corev1.Event struct https://github.com/kubernetes/api/blob/master/core/v1/types.go
+	// +kubebuilder:validation:MinItems=1
+	Path []string `json:"path,omitempty"`
 }
 
 // EventLoggerStatus defines the observed state of EventLogger
 type EventLoggerStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// OperatorVersion the version of the operator that processed the cr
+	OperatorVersion string `json:"operatorVersion"`
+	// LastProcessed the timestamp the cr was last processed
+	LastProcessed metav1.Time `json:"lastProcessed"`
+
+	// Error
+	Error string `json:"error,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -61,4 +113,16 @@ type EventLoggerList struct {
 
 func init() {
 	SchemeBuilder.Register(&EventLogger{}, &EventLoggerList{})
+}
+
+// UpdateStatus update the status of the current event logger
+func (el *EventLogger) Apply(err error) {
+	if err != nil {
+		el.Status.Error = err.Error()
+	} else {
+		el.Status.Error = ""
+	}
+	el.Status.LastProcessed = metav1.Now()
+	el.Status.OperatorVersion = version.Version
+
 }

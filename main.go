@@ -20,15 +20,16 @@ import (
 	"flag"
 	"os"
 
+	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/controllers/event"
+	"github.com/bakito/k8s-event-logger-operator/controllers/pod"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/bakito/k8s-event-logger-operator/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -39,8 +40,8 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(eventloggerv1.AddToScheme(scheme))
+	utilruntime.Must(corev1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -67,15 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.EventLoggerReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("EventLogger"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "EventLogger")
-		os.Exit(1)
-	}
-	if err = (&controllers.EventReconciler{
+	if err = (&event.EventReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 		Scheme: mgr.GetScheme(),
@@ -83,7 +76,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Event")
 		os.Exit(1)
 	}
-	if err = (&controllers.PodReconciler{
+	if err = (&pod.PodReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
 		Scheme: mgr.GetScheme(),

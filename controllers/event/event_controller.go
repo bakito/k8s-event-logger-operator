@@ -14,17 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package event
 
 import (
 	"context"
 
 	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 )
 
 // EventReconciler reconciles a Event object
@@ -48,6 +47,6 @@ func (r *EventReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 
 func (r *EventReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&eventloggerv1.Event{}).
+		For(&corev1.Event{}).
 		Complete(r)
 }
