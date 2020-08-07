@@ -12,7 +12,7 @@ ENV GOPROXY=https://goproxy.io \
 COPY . .
 
 RUN go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
-RUN ./build/build.sh k8s-event-logger .
+RUN ./hack/build.sh k8s-event-logger .
 
 # application image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest 
