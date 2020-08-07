@@ -1,7 +1,0 @@
-apiVersion: eventlogger.bakito.ch/v1
-kind: EventLogger
-metadata:
-  name: example-eventlogger
-spec:
-  kinds:
-    - name: Deployment
