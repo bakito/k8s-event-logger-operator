@@ -48,7 +48,7 @@ type Reconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
-	Config *config
+	Config *Config
 }
 
 // TODO
@@ -57,7 +57,7 @@ type Reconciler struct {
 
 func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	reqLogger := r.Log.WithValues("Namespace", req.Namespace, "Name", req.Name)
+	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
 	if r.Config.name == "" {
 		r.Config.name = req.Name
 	}
@@ -113,7 +113,7 @@ func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger
 type loggingPredicate struct {
 	predicate.Funcs
 	lastVersion string
-	Config      *config
+	Config      *Config
 }
 
 // Create implements Predicate
@@ -233,7 +233,7 @@ func getLatestRevision(ctx context.Context, mgr manager.Manager, namespace strin
 
 type eventLoggerPredicate struct {
 	predicate.Funcs
-	Config *config
+	Config *Config
 }
 
 // Create implements Predicate

@@ -60,7 +60,7 @@ type Reconciler struct {
 
 func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
-	reqLogger := r.Log.WithValues("Namespace", req.Namespace, "Name", req.Name)
+	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
 
 	// Fetch the EventLogger cr
 	cr := &eventloggerv1.EventLogger{}
@@ -114,7 +114,7 @@ func (r *Reconciler) createOrReplace(
 			return false, err
 		}
 
-		reqLogger.Info(fmt.Sprintf("Creating a new %s", query.GetObjectKind().GroupVersionKind().Kind), "Namespace", mo.GetNamespace(), "Name", mo.GetName())
+		reqLogger.Info(fmt.Sprintf("Creating a new %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
 		err = r.Create(ctx, res.(runtime.Object))
 		if err != nil {
 			return false, err
@@ -128,7 +128,7 @@ func (r *Reconciler) createOrReplace(
 	if updateCheck != nil {
 		check := updateCheck(query, res)
 		if check == update {
-			reqLogger.Info(fmt.Sprintf("Updating %s", query.GetObjectKind().GroupVersionKind().Kind), "Namespace", mo.GetNamespace(), "Name", mo.GetName())
+			reqLogger.Info(fmt.Sprintf("Updating %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
 			err = r.Update(ctx, res.(runtime.Object))
 
 			if err != nil {
@@ -136,7 +136,7 @@ func (r *Reconciler) createOrReplace(
 			}
 			return true, nil
 		} else if check == replace {
-			reqLogger.Info(fmt.Sprintf("Replacing %s", query.GetObjectKind().GroupVersionKind().Kind), "Namespace", mo.GetNamespace(), "Name", mo.GetName())
+			reqLogger.Info(fmt.Sprintf("Replacing %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
 
 			err = r.Delete(ctx, query.(runtime.Object))
 

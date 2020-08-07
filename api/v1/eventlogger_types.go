@@ -41,7 +41,7 @@ type EventLoggerSpec struct {
 	// ScrapeMetrics if true, prometheus scrape annotations are added to the pod
 	ScrapeMetrics *bool `json:"scrapeMetrics,omitempty"`
 
-	// Namespace the namespace to watch on, may be an empty string
+	// namespace the namespace to watch on, may be an empty string
 	// +nullable
 	// +optional
 	Namespace *string `json:"namespace,omitempty"`
@@ -72,7 +72,7 @@ type Kind struct {
 
 // Kind defines a kind to loge events for
 type LogField struct {
-	// Name of the log field
+	// name of the log field
 	Name string `json:"name"`
 	// Path within the corev1.Event struct https://github.com/kubernetes/api/blob/master/core/v1/types.go
 	// +kubebuilder:validation:MinItems=1

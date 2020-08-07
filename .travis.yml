@@ -8,7 +8,7 @@ services:
   - docker
 
 script:
-  - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH -f build/Dockerfile .
+  - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH .
 
 deploy:
   - provider: script

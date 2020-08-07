@@ -53,13 +53,22 @@ func newFilter(c eventloggerv1.EventLoggerSpec) *Filter {
 	return f
 }
 
-type config struct {
+// ConfigFor get config for namespace and name
+func ConfigFor(namespace, name string) *Config {
+	return &Config{
+		name:      name,
+		namespace: namespace,
+	}
+}
+
+// Config event config
+type Config struct {
 	namespace string
 	name      string
 	logFields []eventloggerv1.LogField
 	filter    *Filter
 }
 
-func (c config) matches(meta metav1.Object) bool {
+func (c Config) matches(meta metav1.Object) bool {
 	return c.namespace == meta.GetNamespace() && (c.name == meta.GetName() || c.name == "")
 }

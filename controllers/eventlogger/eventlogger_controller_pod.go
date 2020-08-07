@@ -53,7 +53,7 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 
 	if replacePod || len(podList.Items) > 1 {
 		for _, p := range podList.Items {
-			reqLogger.Info(fmt.Sprintf("Deleting %s", pod.Kind), "Namespace", pod.GetNamespace(), "Name", pod.GetName())
+			reqLogger.Info(fmt.Sprintf("Deleting %s", pod.Kind), "namespace", pod.GetNamespace(), "name", pod.GetName())
 			err = r.Delete(ctx, &p, &client.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 			if err != nil {
 				return false, err
@@ -67,7 +67,7 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 		if err := controllerutil.SetControllerReference(cr, pod, r.Scheme); err != nil {
 			return false, err
 		}
-		reqLogger.Info(fmt.Sprintf("Creating a new %s", pod.Kind), "Namespace", pod.GetNamespace(), "Name", pod.GetName())
+		reqLogger.Info(fmt.Sprintf("Creating a new %s", pod.Kind), "namespace", pod.GetNamespace(), "name", pod.GetName())
 		err = r.Create(ctx, pod)
 		if err != nil {
 			return false, err

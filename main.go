@@ -18,16 +18,19 @@ package main
 
 import (
 	"flag"
-	"os"
-
+	"fmt"
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/controllers/event"
 	"github.com/bakito/k8s-event-logger-operator/controllers/eventlogger"
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+	"github.com/bakito/k8s-event-logger-operator/version"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"os"
+	gr "runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
@@ -52,15 +55,25 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	opts := zap.Options{}
+	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	logger := zap.New(zap.UseFlagOptions(&opts))
+	ctrl.SetLogger(logger)
+
+	printVersion()
+
+	loggerMode := false
+	if mode, ok := os.LookupEnv(cnst.EnvEventLoggerMode); ok {
+		loggerMode = cnst.ModeLogger == mode
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
-		LeaderElection:     enableLeaderElection,
+		LeaderElection:     !loggerMode && enableLeaderElection,
 		LeaderElectionID:   "9a62a63a.bakito.ch",
 	})
 	if err != nil {
@@ -68,26 +81,51 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&event.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr, "TODO"); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Event")
-		os.Exit(1)
-	}
-	if err = (&eventlogger.Reconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Pod")
-		os.Exit(1)
-	}
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&eventloggerv1.EventLogger{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "EventLogger")
+	if loggerMode {
+		configName := os.Getenv(cnst.EnvConfigName)
+		if _, ok := os.LookupEnv(cnst.EnvDebugConfig); ok {
+			setupLog.WithValues("configName", configName).Info("Current configuration")
+		}
+		if err = (&event.Reconciler{
+			Client: mgr.GetClient(),
+			Log:    ctrl.Log.WithName("controllers").WithName("Event"),
+			Scheme: mgr.GetScheme(),
+			Config: event.ConfigFor("TODO opNamespace", configName),
+		}).SetupWithManager(mgr, "TODO-watchNamespace"); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "Event")
 			os.Exit(1)
+		}
+	} else {
+		// Setup all Controllers
+		if "TODO wNamespace" == "" {
+			if err = (&eventlogger.Reconciler{
+				Client: mgr.GetClient(),
+				Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
+				Scheme: mgr.GetScheme(),
+			}).SetupWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create controller", "controller", "Pod")
+				os.Exit(1)
+			}
+			setupLog.Info("Running in global mode.")
+
+			if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+				if err = (&eventloggerv1.EventLogger{}).SetupWebhookWithManager(mgr); err != nil {
+					setupLog.Error(err, "unable to create webhook", "webhook", "EventLogger")
+					os.Exit(1)
+				}
+			}
+
+		} else {
+			if err = (&event.Reconciler{
+				Client: mgr.GetClient(),
+				Log:    ctrl.Log.WithName("controllers").WithName("Event"),
+				Scheme: mgr.GetScheme(),
+				Config: event.ConfigFor("TODO wNamespace", ""),
+			}).SetupWithManager(mgr, "TODO-wNamespace"); err != nil {
+				setupLog.Error(err, "unable to create controller", "controller", "Event")
+				os.Exit(1)
+			}
+			setupLog.WithValues("namespace", "TODO-wNamespace").Info("Running in single namespace mode.")
 		}
 	}
 	// +kubebuilder:scaffold:builder
@@ -97,4 +135,11 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func printVersion() {
+	setupLog.Info(fmt.Sprintf("Operator Version: %s", version.Version))
+	setupLog.Info(fmt.Sprintf("Go Version: %s", gr.Version()))
+	setupLog.Info(fmt.Sprintf("Go OS/Arch: %s/%s", gr.GOOS, gr.GOARCH))
+	//TODO	setupLog.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }

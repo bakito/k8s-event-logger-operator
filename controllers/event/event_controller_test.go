@@ -143,7 +143,7 @@ var shouldLogData = []struct {
 
 func Test_shouldLog(t *testing.T) {
 	for i, data := range shouldLogData {
-		lp := &loggingPredicate{Config: &config{filter: newFilter(data.Config)}}
+		lp := &loggingPredicate{Config: &Config{filter: newFilter(data.Config)}}
 
 		dStr, err := json.Marshal(&shouldLogData[i])
 		Assert(t, is.Nil(err))
@@ -195,7 +195,7 @@ func Test_logEvent_true(t *testing.T) {
 
 	lp := &loggingPredicate{
 		lastVersion: "2",
-		Config:      &config{filter: &Filter{}},
+		Config:      &Config{filter: &Filter{}},
 	}
 
 	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{
@@ -219,10 +219,10 @@ func Test_logEvent_true_custom_fields(t *testing.T) {
 	child.EXPECT().Info(gomock.Any()).Times(1)
 
 	lp := &loggingPredicate{
-		Config: &config{filter: &Filter{},
+		Config: &Config{filter: &Filter{},
 			logFields: []v1.LogField{
 				{Name: "type", Path: []string{"Type"}},
-				{Name: "name", Path: []string{"InvolvedObject", "Name"}},
+				{Name: "name", Path: []string{"InvolvedObject", "name"}},
 				{Name: "kind", Path: []string{"InvolvedObject", "Kind"}},
 				{Name: "reason", Path: []string{"Reason"}},
 			},
@@ -261,7 +261,7 @@ func Test_Reconcile_existing(t *testing.T) {
 	}
 
 	cl := fake.NewFakeClientWithScheme(s, el)
-	cfg := &config{}
+	cfg := &Config{}
 	r := &Reconciler{
 		Client: cl,
 		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
@@ -292,7 +292,7 @@ func Test_Reconcile_deleted(t *testing.T) {
 		Client: cl,
 		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 		Scheme: s,
-		Config: &config{},
+		Config: &Config{},
 	}
 
 	req := reconcile.Request{
