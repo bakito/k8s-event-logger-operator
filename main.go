@@ -68,7 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&event.EventReconciler{
+	if err = (&event.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 		Scheme: mgr.GetScheme(),
@@ -76,7 +76,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Event")
 		os.Exit(1)
 	}
-	if err = (&eventlogger.PodReconciler{
+	if err = (&eventlogger.Reconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
 		Scheme: mgr.GetScheme(),

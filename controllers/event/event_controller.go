@@ -43,8 +43,8 @@ var (
 	eventLog = ctrl.Log.WithName("event")
 )
 
-// EventReconciler reconciles a Event object
-type EventReconciler struct {
+// Reconciler reconciles a Event object
+type Reconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
@@ -55,7 +55,7 @@ type EventReconciler struct {
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=events/status,verbs=get;update;patch
 
-func (r *EventReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
+func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	reqLogger := r.Log.WithValues("Namespace", req.Namespace, "Name", req.Name)
 	if r.Config.name == "" {
@@ -101,7 +101,7 @@ func (r *EventReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	return reconcile.Result{}, nil
 }
 
-func (r *EventReconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
+func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
 	if err != nil {
 		logger.Error(err, "")
 	}
@@ -246,7 +246,7 @@ func (p eventLoggerPredicate) Update(e event.UpdateEvent) bool {
 	return p.Config.matches(e.MetaNew)
 }
 
-func (r *EventReconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error {
 	err := ctrl.NewControllerManagedBy(mgr).
 		For(&eventloggerv1.EventLogger{}).
 		Watches(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{}).

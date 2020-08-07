@@ -262,7 +262,7 @@ func Test_Reconcile_existing(t *testing.T) {
 
 	cl := fake.NewFakeClientWithScheme(s, el)
 	cfg := &config{}
-	r := &EventReconciler{
+	r := &Reconciler{
 		Client: cl,
 		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 		Scheme: s,
@@ -288,7 +288,7 @@ func Test_Reconcile_deleted(t *testing.T) {
 
 	cl := fake.NewFakeClientWithScheme(s)
 
-	r := &EventReconciler{
+	r := &Reconciler{
 		Client: cl,
 		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 		Scheme: s,
