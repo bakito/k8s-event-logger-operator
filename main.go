@@ -22,7 +22,7 @@ import (
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/controllers/event"
-	"github.com/bakito/k8s-event-logger-operator/controllers/pod"
+	"github.com/bakito/k8s-event-logger-operator/controllers/eventlogger"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -72,11 +72,11 @@ func main() {
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, "TODO"); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Event")
 		os.Exit(1)
 	}
-	if err = (&pod.PodReconciler{
+	if err = (&eventlogger.PodReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
 		Scheme: mgr.GetScheme(),

@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -142,7 +143,7 @@ var shouldLogData = []struct {
 
 func Test_shouldLog(t *testing.T) {
 	for i, data := range shouldLogData {
-		lp := &loggingPredicate{cfg: &config{filter: newFilter(data.Config)}}
+		lp := &loggingPredicate{Config: &config{filter: newFilter(data.Config)}}
 
 		dStr, err := json.Marshal(&shouldLogData[i])
 		Assert(t, is.Nil(err))
@@ -194,7 +195,7 @@ func Test_logEvent_true(t *testing.T) {
 
 	lp := &loggingPredicate{
 		lastVersion: "2",
-		cfg:         &config{filter: &Filter{}},
+		Config:      &config{filter: &Filter{}},
 	}
 
 	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{
@@ -218,7 +219,7 @@ func Test_logEvent_true_custom_fields(t *testing.T) {
 	child.EXPECT().Info(gomock.Any()).Times(1)
 
 	lp := &loggingPredicate{
-		cfg: &config{filter: &Filter{},
+		Config: &config{filter: &Filter{},
 			logFields: []v1.LogField{
 				{Name: "type", Path: []string{"Type"}},
 				{Name: "name", Path: []string{"InvolvedObject", "Name"}},
@@ -261,7 +262,12 @@ func Test_Reconcile_existing(t *testing.T) {
 
 	cl := fake.NewFakeClientWithScheme(s, el)
 	cfg := &config{}
-	r := newReconciler(cl, s, cfg)
+	r := &EventReconciler{
+		Client: cl,
+		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
+		Scheme: s,
+		Config: cfg,
+	}
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -282,7 +288,12 @@ func Test_Reconcile_deleted(t *testing.T) {
 
 	cl := fake.NewFakeClientWithScheme(s)
 
-	r := newReconciler(cl, s, &config{})
+	r := &EventReconciler{
+		Client: cl,
+		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
+		Scheme: s,
+		Config: &config{},
+	}
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{

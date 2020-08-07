@@ -18,15 +18,19 @@ package event
 
 import (
 	"context"
+	"reflect"
+	"regexp"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/fatih/structs"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
-	"regexp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -44,72 +48,72 @@ type EventReconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
-	cfg    *config
+	Config *config
 }
 
+// TODO
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=events,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=events/status,verbs=get;update;patch
 
 func (r *EventReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	_ = context.Background()
-	_ = r.Log.WithValues("event", req.NamespacedName)
-	if r.cfg.name == "" {
-		r.cfg.name = req.Name
+	ctx := context.Background()
+	reqLogger := r.Log.WithValues("Namespace", req.Namespace, "Name", req.Name)
+	if r.Config.name == "" {
+		r.Config.name = req.Name
 	}
 
-	reqLogger := r.Log.WithValues("Namespace", req.Namespace, "Name", req.Name)
 	reqLogger.V(2).Info("Reconciling event logger")
 
 	// Fetch the EventLogger cr
 	cr := &eventloggerv1.EventLogger{}
-	err := r.Get(context.TODO(), req.NamespacedName, cr)
+	err := r.Get(ctx, req.NamespacedName, cr)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			r.cfg.filter = nil
+			r.Config.filter = nil
 			reqLogger.Info("cr was deleted, removing filter")
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return r.updateCR(cr, reqLogger, err)
+		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
 	needUpdate := false
-	if !reflect.DeepEqual(r.cfg.logFields, cr.Spec.LogFields) {
-		r.cfg.logFields = cr.Spec.LogFields
-		reqLogger.WithValues("logFields", r.cfg.logFields).Info("apply new log fields")
+	if !reflect.DeepEqual(r.Config.logFields, cr.Spec.LogFields) {
+		r.Config.logFields = cr.Spec.LogFields
+		reqLogger.WithValues("logFields", r.Config.logFields).Info("apply new log fields")
 		needUpdate = true
 	}
 
 	newFilter := newFilter(cr.Spec)
-	if r.cfg.filter == nil || !r.cfg.filter.Equals(newFilter) {
-		r.cfg.filter = newFilter
-		reqLogger.WithValues("filter", r.cfg.filter).Info("apply new filter")
+	if r.Config.filter == nil || !r.Config.filter.Equals(newFilter) {
+		r.Config.filter = newFilter
+		reqLogger.WithValues("filter", r.Config.filter).Info("apply new filter")
 		needUpdate = true
 	}
 
 	if needUpdate {
-		return r.updateCR(cr, reqLogger, nil)
+		return r.updateCR(ctx, cr, reqLogger, nil)
 	}
 
 	return reconcile.Result{}, nil
 }
 
-func (r *EventReconciler) updateCR(cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
+func (r *EventReconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
 	if err != nil {
 		logger.Error(err, "")
 	}
 	cr.Apply(err)
-	err = r.Update(context.TODO(), cr)
+	err = r.Update(ctx, cr)
 	return reconcile.Result{}, err
 }
 
 type loggingPredicate struct {
 	predicate.Funcs
 	lastVersion string
-	cfg         *config
+	Config      *config
 }
 
 // Create implements Predicate
@@ -128,7 +132,7 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 }
 
 func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
-	if p.cfg == nil || p.cfg.filter == nil {
+	if p.Config == nil || p.Config.filter == nil {
 		return false
 	}
 
@@ -140,7 +144,7 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 
 	if p.shouldLog(evt) {
 		var eventLogger logr.Logger
-		if len(p.cfg.logFields) == 0 {
+		if len(p.Config.logFields) == 0 {
 			eventLogger = eventLog.WithValues(
 				"namespace", evt.ObjectMeta.Namespace,
 				"name", evt.ObjectMeta.Name,
@@ -153,7 +157,7 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 		} else {
 			m := structs.Map(evt)
 			eventLogger = eventLog
-			for _, lf := range p.cfg.logFields {
+			for _, lf := range p.Config.logFields {
 				if len(lf.Path) > 0 {
 					val, ok, err := unstructured.NestedFieldNoCopy(m, lf.Path...)
 					if ok && err == nil {
@@ -170,11 +174,11 @@ func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
 
 func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
 
-	if len(p.cfg.filter.Kinds) == 0 {
-		return len(p.cfg.filter.EventTypes) == 0 || p.contains(p.cfg.filter.EventTypes, e.Type)
+	if len(p.Config.filter.Kinds) == 0 {
+		return len(p.Config.filter.EventTypes) == 0 || p.contains(p.Config.filter.EventTypes, e.Type)
 	}
 
-	k, ok := p.cfg.filter.Kinds[e.InvolvedObject.Kind]
+	k, ok := p.Config.filter.Kinds[e.InvolvedObject.Kind]
 	if !ok {
 		return false
 	}
@@ -207,21 +211,20 @@ func (p *loggingPredicate) contains(list []string, val string) bool {
 	return false
 }
 
-func getLatestRevision(mgr manager.Manager) (string, error) {
+func getLatestRevision(ctx context.Context, mgr manager.Manager, namespace string) (string, error) {
 
 	cl, err := client.New(mgr.GetConfig(), client.Options{})
 	if err != nil {
 		return "", err
 	}
 
-	namespace, _ := k8sutil.GetWatchNamespace()
 	eventList := &corev1.EventList{}
 	opts := []client.ListOption{
 		client.Limit(0),
 		client.InNamespace(namespace),
 	}
 
-	err = cl.List(context.TODO(), eventList, opts...)
+	err = cl.List(ctx, eventList, opts...)
 	if err != nil {
 		return "", err
 	}
@@ -230,21 +233,37 @@ func getLatestRevision(mgr manager.Manager) (string, error) {
 
 type eventLoggerPredicate struct {
 	predicate.Funcs
-	cfg *config
+	Config *config
 }
 
 // Create implements Predicate
 func (p eventLoggerPredicate) Create(e event.CreateEvent) bool {
-	return p.cfg.matches(e.Meta)
+	return p.Config.matches(e.Meta)
 }
 
 // Update implements Predicate
 func (p eventLoggerPredicate) Update(e event.UpdateEvent) bool {
-	return p.cfg.matches(e.MetaNew)
+	return p.Config.matches(e.MetaNew)
 }
 
-func (r *EventReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *EventReconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error {
+	err := ctrl.NewControllerManagedBy(mgr).
+		For(&eventloggerv1.EventLogger{}).
+		Watches(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{}).
+		WithEventFilter(eventLoggerPredicate{Config: r.Config}).
+		Complete(r)
+
+	if err != nil {
+		return err
+	}
+	// Watch for changes to primary resource Event
+	p := &loggingPredicate{Config: r.Config}
+	p.lastVersion, err = getLatestRevision(context.Background(), mgr, namespace)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Event{}).
+		Watches(&source.Kind{Type: &corev1.Event{}}, &handler.Funcs{}).
+		WithEventFilter(p).
 		Complete(r)
+
 }

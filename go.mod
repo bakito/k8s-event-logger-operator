@@ -3,9 +3,13 @@ module github.com/bakito/k8s-event-logger-operator
 go 1.14
 
 require (
+	github.com/fatih/structs v1.1.0
 	github.com/go-logr/logr v0.1.0
+	github.com/golang/mock v1.2.0
+	github.com/google/go-cmp v0.3.0
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
+	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v0.18.2
