@@ -222,7 +222,7 @@ func Test_logEvent_true_custom_fields(t *testing.T) {
 		Config: &Config{filter: &Filter{},
 			logFields: []v1.LogField{
 				{Name: "type", Path: []string{"Type"}},
-				{Name: "name", Path: []string{"InvolvedObject", "name"}},
+				{Name: "name", Path: []string{"InvolvedObject", "Name"}},
 				{Name: "kind", Path: []string{"InvolvedObject", "Kind"}},
 				{Name: "reason", Path: []string{"Reason"}},
 			},

@@ -143,3 +143,32 @@ func printVersion() {
 	setupLog.Info(fmt.Sprintf("Go OS/Arch: %s/%s", gr.GOOS, gr.GOARCH))
 	//TODO	setupLog.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
+
+const (
+	WatchNamespaceEnvVar = "WATCH_NAMESPACE"
+)
+/*
+func GetWatchNamespace() (string, error) {
+	ns, found := os.LookupEnv(WatchNamespaceEnvVar)
+	if !found {
+		return "", fmt.Errorf("%s must be set", WatchNamespaceEnvVar)
+	}
+	return ns, nil
+}
+
+func GetOperatorNamespace() (string, error) {
+	if isRunModeLocal() {
+		return "", ErrRunLocal
+	}
+	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", ErrNoNamespace
+		}
+		return "", err
+	}
+	ns := strings.TrimSpace(string(nsBytes))
+	logk8sutil.V(1).Info("Found namespace", "Namespace", ns)
+	return ns, nil
+}
+*/

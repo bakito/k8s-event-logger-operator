@@ -54,6 +54,7 @@ func newFilter(c eventloggerv1.EventLoggerSpec) *Filter {
 }
 
 // ConfigFor get config for namespace and name
+
 func ConfigFor(namespace, name string) *Config {
 	return &Config{
 		name:      name,
