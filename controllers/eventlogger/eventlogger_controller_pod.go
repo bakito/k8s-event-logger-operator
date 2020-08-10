@@ -18,6 +18,7 @@ package eventlogger
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
@@ -80,6 +81,13 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 
 // podForCR returns a pod with the same name/namespace as the cr
 func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
+	metricsAddrFlag := flag.Lookup(cnst.ArgMetricsAddr)
+	metricsPort := metricsAddr.Value.String()
+	if metricsPort == "" {
+		metricsPort = metricsAddr.DefValue
+	}
+	metricsPort = metricsPort[:1]
+
 	labels := make(map[string]string)
 	for k, v := range cr.Spec.Labels {
 		labels[k] = v
@@ -92,7 +100,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		annotations[k] = v
 	}
 	if cr.Spec.ScrapeMetrics != nil && *cr.Spec.ScrapeMetrics {
-		annotations["prometheus.io/port"] = string(cnst.MetricsPort)
+		annotations["prometheus.io/port"] = metricsPort
 		annotations["prometheus.io/scrape"] = "true"
 	}
 
@@ -122,12 +130,11 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					Name:            "event-logger",
 					Image:           eventLoggerImage,
 					ImagePullPolicy: corev1.PullAlways,
-					Command:         []string{"/opt/go/k8s-event-logger"},
-					Args:            os.Args[1:], // pass on the operator args
+					// TODO: args
+					Command: []string{"/opt/go/k8s-event-logger"},
+					Args:    os.Args[1:], // pass on the operator args
 					Env: []corev1.EnvVar{
 						{Name: "WATCH_NAMESPACE", Value: watchNamespace},
-						{Name: cnst.EnvEventLoggerMode, Value: cnst.ModeLogger},
-						{Name: cnst.EnvConfigName, Value: cr.Name},
 						{Name: "DEBUG_CONFIG", Value: "false"},
 						{Name: "POD_NAME", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.name"}}},
 					},

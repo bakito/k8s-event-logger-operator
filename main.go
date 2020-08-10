@@ -19,6 +19,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+	gr "runtime"
+	"strings"
+
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/controllers/event"
 	"github.com/bakito/k8s-event-logger-operator/controllers/eventlogger"
@@ -29,10 +34,9 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"os"
-	gr "runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
 	// +kubebuilder:scaffold:imports
 )
 
@@ -51,10 +55,12 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
-	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+	var enableLoggerMode bool
+	flag.StringVar(&metricsAddr, cnst.ArgMetricsAddr, cnst.DefaultMetricsAddr, "The address the metric endpoint binds to.")
+	flag.BoolVar(&enableLeaderElection, cnst.ArgEnableLeaderElection, false,
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&enableLoggerMode, cnst.ArgEnableLoggerMode, false,
+		"Enable logger mode. Enabling this will only log events of the current namespace.")
 	opts := zap.Options{}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -64,16 +70,11 @@ func main() {
 
 	printVersion()
 
-	loggerMode := false
-	if mode, ok := os.LookupEnv(cnst.EnvEventLoggerMode); ok {
-		loggerMode = cnst.ModeLogger == mode
-	}
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
-		LeaderElection:     !loggerMode && enableLeaderElection,
+		LeaderElection:     !enableLoggerMode && enableLeaderElection,
 		LeaderElectionID:   "9a62a63a.bakito.ch",
 	})
 	if err != nil {
@@ -81,7 +82,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if loggerMode {
+	if enableLoggerMode {
 		configName := os.Getenv(cnst.EnvConfigName)
 		if _, ok := os.LookupEnv(cnst.EnvDebugConfig); ok {
 			setupLog.WithValues("configName", configName).Info("Current configuration")
@@ -144,18 +145,6 @@ func printVersion() {
 	//TODO	setupLog.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
 }
 
-const (
-	WatchNamespaceEnvVar = "WATCH_NAMESPACE"
-)
-/*
-func GetWatchNamespace() (string, error) {
-	ns, found := os.LookupEnv(WatchNamespaceEnvVar)
-	if !found {
-		return "", fmt.Errorf("%s must be set", WatchNamespaceEnvVar)
-	}
-	return ns, nil
-}
-
 func GetOperatorNamespace() (string, error) {
 	if isRunModeLocal() {
 		return "", ErrRunLocal
@@ -171,4 +160,3 @@ func GetOperatorNamespace() (string, error) {
 	logk8sutil.V(1).Info("Found namespace", "Namespace", ns)
 	return ns, nil
 }
-*/
