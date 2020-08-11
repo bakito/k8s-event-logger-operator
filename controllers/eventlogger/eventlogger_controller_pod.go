@@ -25,7 +25,6 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -82,11 +81,14 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 // podForCR returns a pod with the same name/namespace as the cr
 func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	metricsAddrFlag := flag.Lookup(cnst.ArgMetricsAddr)
-	metricsPort := metricsAddr.Value.String()
-	if metricsPort == "" {
-		metricsPort = metricsAddr.DefValue
+	metricsAddr := cnst.DefaultMetricsAddr
+	if metricsAddrFlag != nil {
+		metricsAddr := metricsAddrFlag.Value.String()
+		if metricsAddr == "" {
+			metricsAddr = metricsAddrFlag.DefValue
+		}
 	}
-	metricsPort = metricsPort[:1]
+	metricsPort := metricsAddr[:1]
 
 	labels := make(map[string]string)
 	for k, v := range cr.Spec.Labels {
@@ -130,13 +132,14 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					Name:            "event-logger",
 					Image:           eventLoggerImage,
 					ImagePullPolicy: corev1.PullAlways,
-					// TODO: args
-					Command: []string{"/opt/go/k8s-event-logger"},
-					Args:    os.Args[1:], // pass on the operator args
+					Command:         []string{"/opt/go/k8s-event-logger"},
+					Args: []string{
+						"-" + cnst.ArgMetricsAddr, metricsAddr,
+						"-" + cnst.ArgEnableLoggerMode, "true",
+						"-" + cnst.ArgConfigName, cr.Name,
+					},
 					Env: []corev1.EnvVar{
-						{Name: "WATCH_NAMESPACE", Value: watchNamespace},
-						{Name: "DEBUG_CONFIG", Value: "false"},
-						{Name: "POD_NAME", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.name"}}},
+						{Name: cnst.EnvWatchNamespace, Value: watchNamespace},
 					},
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{corev1.ResourceCPU: podReqCPU, corev1.ResourceMemory: podReqMem},

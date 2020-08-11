@@ -238,7 +238,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 			},
 		}).
 		Complete(r)
-	
+
 	if err != nil {
 		return err
 	}

@@ -73,7 +73,7 @@ func TestPodController(t *testing.T) {
 	Assert(t, is.Contains(pod.ObjectMeta.Labels, "created-by"))
 	Assert(t, is.Equal(pod.ObjectMeta.Labels["test-label"], "foo"))
 	Assert(t, is.Equal(pod.ObjectMeta.Annotations["test-annotation"], "bar"))
-	Assert(t, is.Equal(pod.ObjectMeta.Annotations["prometheus.io/port"], string(c.MetricsPort)))
+	Assert(t, is.Equal(pod.ObjectMeta.Annotations["prometheus.io/port"], string(c.DefaultMetricsAddr[:1])))
 	Assert(t, is.Equal(pod.ObjectMeta.Annotations["prometheus.io/scrape"], "true"))
 	Assert(t, is.Equal(pod.ObjectMeta.Namespace, el.GetNamespace()))
 
@@ -89,9 +89,7 @@ func TestPodController(t *testing.T) {
 	for _, e := range container.Env {
 		evars[e.Name] = e
 	}
-	Assert(t, is.Contains(evars, c.EnvConfigName))
-	Assert(t, is.Equal(evars[c.EnvConfigName].Value, el.GetName()))
-	Assert(t, is.Equal(evars["WATCH_NAMESPACE"].Value, ns2))
+	Assert(t, is.Equal(evars[c.EnvWatchNamespace].Value, ns2))
 
 	// service account
 	saccList := &corev1.ServiceAccountList{}
