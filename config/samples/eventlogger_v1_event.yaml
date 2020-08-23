@@ -1,0 +1,7 @@
+apiVersion: eventlogger.bakito.ch/v1
+kind: Event
+metadata:
+  name: event-sample
+spec:
+  # Add fields here
+  foo: bar

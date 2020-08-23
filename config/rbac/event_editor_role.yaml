@@ -1,0 +1,24 @@
+# permissions for end users to edit events.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: event-editor-role
+rules:
+- apiGroups:
+  - eventlogger.bakito.ch
+  resources:
+  - events
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - eventlogger.bakito.ch
+  resources:
+  - events/status
+  verbs:
+  - get
