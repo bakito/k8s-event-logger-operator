@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/fatih/structs v1.1.0
 	github.com/go-logr/logr v0.1.0
-	github.com/golang/mock v1.2.0
+	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.3.0
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
