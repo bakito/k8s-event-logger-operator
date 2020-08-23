@@ -1,6 +1,6 @@
 language: go
 go:
-  - 1.13.x
+  - 1.14.x
 os:
   - linux
 
@@ -11,7 +11,7 @@ before_script:
 script:
   - go test ./...  -coverprofile=coverage.out
   - goveralls -service=travis-ci -v -coverprofile=coverage.out
-  - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH -f build/Dockerfile .
+  - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH -f Dockerfile .
 
 deploy:
   - provider: script
