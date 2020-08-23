@@ -6,9 +6,12 @@ os:
 
 services:
   - docker
-
+before_script:
+  - go get github.com/mattn/goveralls
 script:
-  - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH .
+  - go test ./...  -coverprofile=coverage.out
+  - goveralls -service=travis-ci -v -coverprofile=coverage.out
+  - docker build -t quay.io/bakito/k8s-event-logger:$TRAVIS_BRANCH -f build/Dockerfile .
 
 deploy:
   - provider: script
