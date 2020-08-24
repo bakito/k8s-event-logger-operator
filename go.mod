@@ -6,7 +6,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/go-logr/logr v0.1.0
 	github.com/golang/mock v1.4.4
-	github.com/google/go-cmp v0.4.0
+	github.com/google/go-cmp v0.5.1
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.18.8
 	k8s.io/apimachinery v0.18.8
