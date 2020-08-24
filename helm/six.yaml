@@ -1,0 +1,7 @@
+image:
+  repository: artifactory.six-group.net/bakito/k8s-event-logger
+
+resources:
+  limits:
+    memory: 1024Mi
+# assigin clusterrole to user :  oc adm policy add-cluster-role-to-user cluster-reader system:serviceaccount:logging:event-logger-node-eventlogger
