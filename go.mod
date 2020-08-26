@@ -8,7 +8,7 @@ require (
 	github.com/go-logr/logr v0.2.1-0.20200730175230-ee2de8da5be6
 	github.com/go-logr/zapr v0.2.0 // indirect
 	github.com/golang/mock v1.4.4
-	github.com/google/go-cmp v0.5.1
+	github.com/google/go-cmp v0.5.2
 	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.18.8
 	k8s.io/apimachinery v0.18.8
