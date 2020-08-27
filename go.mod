@@ -9,9 +9,10 @@ require (
 	github.com/go-logr/zapr v0.2.0 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.5.2
+	github.com/jessevdk/go-flags v1.4.0 // indirect
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.18.8
-	k8s.io/apimachinery v0.18.8
-	k8s.io/client-go v0.18.8
+	k8s.io/api v0.19.0
+	k8s.io/apimachinery v0.19.0
+	k8s.io/client-go v0.19.0
 	sigs.k8s.io/controller-runtime v0.6.2
 )
