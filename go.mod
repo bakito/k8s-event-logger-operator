@@ -4,8 +4,7 @@ go 1.14
 
 require (
 	github.com/fatih/structs v1.1.0
-	// fix untli 0.2.1 is released https://github.com/go-logr/logr/issues/22
-	github.com/go-logr/logr v0.2.1-0.20200730175230-ee2de8da5be6
+	github.com/go-logr/logr v0.2.1
 	github.com/go-logr/zapr v0.2.0 // indirect
 	github.com/golang/mock v1.4.4
 	github.com/google/go-cmp v0.5.2
