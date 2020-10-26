@@ -38,5 +38,5 @@ const (
 	EnvLoggerPodMaxMem = "LOGGER_POD_LIMIT_MEM"
 
 	// EnvEnableWebhook enable webhooks
-	EnvEnableWebhook = "LOGGER_POD_LIMIT_MEM"
+	EnvEnableWebhook = "ENABLE_WEBHOOKS"
 )
