@@ -69,18 +69,20 @@ func main() {
 
 	printVersion()
 
+	watchNamespace := os.Getenv(cnst.EnvWatchNamespace)
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
-		LeaderElection:     !enableLoggerMode && enableLeaderElection,
-		LeaderElectionID:   "9a62a63a.bakito.ch",
+		LeaderElection:     enableLeaderElection && !enableLoggerMode,
+		LeaderElectionID:   "leader.eventlogger.bakito.ch",
+		Namespace:          watchNamespace,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-	watchNamespace := os.Getenv(cnst.EnvWatchNamespace)
 
 	if enableLoggerMode {
 		setupLog.WithValues("configName", configName).V(4).Info("Current configuration")

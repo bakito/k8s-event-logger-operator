@@ -116,7 +116,7 @@ type loggingPredicate struct {
 
 // Create implements Predicate
 func (p loggingPredicate) Create(e event.CreateEvent) bool {
-	if e.Object.GetObjectKind().GroupVersionKind().Kind == "EventLogger" {
+	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.Meta)
 	}
 	return p.logEvent(e.Meta, e.Object)
@@ -124,8 +124,7 @@ func (p loggingPredicate) Create(e event.CreateEvent) bool {
 
 // Update implements Predicate
 func (p loggingPredicate) Update(e event.UpdateEvent) bool {
-	if e.ObjectOld.GetObjectKind().GroupVersionKind().Kind == "EventLogger" ||
-		e.ObjectNew.GetObjectKind().GroupVersionKind().Kind == "EventLogger" {
+	if _, ok := e.ObjectOld.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.MetaNew)
 	}
 	return p.logEvent(e.MetaNew, e.ObjectNew)

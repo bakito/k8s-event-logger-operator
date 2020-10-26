@@ -19,11 +19,11 @@ package main_controller
 import (
 	"context"
 	"fmt"
-	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"math/rand"
 	"os"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
