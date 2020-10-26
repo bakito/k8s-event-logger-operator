@@ -1,4 +1,4 @@
-package eventlogger
+package main_controller
 
 import (
 	"context"

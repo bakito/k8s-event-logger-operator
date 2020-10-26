@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package event
+package child_controller
 
 import (
 	"context"
@@ -51,9 +51,7 @@ type Reconciler struct {
 	Config *Config
 }
 
-// TODO
-// +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=events,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=events/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
 
 func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
@@ -118,7 +116,19 @@ type loggingPredicate struct {
 
 // Create implements Predicate
 func (p loggingPredicate) Create(e event.CreateEvent) bool {
+	if e.Object.GetObjectKind().GroupVersionKind().Kind == "EventLogger" {
+		return p.Config.matches(e.Meta)
+	}
 	return p.logEvent(e.Meta, e.Object)
+}
+
+// Update implements Predicate
+func (p loggingPredicate) Update(e event.UpdateEvent) bool {
+	if e.ObjectOld.GetObjectKind().GroupVersionKind().Kind == "EventLogger" ||
+		e.ObjectNew.GetObjectKind().GroupVersionKind().Kind == "EventLogger" {
+		return p.Config.matches(e.MetaNew)
+	}
+	return p.logEvent(e.MetaNew, e.ObjectNew)
 }
 
 // Delete implements Predicate
@@ -126,12 +136,7 @@ func (p loggingPredicate) Delete(e event.DeleteEvent) bool {
 	return p.logEvent(e.Meta, e.Object)
 }
 
-// Update implements Predicate
-func (p loggingPredicate) Update(e event.UpdateEvent) bool {
-	return p.logEvent(e.MetaNew, e.ObjectNew)
-}
-
-func (p loggingPredicate) logEvent(mo metav1.Object, e runtime.Object) bool {
+func (p loggingPredicate) logEvent(_ metav1.Object, e runtime.Object) bool {
 	if p.Config == nil || p.Config.filter == nil {
 		return false
 	}
@@ -231,39 +236,16 @@ func getLatestRevision(ctx context.Context, mgr manager.Manager, namespace strin
 	return eventList.ResourceVersion, nil
 }
 
-type eventLoggerPredicate struct {
-	predicate.Funcs
-	Config *Config
-}
-
-// Create implements Predicate
-func (p eventLoggerPredicate) Create(e event.CreateEvent) bool {
-	return p.Config.matches(e.Meta)
-}
-
-// Update implements Predicate
-func (p eventLoggerPredicate) Update(e event.UpdateEvent) bool {
-	return p.Config.matches(e.MetaNew)
-}
-
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error {
-	err := ctrl.NewControllerManagedBy(mgr).
-		For(&eventloggerv1.EventLogger{}).
-		Watches(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{}).
-		WithEventFilter(eventLoggerPredicate{Config: r.Config}).
-		Complete(r)
+	lv, err := getLatestRevision(context.Background(), mgr, namespace)
 
 	if err != nil {
 		return err
 	}
-	// Watch for changes to primary resource Event
-	p := &loggingPredicate{Config: r.Config}
-	p.lastVersion, err = getLatestRevision(context.Background(), mgr, namespace)
-
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.Event{}).
+		For(&eventloggerv1.EventLogger{}).
 		Watches(&source.Kind{Type: &corev1.Event{}}, &handler.Funcs{}).
-		WithEventFilter(p).
+		WithEventFilter(&loggingPredicate{Config: r.Config, lastVersion: lv}).
 		Complete(r)
 
 }

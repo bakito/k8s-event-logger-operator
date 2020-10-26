@@ -1,0 +1,16 @@
+{{- if .Values.rbac.create -}}
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "k8s-event-logger-operator.roleName" . }}
+  labels:
+{{ include "k8s-event-logger-operator.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "k8s-event-logger-operator.roleName" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end -}}

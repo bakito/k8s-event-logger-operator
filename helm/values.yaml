@@ -1,0 +1,52 @@
+# Default values for k8s-event-logger-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+image:
+  repository: quay.io/bakito/k8s-event-logger
+  pullPolicy: Always
+
+eventLogger:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+logging: # see https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md
+  level: info
+  timeEncoding: iso8601
+
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+rbac:
+  create: true
+  # The name of the role and clusterrole to use.
+  # If not set and create is true, a name is generated using the fullname template
+  roleName:
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
