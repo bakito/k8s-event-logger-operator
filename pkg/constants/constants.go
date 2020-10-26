@@ -16,6 +16,9 @@ const (
 	// ArgEnableLeaderElection enable leader election
 	ArgEnableLeaderElection = "enable-leader-election"
 
+	// ArgEnableProfiling enable profiling
+	ArgEnableProfiling = "enable-profiling"
+
 	// EnvWatchNamespace watch namespace env variable
 	EnvWatchNamespace = "WATCH_NAMESPACE"
 

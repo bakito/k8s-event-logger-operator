@@ -19,18 +19,20 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	gr "runtime"
+
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/controllers/child-controller"
 	"github.com/bakito/k8s-event-logger-operator/controllers/main-controller"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/version"
+	"github.com/bakito/operator-utils/pkg/pprof"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"os"
-	gr "runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
@@ -53,11 +55,15 @@ func main() {
 	var configName string
 	var enableLeaderElection bool
 	var enableLoggerMode bool
+	var enableProfiling bool
 	flag.StringVar(&metricsAddr, cnst.ArgMetricsAddr, cnst.DefaultMetricsAddr, "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, cnst.ArgEnableLeaderElection, false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&enableLoggerMode, cnst.ArgEnableLoggerMode, false,
 		"Enable logger mode. Enabling this will only log events of the current namespace.")
+	flag.BoolVar(&enableProfiling, cnst.ArgEnableProfiling, false,
+		"Enable profiling on port ':8081'.")
+
 	flag.StringVar(&configName, cnst.ArgConfigName, "",
 		"The name of the eventlogger config to work with.")
 	opts := zap.Options{}
@@ -129,6 +135,13 @@ func main() {
 		}
 	}
 	// +kubebuilder:scaffold:builder
+
+	if enableProfiling {
+		if err = mgr.Add(pprof.New(":8081")); err != nil {
+			setupLog.Error(err, "unable to create pprof service")
+			os.Exit(1)
+		}
+	}
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
