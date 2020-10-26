@@ -32,14 +32,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 var (
@@ -239,50 +235,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&eventloggerv1.EventLogger{}).
-		Watches(&source.Kind{Type: &corev1.Pod{}}, &enqueueDeletedRequestForOwner{
-			EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
-				IsController: true,
-				OwnerType:    &eventloggerv1.EventLogger{},
-			},
-		}).
-		Watches(&source.Kind{Type: &corev1.ServiceAccount{}}, &enqueueDeletedRequestForOwner{
-			EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
-				IsController: true,
-				OwnerType:    &eventloggerv1.EventLogger{},
-			},
-		}).
-		Watches(&source.Kind{Type: &rbacv1.Role{}}, &enqueueDeletedRequestForOwner{
-			EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
-				IsController: true,
-				OwnerType:    &eventloggerv1.EventLogger{},
-			},
-		}).
-		Watches(&source.Kind{Type: &rbacv1.RoleBinding{}}, &enqueueDeletedRequestForOwner{
-			EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
-				IsController: true,
-				OwnerType:    &eventloggerv1.EventLogger{},
-			},
-		}).
+		Owns(&corev1.Pod{}).
+		Owns(&corev1.ServiceAccount{}).
+		Owns(&rbacv1.Role{}).
+		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)
-}
-
-type enqueueDeletedRequestForOwner struct {
-	handler.EnqueueRequestForOwner
-}
-
-// Create implements Predicate
-func (h enqueueDeletedRequestForOwner) Create(event.CreateEvent, workqueue.RateLimitingInterface) {
-}
-
-// Delete implements Predicate
-func (h enqueueDeletedRequestForOwner) Delete(e event.DeleteEvent, rli workqueue.RateLimitingInterface) {
-	h.EnqueueRequestForOwner.Delete(e, rli)
-}
-
-// Update implements Predicate
-func (h enqueueDeletedRequestForOwner) Update(event.UpdateEvent, workqueue.RateLimitingInterface) {
-}
-
-// Generic implements Predicate
-func (h enqueueDeletedRequestForOwner) Generic(event.GenericEvent, workqueue.RateLimitingInterface) {
 }
