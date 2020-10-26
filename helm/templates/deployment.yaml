@@ -22,8 +22,7 @@ spec:
           command:
             - /opt/go/k8s-event-logger
           args:
-            - "--zap-level={{ .Values.logging.level }}"
-            - "--zap-time-encoding={{ .Values.logging.timeEncoding }}"
+            - "--enable-leader-election"
           env:
             - name: OPERATOR_NAME
               value: {{ include "k8s-event-logger-operator.fullname" . }}
@@ -44,6 +43,8 @@ spec:
               value: "{{ .Values.eventLogger.resources.limits.cpu }}"
             - name: LOGGER_POD_LIMIT_MEM
               value: "{{ .Values.eventLogger.resources.limits.memory }}"
+            - name: "ENABLE_WEBHOOKS"
+              value: "false"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

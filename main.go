@@ -114,7 +114,7 @@ func main() {
 			}
 			setupLog.Info("Running in global mode.")
 
-			if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+			if os.Getenv(cnst.EnvEnableWebhook) != "false" {
 				if err = (&eventloggerv1.EventLogger{}).SetupWebhookWithManager(mgr); err != nil {
 					setupLog.Error(err, "unable to create webhook", "webhook", "EventLogger")
 					os.Exit(1)

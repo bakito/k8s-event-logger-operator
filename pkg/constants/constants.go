@@ -34,6 +34,9 @@ const (
 	// EnvLoggerPodMaxCPU set the logger pod max cpu
 	EnvLoggerPodMaxCPU = "LOGGER_POD_LIMIT_CPU"
 
-	// EnvLoggerPodMaxMem set the logger pod mac memory
+	// EnvLoggerPodMaxMem set the logger pod max memory
 	EnvLoggerPodMaxMem = "LOGGER_POD_LIMIT_MEM"
+
+	// EnvEnableWebhook enable webhooks
+	EnvEnableWebhook = "LOGGER_POD_LIMIT_MEM"
 )
