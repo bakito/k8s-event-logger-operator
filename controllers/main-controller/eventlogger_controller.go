@@ -14,16 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package eventlogger
+package main_controller
 
 import (
 	"context"
 	"fmt"
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"math/rand"
+	"os"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,9 +58,7 @@ type Reconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// TODO
-// +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=pods,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=pods/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
 
 func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
@@ -219,43 +220,49 @@ func podEnv(pod *corev1.Pod, name string) string {
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// Watch for changes to primary resource EventLogger
-	err := ctrl.NewControllerManagedBy(mgr).
-		For(&eventloggerv1.EventLogger{}).
-		Watches(&source.Kind{Type: &eventloggerv1.EventLogger{}}, &handler.EnqueueRequestForObject{}).
-		Complete(r)
-	if err != nil {
-		return err
+
+	if podImage, ok := os.LookupEnv(cnst.EnvEventLoggerImage); ok {
+		eventLoggerImage = podImage
+	}
+	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodReqCPU); ok {
+		podReqCPU = resource.MustParse(cpu)
+	}
+	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodReqMem); ok {
+		podReqMem = resource.MustParse(mem)
+	}
+	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodMaxCPU); ok {
+		podMaxCPU = resource.MustParse(cpu)
+	}
+	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodMaxMem); ok {
+		podMaxMem = resource.MustParse(mem)
 	}
 
-	// Watch for changes to secondary resource Pod and requeue the owner EventLogger
-	ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.Pod{}).
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&eventloggerv1.EventLogger{}).
 		Watches(&source.Kind{Type: &corev1.Pod{}}, &enqueueDeletedRequestForOwner{
 			EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
 				IsController: true,
 				OwnerType:    &eventloggerv1.EventLogger{},
 			},
 		}).
-		Complete(r)
-
-	if err != nil {
-		return err
-	}
-	// Watch for changes to secondary resource Secret and requeue the owner EventLogger
-	ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.Secret{}).
-		Watches(&source.Kind{Type: &corev1.Secret{}}, &handler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    &eventloggerv1.EventLogger{},
+		Watches(&source.Kind{Type: &corev1.ServiceAccount{}}, &enqueueDeletedRequestForOwner{
+			EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
+				IsController: true,
+				OwnerType:    &eventloggerv1.EventLogger{},
+			},
 		}).
-		Complete(r)
-	if err != nil {
-		return err
-	}
-
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.Pod{}).
+		Watches(&source.Kind{Type: &rbacv1.Role{}}, &enqueueDeletedRequestForOwner{
+			EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
+				IsController: true,
+				OwnerType:    &eventloggerv1.EventLogger{},
+			},
+		}).
+		Watches(&source.Kind{Type: &rbacv1.RoleBinding{}}, &enqueueDeletedRequestForOwner{
+			EnqueueRequestForOwner: handler.EnqueueRequestForOwner{
+				IsController: true,
+				OwnerType:    &eventloggerv1.EventLogger{},
+			},
+		}).
 		Complete(r)
 }
 

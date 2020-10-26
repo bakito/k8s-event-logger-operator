@@ -1,4 +1,4 @@
-FROM golang:1.14 as builder
+FROM golang:1.15 as builder
 
 WORKDIR /build
 
@@ -11,7 +11,7 @@ ENV GOPROXY=https://goproxy.io \
     GOARCH=amd64
 COPY . .
 
-RUN go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
+RUN make test
 RUN ./hack/build.sh k8s-event-logger .
 
 # application image

@@ -91,7 +91,6 @@ type EventLoggerStatus struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
 
 // EventLogger is the Schema for the eventloggers API
 type EventLogger struct {

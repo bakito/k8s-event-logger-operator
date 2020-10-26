@@ -18,17 +18,15 @@ RELEASE=${1}
 sed -i "s/Version = \".*\"/Version = \"v${RELEASE}\"/" version/version.go
 sed -i "s/version: .*/version: ${RELEASE}/" helm/Chart.yaml
 sed -i "s/appVersion: .*/appVersion: v${RELEASE}/" helm/Chart.yaml
-operator-sdk generate crds
-operator-sdk generate k8s
+
+make test
 
 GO_VERSION=$(cat go.mod | grep -a "^go.*" | awk '{print $2}')
 
-sed -i "s/golang:.*/golang:${GO_VERSION} as builder/" build/Dockerfile
-sed -i "s/golang:.*/golang:${GO_VERSION} || true/" build/build-images.sh
+sed -i "s/golang:.*/golang:${GO_VERSION} as builder/" Dockerfile
+sed -i "s/golang:.*/golang:${GO_VERSION} || true/" hack/build-images.sh
 
-cp deploy/crds/*crd.yaml helm/crds/
-
-git add . 
+git add .
 git diff-index --quiet HEAD || git commit -m "prepare release ${RELEASE}"
 git push
 

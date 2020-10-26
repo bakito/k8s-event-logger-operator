@@ -1,6 +1,6 @@
 module github.com/bakito/k8s-event-logger-operator
 
-go 1.14
+go 1.15
 
 require (
 	github.com/fatih/structs v1.1.0

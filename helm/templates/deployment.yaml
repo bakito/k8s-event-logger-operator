@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "k8s-event-logger-operator.fullname" . }}
+  labels:
+    {{- include "k8s-event-logger-operator.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /opt/go/k8s-event-logger
+          args:
+            - "--zap-level={{ .Values.logging.level }}"
+            - "--zap-time-encoding={{ .Values.logging.timeEncoding }}"
+          env:
+            - name: OPERATOR_NAME
+              value: {{ include "k8s-event-logger-operator.fullname" . }}
+            - name: WATCH_NAMESPACE
+              value: ""
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: EVENT_LOGGER_IMAGE
+              value: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+            - name: LOGGER_POD_REQUEST_CPU
+              value: "{{ .Values.eventLogger.resources.requests.cpu }}"
+            - name: LOGGER_POD_REQUEST_MEM
+              value: "{{ .Values.eventLogger.resources.requests.memory }}"
+            - name: LOGGER_POD_LIMIT_CPU
+              value: "{{ .Values.eventLogger.resources.limits.cpu }}"
+            - name: LOGGER_POD_LIMIT_MEM
+              value: "{{ .Values.eventLogger.resources.limits.memory }}"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

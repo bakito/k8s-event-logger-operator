@@ -1,4 +1,4 @@
-package event
+package child_controller
 
 import (
 	"encoding/json"
