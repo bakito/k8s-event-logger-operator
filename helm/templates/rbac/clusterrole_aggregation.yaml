@@ -10,18 +10,18 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
 {{ include "k8s-event-logger-operator.labels" . | nindent 4 }}
 rules:
-- apiGroups:
-  - eventlogger.bakito.ch
-  resources:
-  - eventloggers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
+  - apiGroups:
+      - eventlogger.bakito.ch
+    resources:
+      - eventloggers
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
 
 ---
 
@@ -31,15 +31,14 @@ metadata:
   name: eventlogger-bakito-ch-view
   labels:
     rbac.authorization.k8s.io/aggregate-to-view: "true"
-    
 {{ include "k8s-event-logger-operator.labels" . | nindent 4 }}
 rules:
-- apiGroups:
-  - eventlogger.bakito.ch
-  resources:
-  - eventloggers
-  verbs:
-  - get
-  - list
-  - watch
+  - apiGroups:
+      - eventlogger.bakito.ch
+    resources:
+      - eventloggers
+    verbs:
+      - get
+      - list
+      - watch
 {{- end -}}

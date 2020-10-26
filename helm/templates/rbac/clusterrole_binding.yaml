@@ -6,9 +6,9 @@ metadata:
   labels:
 {{ include "k8s-event-logger-operator.labels" . | nindent 4 }}
 subjects:
-- kind: ServiceAccount
-  name: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
-  namespace: {{ .Release.Namespace }}
+  - kind: ServiceAccount
+    name: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: {{ include "k8s-event-logger-operator.roleName" . }}

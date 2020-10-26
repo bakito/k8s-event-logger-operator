@@ -3,16 +3,16 @@ kind: Deployment
 metadata:
   name: {{ include "k8s-event-logger-operator.fullname" . }}
   labels:
-    {{- include "k8s-event-logger-operator.labels" . | nindent 4 }}
+  {{- include "k8s-event-logger-operator.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 6 }}
+  {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 8 }}
+    {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
       containers:
@@ -22,7 +22,7 @@ spec:
           command:
             - /opt/go/k8s-event-logger
           args:
-            - "--enable-leader-election"
+            - "--enable-leader-election={{ .Values.eventLogger.leaderElection }}"
           env:
             - name: OPERATOR_NAME
               value: {{ include "k8s-event-logger-operator.fullname" . }}
@@ -46,16 +46,16 @@ spec:
             - name: "ENABLE_WEBHOOKS"
               value: "false"
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+      {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
+      {{- toYaml . | nindent 8 }}
       {{- end }}
-    {{- with .Values.affinity }}
+      {{- with .Values.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+    {{- toYaml . | nindent 8 }}
+  {{- end }}
