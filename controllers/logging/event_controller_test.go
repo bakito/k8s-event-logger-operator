@@ -1,4 +1,4 @@
-package child_controller
+package logging
 
 import (
 	"encoding/json"

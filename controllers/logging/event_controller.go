@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package child_controller
+package logging
 
 import (
 	"context"
@@ -53,6 +53,7 @@ type Reconciler struct {
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
 
+// Reconcile EventLogger to update the current config
 func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
@@ -235,6 +236,7 @@ func getLatestRevision(ctx context.Context, mgr manager.Manager, namespace strin
 	return eventList.ResourceVersion, nil
 }
 
+// SetupWithManager setup with manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error {
 	lv, err := getLatestRevision(context.Background(), mgr, namespace)
 

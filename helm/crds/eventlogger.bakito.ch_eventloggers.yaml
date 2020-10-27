@@ -44,7 +44,7 @@ spec:
             kinds:
               description: Kinds the kinds to log the events for
               items:
-                description: Kind defines a kind to loge events for
+                description: Kind defines a kind to log events for
                 properties:
                   eventTypes:
                     description: EventTypes the event types to log. If empty events are logged as defined in spec.
@@ -77,7 +77,7 @@ spec:
             logFields:
               description: LogFields fields ot the event to be logged.
               items:
-                description: Kind defines a kind to loge events for
+                description: LogField defines a log field
                 properties:
                   name:
                     description: name of the log field

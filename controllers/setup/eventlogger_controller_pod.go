@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main_controller
+package setup
 
 import (
 	"context"
@@ -81,12 +81,13 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 // podForCR returns a pod with the same name/namespace as the cr
 func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	metricsAddrFlag := flag.Lookup(cnst.ArgMetricsAddr)
-	metricsAddr := cnst.DefaultMetricsAddr
+	var metricsAddr string
 	if metricsAddrFlag != nil {
-		metricsAddr := metricsAddrFlag.Value.String()
-		if metricsAddr == "" {
-			metricsAddr = metricsAddrFlag.DefValue
-		}
+		metricsAddr = metricsAddrFlag.Value.String()
+
+	}
+	if metricsAddr == "" {
+		metricsAddr = cnst.DefaultMetricsAddr
 	}
 	metricsPort := metricsAddr[:1]
 

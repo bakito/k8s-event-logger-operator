@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main_controller
+package setup
 
 import (
 	"context"
@@ -65,6 +65,7 @@ type Reconciler struct {
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
 
+// Reconcile EventLogger to setup event logger pods
 func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
@@ -224,6 +225,7 @@ func podEnv(pod *corev1.Pod, name string) string {
 	return "N/A"
 }
 
+// SetupWithManager setup with manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	if err := r.setupDefaults(mgr.GetAPIReader(), types.NamespacedName{
@@ -283,12 +285,11 @@ func (r *Reconciler) setupEventLoggerImage(client client.Reader, nn types.Namesp
 		r.eventLoggerImage = p.Spec.Containers[0].Image
 		return nil
 
-	} else {
-		for _, c := range p.Spec.Containers {
-			if c.Name == defaultContainerName {
-				r.eventLoggerImage = c.Image
-				return nil
-			}
+	}
+	for _, c := range p.Spec.Containers {
+		if c.Name == defaultContainerName {
+			r.eventLoggerImage = c.Image
+			return nil
 		}
 	}
 	return fmt.Errorf("could not evaluate the event logger image to use")

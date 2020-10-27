@@ -23,8 +23,8 @@ import (
 	gr "runtime"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/bakito/k8s-event-logger-operator/controllers/child-controller"
-	"github.com/bakito/k8s-event-logger-operator/controllers/main-controller"
+	"github.com/bakito/k8s-event-logger-operator/controllers/logging"
+	"github.com/bakito/k8s-event-logger-operator/controllers/setup"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/bakito/operator-utils/pkg/pprof"
@@ -92,11 +92,11 @@ func main() {
 
 	if enableLoggerMode {
 		setupLog.WithValues("configName", configName).V(4).Info("Current configuration")
-		if err = (&child_controller.Reconciler{
+		if err = (&logging.Reconciler{
 			Client: mgr.GetClient(),
 			Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 			Scheme: mgr.GetScheme(),
-			Config: child_controller.ConfigFor(watchNamespace, configName),
+			Config: logging.ConfigFor(watchNamespace, configName),
 		}).SetupWithManager(mgr, watchNamespace); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "Event")
 			os.Exit(1)
@@ -104,7 +104,7 @@ func main() {
 	} else {
 		// Setup all Controllers
 		if watchNamespace == "" {
-			if err = (&main_controller.Reconciler{
+			if err = (&setup.Reconciler{
 				Client: mgr.GetClient(),
 				Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
 				Scheme: mgr.GetScheme(),
@@ -122,11 +122,11 @@ func main() {
 			}
 
 		} else {
-			if err = (&child_controller.Reconciler{
+			if err = (&logging.Reconciler{
 				Client: mgr.GetClient(),
 				Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 				Scheme: mgr.GetScheme(),
-				Config: child_controller.ConfigFor(watchNamespace, ""),
+				Config: logging.ConfigFor(watchNamespace, ""),
 			}).SetupWithManager(mgr, watchNamespace); err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "Event")
 				os.Exit(1)

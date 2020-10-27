@@ -53,7 +53,7 @@ type EventLoggerSpec struct {
 	LogFields []LogField `json:"logFields,omitempty"`
 }
 
-// Kind defines a kind to loge events for
+// Kind defines a kind to log events for
 type Kind struct {
 	// +kubebuilder:validation:MinLength=3
 	Name string `json:"name"`
@@ -70,7 +70,7 @@ type Kind struct {
 	SkipOnMatch *bool `json:"skipOnMatch,omitempty"`
 }
 
-// Kind defines a kind to loge events for
+// LogField defines a log field
 type LogField struct {
 	// name of the log field
 	Name string `json:"name"`
@@ -114,7 +114,7 @@ func init() {
 	SchemeBuilder.Register(&EventLogger{}, &EventLoggerList{})
 }
 
-// UpdateStatus update the status of the current event logger
+// Apply update the status of the current event logger
 func (el *EventLogger) Apply(err error) {
 	if err != nil {
 		el.Status.Error = err.Error()

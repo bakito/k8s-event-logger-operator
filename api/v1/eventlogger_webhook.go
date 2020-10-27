@@ -26,13 +26,12 @@ import (
 // log is for logging in this package.
 var eventloggerlog = logf.Log.WithName("eventlogger-resource")
 
+// SetupWebhookWithManager setup with manager
 func (r *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
 }
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 // +kubebuilder:webhook:path=/mutate-eventlogger-bakito-ch-v1-eventlogger,mutating=true,failurePolicy=fail,groups=eventlogger.bakito.ch,resources=eventloggers,verbs=create;update,versions=v1,name=meventlogger.kb.io
 
@@ -41,11 +40,8 @@ var _ webhook.Defaulter = &EventLogger{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *EventLogger) Default() {
 	eventloggerlog.Info("default", "name", r.Name)
-
-	// TODO(user): fill in your defaulting logic.
 }
 
-// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // +kubebuilder:webhook:verbs=create;update,path=/validate-eventlogger-bakito-ch-v1-eventlogger,mutating=false,failurePolicy=fail,groups=eventlogger.bakito.ch,resources=eventloggers,versions=v1,name=veventlogger.kb.io
 
 var _ webhook.Validator = &EventLogger{}
@@ -54,7 +50,6 @@ var _ webhook.Validator = &EventLogger{}
 func (r *EventLogger) ValidateCreate() error {
 	eventloggerlog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
 	return nil
 }
 
@@ -62,7 +57,6 @@ func (r *EventLogger) ValidateCreate() error {
 func (r *EventLogger) ValidateUpdate(old runtime.Object) error {
 	eventloggerlog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
 	return nil
 }
 
@@ -70,6 +64,5 @@ func (r *EventLogger) ValidateUpdate(old runtime.Object) error {
 func (r *EventLogger) ValidateDelete() error {
 	eventloggerlog.Info("validate delete", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object deletion.
 	return nil
 }
