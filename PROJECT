@@ -1,5 +1,6 @@
 domain: bakito.ch
-layout: go.kubebuilder.io/v2.0.0
+layout: go.kubebuilder.io/v2
+projectName: k8s-event-logger-operator
 repo: github.com/bakito/k8s-event-logger-operator
 resources:
 - group: eventlogger
@@ -13,4 +14,4 @@ resources:
   version: v1
 version: 3-alpha
 plugins:
-  go.operator-sdk.io/v2.0.0: {}
+  go.sdk.operatorframework.io/v2-alpha: {}
