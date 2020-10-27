@@ -63,7 +63,3 @@ spec:
       path:
         - Type
 ```
-
-
-## License
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fbakito%2Fk8s-event-logger-operator.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fbakito%2Fk8s-event-logger-operator?ref=badge_large)
