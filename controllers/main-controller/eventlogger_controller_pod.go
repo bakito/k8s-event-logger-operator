@@ -79,7 +79,7 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 }
 
 // podForCR returns a pod with the same name/namespace as the cr
-func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
+func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	metricsAddrFlag := flag.Lookup(cnst.ArgMetricsAddr)
 	metricsAddr := cnst.DefaultMetricsAddr
 	if metricsAddrFlag != nil {
@@ -130,7 +130,7 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 			Containers: []corev1.Container{
 				{
 					Name:            "event-logger",
-					Image:           eventLoggerImage,
+					Image:           r.eventLoggerImage,
 					ImagePullPolicy: corev1.PullAlways,
 					Command:         []string{"/opt/go/k8s-event-logger"},
 					Args: []string{
@@ -142,8 +142,8 @@ func podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 						{Name: cnst.EnvWatchNamespace, Value: watchNamespace},
 					},
 					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{corev1.ResourceCPU: podReqCPU, corev1.ResourceMemory: podReqMem},
-						Limits:   corev1.ResourceList{corev1.ResourceCPU: podMaxCPU, corev1.ResourceMemory: podMaxMem},
+						Requests: corev1.ResourceList{corev1.ResourceCPU: r.podReqCPU, corev1.ResourceMemory: r.podReqMem},
+						Limits:   corev1.ResourceList{corev1.ResourceCPU: r.podMaxCPU, corev1.ResourceMemory: r.podMaxMem},
 					},
 				},
 			},

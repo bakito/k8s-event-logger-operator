@@ -19,6 +19,7 @@ package main_controller
 import (
 	"context"
 	"fmt"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"math/rand"
 	"os"
 
@@ -26,7 +27,6 @@ import (
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,13 +38,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const (
+	defaultContainerName = "k8s-event-logger-operator"
+)
+
 var (
 	gracePeriod      int64
-	eventLoggerImage = "quay.io/bakito/k8s-event-logger"
-	podReqCPU        = resource.MustParse("100m")
-	podReqMem        = resource.MustParse("64Mi")
-	podMaxCPU        = resource.MustParse("200m")
-	podMaxMem        = resource.MustParse("128Mi")
+	defaultPodReqCPU = resource.MustParse("100m")
+	defaultPodReqMem = resource.MustParse("64Mi")
+	defaultPodMaxCPU = resource.MustParse("200m")
+	defaultPodMaxMem = resource.MustParse("128Mi")
 )
 
 // Reconciler reconciles a Pod object
@@ -52,6 +55,12 @@ type Reconciler struct {
 	client.Client
 	Log    logr.Logger
 	Scheme *runtime.Scheme
+
+	eventLoggerImage string
+	podReqCPU        resource.Quantity
+	podReqMem        resource.Quantity
+	podMaxCPU        resource.Quantity
+	podMaxMem        resource.Quantity
 }
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
@@ -82,7 +91,7 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	}
 
 	// Define a new Pod object
-	pod := podForCR(cr)
+	pod := r.podForCR(cr)
 	// Check if this Pod already exists
 	podChanged, err := r.createOrReplacePod(ctx, cr, pod, reqLogger)
 	if err != nil {
@@ -217,20 +226,11 @@ func podEnv(pod *corev1.Pod, name string) string {
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 
-	if podImage, ok := os.LookupEnv(cnst.EnvEventLoggerImage); ok {
-		eventLoggerImage = podImage
-	}
-	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodReqCPU); ok {
-		podReqCPU = resource.MustParse(cpu)
-	}
-	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodReqMem); ok {
-		podReqMem = resource.MustParse(mem)
-	}
-	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodMaxCPU); ok {
-		podMaxCPU = resource.MustParse(cpu)
-	}
-	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodMaxMem); ok {
-		podMaxMem = resource.MustParse(mem)
+	if err := r.setupDefaults(mgr.GetAPIReader(), types.NamespacedName{
+		Namespace: os.Getenv(cnst.EnvPodNamespace),
+		Name:      os.Getenv(cnst.EnvPodName),
+	}); err != nil {
+		return err
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -240,4 +240,56 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)
+}
+
+func (r *Reconciler) setupDefaults(client client.Reader, nn types.NamespacedName) error {
+	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodReqCPU); ok {
+		r.podReqCPU = resource.MustParse(cpu)
+	} else {
+		r.podReqCPU = defaultPodReqCPU
+	}
+	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodReqMem); ok {
+		r.podReqMem = resource.MustParse(mem)
+	} else {
+		r.podReqMem = defaultPodReqMem
+	}
+	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodMaxCPU); ok {
+		r.podMaxCPU = resource.MustParse(cpu)
+	} else {
+		r.podMaxCPU = defaultPodMaxCPU
+	}
+	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodMaxMem); ok {
+		r.podMaxMem = resource.MustParse(mem)
+	} else {
+		r.podMaxMem = defaultPodMaxMem
+	}
+
+	return r.setupEventLoggerImage(client, nn)
+}
+
+func (r *Reconciler) setupEventLoggerImage(client client.Reader, nn types.NamespacedName) error {
+	if podImage, ok := os.LookupEnv(cnst.EnvEventLoggerImage); ok && podImage != "" {
+		r.eventLoggerImage = podImage
+		return nil
+	}
+	p := &corev1.Pod{}
+	err := client.Get(context.TODO(), nn, p)
+
+	if err != nil {
+		return err
+	}
+
+	if len(p.Spec.Containers) == 1 {
+		r.eventLoggerImage = p.Spec.Containers[0].Image
+		return nil
+
+	} else {
+		for _, c := range p.Spec.Containers {
+			if c.Name == defaultContainerName {
+				r.eventLoggerImage = c.Image
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("could not evaluate the event logger image to use")
 }

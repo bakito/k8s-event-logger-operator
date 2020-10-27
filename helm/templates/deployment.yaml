@@ -33,8 +33,11 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.name
-            - name: EVENT_LOGGER_IMAGE
-              value: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
+            - name: POD_NAMEESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
             - name: LOGGER_POD_REQUEST_CPU
               value: "{{ .Values.eventLogger.resources.requests.cpu }}"
             - name: LOGGER_POD_REQUEST_MEM

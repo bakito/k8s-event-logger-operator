@@ -2,6 +2,7 @@ package main_controller
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
@@ -25,14 +26,14 @@ import (
 
 const (
 	testNamespace = "eventlogger-operator"
+	testImage     = "quay.io/bakito/k8s-event-logger"
 )
 
 func TestPodController(t *testing.T) {
-	eventLoggerImage = "quay.io/bakito/k8s-event-logger"
-	podReqCPU = resource.MustParse("111m")
-	podReqMem = resource.MustParse("222Mi")
-	podMaxCPU = resource.MustParse("333m")
-	podMaxMem = resource.MustParse("444Mi")
+	defaultPodReqCPU = resource.MustParse("111m")
+	defaultPodReqMem = resource.MustParse("222Mi")
+	defaultPodMaxCPU = resource.MustParse("333m")
+	defaultPodMaxMem = resource.MustParse("444Mi")
 
 	ns2 := "eventlogger-operators"
 
@@ -80,10 +81,10 @@ func TestPodController(t *testing.T) {
 	Assert(t, is.Len(pod.Spec.Containers, 1))
 	container := pod.Spec.Containers[0]
 
-	Assert(t, is.Equal(*container.Resources.Requests.Cpu(), podReqCPU))
-	Assert(t, is.Equal(*container.Resources.Requests.Memory(), podReqMem))
-	Assert(t, is.Equal(*container.Resources.Limits.Cpu(), podMaxCPU))
-	Assert(t, is.Equal(*container.Resources.Limits.Memory(), podMaxMem))
+	Assert(t, is.Equal(*container.Resources.Requests.Cpu(), defaultPodReqCPU))
+	Assert(t, is.Equal(*container.Resources.Requests.Memory(), defaultPodReqMem))
+	Assert(t, is.Equal(*container.Resources.Limits.Cpu(), defaultPodMaxCPU))
+	Assert(t, is.Equal(*container.Resources.Limits.Memory(), defaultPodMaxMem))
 
 	evars := make(map[string]corev1.EnvVar)
 	for _, e := range container.Env {
@@ -125,7 +126,6 @@ func TestPodController(t *testing.T) {
 }
 
 func TestPodController_changed_image(t *testing.T) {
-	eventLoggerImage = "quay.io/bakito/k8s-event-logger"
 	el := &v1.EventLogger{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "eventlogger",
@@ -142,7 +142,7 @@ func TestPodController_changed_image(t *testing.T) {
 	assertEntrySize(t, cl, pods, 1)
 	pod2 := pods.Items[0]
 
-	Assert(t, is.Equal(pod2.Spec.Containers[0].Image, eventLoggerImage))
+	Assert(t, is.Equal(pod2.Spec.Containers[0].Image, testImage))
 }
 
 func TestPodController_extnernal_serviceaccount(t *testing.T) {
@@ -163,7 +163,7 @@ func TestPodController_extnernal_serviceaccount(t *testing.T) {
 	assertEntrySize(t, cl, pods, 1)
 	pod2 := pods.Items[0]
 
-	Assert(t, is.Equal(pod2.Spec.Containers[0].Image, eventLoggerImage))
+	Assert(t, is.Equal(pod2.Spec.Containers[0].Image, testImage))
 
 	assertEntrySize(t, cl, &corev1.ServiceAccountList{}, 0)
 	assertEntrySize(t, cl, &rbacv1.RoleList{}, 0)
@@ -175,13 +175,31 @@ func testReconcile(t *testing.T, intitialObjects ...runtime.Object) (client.Clie
 	s := scheme.Scheme
 	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
 
+	nn := types.NamespacedName{
+		Namespace: uuid.New().String(),
+		Name:      uuid.New().String(),
+	}
+	operatorPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: nn.Namespace,
+			Name:      nn.Name,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{Image: testImage}},
+		},
+	}
+	intitialObjects = append(intitialObjects, operatorPod)
+
 	cl := fake.NewFakeClientWithScheme(s, intitialObjects...)
 
 	r := &Reconciler{
-		Client: cl,
-		Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
-		Scheme: s,
+		Client:           cl,
+		Log:              ctrl.Log.WithName("controllers").WithName("Pod"),
+		Scheme:           s,
+		eventLoggerImage: testImage,
 	}
+
+	Assert(t, is.Nil(r.setupDefaults(cl, nn)))
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -195,12 +213,12 @@ func testReconcile(t *testing.T, intitialObjects ...runtime.Object) (client.Clie
 	return cl, res
 }
 
-func assertEntrySize(t *testing.T, cl client.Client, list runtime.Object, expectecd int) {
-	err := cl.List(context.TODO(), list)
+func assertEntrySize(t *testing.T, cl client.Client, list runtime.Object, expected int) {
+	err := cl.List(context.TODO(), list, client.MatchingLabels{"app": "event-logger-eventlogger"})
 	Assert(t, is.Nil(err))
 	r := reflect.ValueOf(list)
 	f := reflect.Indirect(r).FieldByName("Items")
-	Assert(t, is.Equal(f.Len(), expectecd))
+	Assert(t, is.Equal(f.Len(), expected))
 }
 
 func newPod() *corev1.Pod {

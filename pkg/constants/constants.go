@@ -39,4 +39,10 @@ const (
 
 	// EnvEnableWebhook enable webhooks
 	EnvEnableWebhook = "ENABLE_WEBHOOKS"
+
+	// EnvPodName the name the pod
+	EnvPodName = "POD_NAME"
+
+	// EnvPodNamespace the namespace the pod
+	EnvPodNamespace = "POD_NAMESPACE"
 )
