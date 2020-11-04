@@ -122,6 +122,13 @@ func (in *EventLoggerSpec) DeepCopyInto(out *EventLoggerSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.NodeSelector != nil {
+		in, out := &in.NodeSelector, &out.NodeSelector
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.LogFields != nil {
 		in, out := &in.LogFields, &out.LogFields
 		*out = make([]LogField, len(*in))

@@ -96,6 +96,11 @@ spec:
               description: namespace the namespace to watch on, may be an empty string
               nullable: true
               type: string
+            nodeSelector:
+              additionalProperties:
+                type: string
+              description: 'NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node''s labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
+              type: object
             scrapeMetrics:
               description: ScrapeMetrics if true, prometheus scrape annotations are added to the pod
               type: boolean

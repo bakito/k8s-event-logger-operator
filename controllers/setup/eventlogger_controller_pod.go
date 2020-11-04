@@ -149,6 +149,7 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 				},
 			},
 			ServiceAccountName: saccName,
+			NodeSelector:       cr.Spec.NodeSelector,
 		},
 	}
 	return pod

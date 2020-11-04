@@ -48,6 +48,7 @@ func TestPodController(t *testing.T) {
 			Annotations:   map[string]string{"test-annotation": "bar"},
 			ScrapeMetrics: &scrape,
 			Namespace:     &ns2,
+			NodeSelector:  map[string]string{"ns-key": "ns-value"},
 		},
 	}
 
@@ -77,6 +78,9 @@ func TestPodController(t *testing.T) {
 	Assert(t, is.Equal(pod.ObjectMeta.Annotations["prometheus.io/port"], string(c.DefaultMetricsAddr[:1])))
 	Assert(t, is.Equal(pod.ObjectMeta.Annotations["prometheus.io/scrape"], "true"))
 	Assert(t, is.Equal(pod.ObjectMeta.Namespace, el.GetNamespace()))
+
+	Assert(t, is.Len(pod.Spec.NodeSelector, 1))
+	Assert(t, is.Equal(pod.Spec.NodeSelector["ns-key"], "ns-value"))
 
 	Assert(t, is.Len(pod.Spec.Containers, 1))
 	container := pod.Spec.Containers[0]
