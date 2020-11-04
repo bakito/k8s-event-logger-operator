@@ -4,6 +4,6 @@ description: Kubernetes event logger operator
 
 type: application
 
-version: 0.5.3
+version: 0.5.4
 
-appVersion: v0.5.3
+appVersion: v0.5.4
