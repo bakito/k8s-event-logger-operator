@@ -33,10 +33,10 @@ type EventLoggerSpec struct {
 	EventTypes []string `json:"eventTypes,omitempty"`
 
 	// Labels additional labels for the logger pod
-	Labels map[string]string `json:"labels,omitempty"`
+	Labels map[string]string `json:"labels,omitempty" validate:"k8s-label-keys,k8s-label-values"`
 
 	// Labels additional annotations for the logger pod
-	Annotations map[string]string `json:"annotations,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty" validate:"k8s-annotation-keys"`
 
 	// ScrapeMetrics if true, prometheus scrape annotations are added to the pod
 	ScrapeMetrics *bool `json:"scrapeMetrics,omitempty"`
@@ -53,7 +53,7 @@ type EventLoggerSpec struct {
 	// Selector which must match a node's labels for the pod to be scheduled on that node.
 	// More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
 	// +optional
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty" validate:"k8s-label-keys,k8s-label-values"`
 
 	// LogFields fields ot the event to be logged.
 	LogFields []LogField `json:"logFields,omitempty"`
@@ -91,7 +91,8 @@ type EventLoggerStatus struct {
 	OperatorVersion string `json:"operatorVersion"`
 	// LastProcessed the timestamp the cr was last processed
 	LastProcessed metav1.Time `json:"lastProcessed"`
-
+	// Hash
+	Hash string `json:"hash,omitempty"`
 	// Error
 	Error string `json:"error,omitempty"`
 }
@@ -121,13 +122,13 @@ func init() {
 }
 
 // Apply update the status of the current event logger
-func (el *EventLogger) Apply(err error) {
+func (in *EventLogger) Apply(err error) {
 	if err != nil {
-		el.Status.Error = err.Error()
+		in.Status.Error = err.Error()
 	} else {
-		el.Status.Error = ""
+		in.Status.Error = ""
 	}
-	el.Status.LastProcessed = metav1.Now()
-	el.Status.OperatorVersion = version.Version
+	in.Status.LastProcessed = metav1.Now()
+	in.Status.OperatorVersion = version.Version
 
 }

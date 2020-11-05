@@ -27,9 +27,9 @@ import (
 var eventloggerlog = logf.Log.WithName("eventlogger-resource")
 
 // SetupWebhookWithManager setup with manager
-func (r *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (in *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
+		For(in).
 		Complete()
 }
 
@@ -38,8 +38,8 @@ func (r *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Defaulter = &EventLogger{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *EventLogger) Default() {
-	eventloggerlog.Info("default", "name", r.Name)
+func (in *EventLogger) Default() {
+	eventloggerlog.Info("default", "name", in.Name)
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-eventlogger-bakito-ch-v1-eventlogger,mutating=false,failurePolicy=fail,groups=eventlogger.bakito.ch,resources=eventloggers,versions=v1,name=veventlogger.kb.io
@@ -47,22 +47,16 @@ func (r *EventLogger) Default() {
 var _ webhook.Validator = &EventLogger{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *EventLogger) ValidateCreate() error {
-	eventloggerlog.Info("validate create", "name", r.Name)
-
-	return nil
+func (in *EventLogger) ValidateCreate() error {
+	return in.Spec.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *EventLogger) ValidateUpdate(old runtime.Object) error {
-	eventloggerlog.Info("validate update", "name", r.Name)
-
-	return nil
+func (in *EventLogger) ValidateUpdate(old runtime.Object) error {
+	return in.Spec.Validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *EventLogger) ValidateDelete() error {
-	eventloggerlog.Info("validate delete", "name", r.Name)
-
+func (in *EventLogger) ValidateDelete() error {
 	return nil
 }

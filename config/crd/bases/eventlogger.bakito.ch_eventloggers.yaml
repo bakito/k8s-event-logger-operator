@@ -114,6 +114,9 @@ spec:
             error:
               description: Error
               type: string
+            hash:
+              description: Hash
+              type: string
             lastProcessed:
               description: LastProcessed the timestamp the cr was last processed
               format: date-time

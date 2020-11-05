@@ -19,19 +19,18 @@ package setup
 import (
 	"context"
 	"fmt"
-	rbacv1 "k8s.io/api/rbac/v1"
-	"math/rand"
-	"os"
-
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"math/rand"
+	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -40,6 +39,7 @@ import (
 
 const (
 	defaultContainerName = "k8s-event-logger-operator"
+	letterBytes          = "abcdefghijklmnopqrstuvwxyz"
 )
 
 var (
@@ -84,7 +84,16 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
+	if cr.Status.Hash == cr.Spec.Hash() {
+		// ignore, no changes
+		return reconcile.Result{}, nil
+	}
+
 	reqLogger.Info("Reconciling event logger")
+
+	if err = cr.Spec.Validate(); err != nil {
+		return r.updateCR(ctx, cr, reqLogger, err)
+	}
 
 	saccChanged, roleChanged, rbChanged, err := r.setupRbac(ctx, cr, reqLogger)
 	if err != nil {
@@ -168,6 +177,7 @@ func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger
 		logger.Error(err, "")
 	}
 	cr.Apply(err)
+	cr.Status.Hash = cr.Spec.Hash()
 	err = r.Update(ctx, cr)
 	return reconcile.Result{}, err
 }
@@ -189,8 +199,6 @@ const (
 	replace updateReplace = "replace"
 	no      updateReplace = "no"
 )
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyz"
 
 func randString() string {
 	b := make([]byte, 8)
