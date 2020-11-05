@@ -33,7 +33,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.name
-            - name: POD_NAMEESPACE
+            - name: POD_NAMESPACE
               valueFrom:
                 fieldRef:
                   apiVersion: v1
