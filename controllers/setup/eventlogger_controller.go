@@ -84,7 +84,7 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
-	if cr.Status.Hash == cr.Spec.Hash() {
+	if !cr.HasChanged() {
 		// ignore, no changes
 		return reconcile.Result{}, nil
 	}

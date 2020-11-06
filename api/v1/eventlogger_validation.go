@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/bakito/k8s-event-logger-operator/version"
 	english "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -25,6 +26,11 @@ type contextKey string
 
 var specKey = contextKey("spec")
 var errorsKey = contextKey("errors")
+
+// HasChanged check if the spec or operator version has changed
+func (in *EventLogger) HasChanged() bool {
+	return in.Status.Hash != in.Spec.Hash() || in.Status.OperatorVersion != version.Version
+}
 
 // Hash the event
 func (in *EventLoggerSpec) Hash() string {
