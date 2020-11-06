@@ -2,5 +2,5 @@ package version
 
 var (
 	// Version the module version
-	Version = "v0.5.6"
+	Version = "v0.6.0"
 )
