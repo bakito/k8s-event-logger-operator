@@ -9,7 +9,7 @@ import (
 
 func Test_Validate_Success(t *testing.T) {
 	s := &EventLoggerSpec{
-		Annotations: map[string]string{"valid": "valid"},
+		Annotations: map[string]string{"valid/valid": "valid", "valid": "valid"},
 		Labels:      map[string]string{"valid": "valid"},
 	}
 
@@ -36,6 +36,9 @@ func Test_Validate_Invalid_AnnotationKey(t *testing.T) {
 	s := &EventLoggerSpec{
 		Annotations: map[string]string{"in valid": "valid"},
 	}
-
+	Assert(t, s.Validate() != nil)
+	s = &EventLoggerSpec{
+		Annotations: map[string]string{"in/valid/": "valid"},
+	}
 	Assert(t, s.Validate() != nil)
 }

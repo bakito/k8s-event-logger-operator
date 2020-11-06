@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	keyPattern        = regexp.MustCompile(`^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$`)
-	labelValuePattern = regexp.MustCompile(`^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`)
+	annotationKeyPattern = regexp.MustCompile(`^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9](\/([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`)
+	labelKeyPattern      = regexp.MustCompile(`^([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]$`)
+	labelValuePattern    = regexp.MustCompile(`^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`)
 )
 
 // Custom type for context key, so we don't have to use 'string' directly
@@ -50,10 +51,21 @@ func k8sLabelValues(_ context.Context, fl validator.FieldLevel) bool {
 	return true
 }
 
-func k8sKeys(_ context.Context, fl validator.FieldLevel) bool {
+func k8sLabelKeys(_ context.Context, fl validator.FieldLevel) bool {
 	if annotations, ok := fl.Field().Interface().(map[string]string); ok {
 		for k := range annotations {
-			if !keyPattern.MatchString(k) {
+			if !labelKeyPattern.MatchString(k) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func k8sAnnotationKeys(_ context.Context, fl validator.FieldLevel) bool {
+	if annotations, ok := fl.Field().Interface().(map[string]string); ok {
+		for k := range annotations {
+			if !annotationKeyPattern.MatchString(k) {
 				return false
 			}
 		}
@@ -86,9 +98,9 @@ func (err *eventLoggerValidatorError) addError(errStr string) {
 func newEventLoggerValidator(spec *EventLoggerSpec) *eventLoggerValidator {
 	result := validator.New()
 
-	_ = result.RegisterValidationCtx("k8s-label-keys", k8sKeys)
+	_ = result.RegisterValidationCtx("k8s-label-keys", k8sLabelKeys)
 	_ = result.RegisterValidationCtx("k8s-label-values", k8sLabelValues)
-	_ = result.RegisterValidationCtx("k8s-annotation-keys", k8sKeys)
+	_ = result.RegisterValidationCtx("k8s-annotation-keys", k8sAnnotationKeys)
 
 	// context
 	ctx := context.WithValue(context.Background(), specKey, spec)
@@ -107,7 +119,7 @@ func newEventLoggerValidator(spec *EventLoggerSpec) *eventLoggerValidator {
 	}{
 		{
 			tag:         "k8s-label-keys",
-			translation: fmt.Sprintf("'key in {0}' must match the pattern %s", keyPattern.String()),
+			translation: fmt.Sprintf("'key in {0}' must match the pattern %s", labelKeyPattern.String()),
 		},
 		{
 			tag:         "k8s-label-values",
@@ -115,7 +127,7 @@ func newEventLoggerValidator(spec *EventLoggerSpec) *eventLoggerValidator {
 		},
 		{
 			tag:         "k8s-annotation-keys",
-			translation: fmt.Sprintf("'key in {0}' must match the pattern %s", keyPattern.String()),
+			translation: fmt.Sprintf("'key in {0}' must match the pattern %s", annotationKeyPattern.String()),
 		},
 	}
 	for _, t := range translations {
