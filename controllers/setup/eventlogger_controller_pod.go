@@ -135,9 +135,9 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					ImagePullPolicy: corev1.PullAlways,
 					Command:         []string{"/opt/go/k8s-event-logger"},
 					Args: []string{
+						"--" + cnst.ArgConfigName, cr.Name,
 						"--" + cnst.ArgMetricsAddr, metricsAddr,
 						"--" + cnst.ArgEnableLoggerMode, "true",
-						"--" + cnst.ArgConfigName, cr.Name,
 					},
 					Env: []corev1.EnvVar{
 						{Name: cnst.EnvWatchNamespace, Value: watchNamespace},
