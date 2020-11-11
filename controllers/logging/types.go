@@ -54,21 +54,26 @@ func newFilter(c eventloggerv1.EventLoggerSpec) *Filter {
 }
 
 // ConfigFor get config for namespace and name
-func ConfigFor(namespace, name string) *Config {
+func ConfigFor(name, podNamespace, watchNamespace string) *Config {
 	return &Config{
-		name:      name,
-		namespace: namespace,
+		name:           name,
+		podNamespace:   podNamespace,
+		watchNamespace: watchNamespace,
 	}
 }
 
 // Config event config
 type Config struct {
-	namespace string
-	name      string
-	logFields []eventloggerv1.LogField
-	filter    *Filter
+	podNamespace   string
+	watchNamespace string
+	name           string
+	logFields      []eventloggerv1.LogField
+	filter         *Filter
 }
 
 func (c Config) matches(meta metav1.Object) bool {
-	return c.namespace == meta.GetNamespace() && (c.name == meta.GetName() || c.name == "")
+	if c.watchNamespace == "" {
+		return c.podNamespace == meta.GetNamespace() && (c.name == meta.GetName())
+	}
+	return c.watchNamespace == meta.GetNamespace() && (c.name == meta.GetName())
 }

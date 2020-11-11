@@ -76,6 +76,7 @@ func main() {
 	printVersion()
 
 	watchNamespace := os.Getenv(cnst.EnvWatchNamespace)
+	podNamespace := os.Getenv(cnst.EnvPodNamespace)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -96,7 +97,7 @@ func main() {
 			Client: mgr.GetClient(),
 			Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 			Scheme: mgr.GetScheme(),
-			Config: logging.ConfigFor(watchNamespace, configName),
+			Config: logging.ConfigFor(configName, podNamespace, watchNamespace),
 		}).SetupWithManager(mgr, watchNamespace); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "Event")
 			os.Exit(1)
@@ -126,7 +127,7 @@ func main() {
 				Client: mgr.GetClient(),
 				Log:    ctrl.Log.WithName("controllers").WithName("Event"),
 				Scheme: mgr.GetScheme(),
-				Config: logging.ConfigFor(watchNamespace, ""),
+				Config: logging.ConfigFor(configName, podNamespace, watchNamespace),
 			}).SetupWithManager(mgr, watchNamespace); err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "Event")
 				os.Exit(1)

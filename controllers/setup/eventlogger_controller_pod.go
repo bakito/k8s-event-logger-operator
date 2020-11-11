@@ -141,6 +141,12 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 					},
 					Env: []corev1.EnvVar{
 						{Name: cnst.EnvWatchNamespace, Value: watchNamespace},
+						{Name: cnst.EnvPodNamespace, ValueFrom: &corev1.EnvVarSource{
+							FieldRef: &corev1.ObjectFieldSelector{
+								APIVersion: "v1",
+								FieldPath:  "metadata.namespace",
+							},
+						}},
 					},
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{corev1.ResourceCPU: r.podReqCPU, corev1.ResourceMemory: r.podReqMem},
