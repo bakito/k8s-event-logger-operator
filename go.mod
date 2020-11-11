@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/bakito/operator-utils v1.2.0
 	github.com/fatih/structs v1.1.0
-	github.com/go-logr/logr v0.2.1
+	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.2.0 // indirect
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/universal-translator v0.17.0

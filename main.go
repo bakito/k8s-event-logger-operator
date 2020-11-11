@@ -91,7 +91,7 @@ func main() {
 	}
 
 	if enableLoggerMode {
-		setupLog.WithValues("configName", configName).V(4).Info("Current configuration")
+		setupLog.WithValues("configName", configName).Info("Current configuration")
 		if err = (&logging.Reconciler{
 			Client: mgr.GetClient(),
 			Log:    ctrl.Log.WithName("controllers").WithName("Event"),
