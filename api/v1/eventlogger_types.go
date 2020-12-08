@@ -83,6 +83,11 @@ type LogField struct {
 	// Path within the corev1.Event struct https://github.com/kubernetes/api/blob/master/core/v1/types.go
 	// +kubebuilder:validation:MinItems=1
 	Path []string `json:"path,omitempty"`
+
+	// Value a static value of the log field. Can be uses to add static log fields
+	// +optional
+	// +nullable
+	Value *string `json:"value,omitempty"`
 }
 
 // EventLoggerStatus defines the observed state of EventLogger

@@ -144,7 +144,10 @@ func (p loggingPredicate) logEvent(_ metav1.Object, e runtime.Object) bool {
 		return false
 	}
 
-	evt := e.(*corev1.Event)
+	evt, ok := e.(*corev1.Event)
+	if !ok {
+		return false
+	}
 	if evt.ResourceVersion <= p.lastVersion {
 		return false
 	}
@@ -171,6 +174,8 @@ func (p loggingPredicate) logEvent(_ metav1.Object, e runtime.Object) bool {
 					if ok && err == nil {
 						eventLogger = eventLogger.WithValues(lf.Name, val)
 					}
+				} else if lf.Value != nil {
+					eventLogger = eventLogger.WithValues(lf.Name, *lf.Value)
 				}
 			}
 		}

@@ -88,6 +88,10 @@ spec:
                       type: string
                     minItems: 1
                     type: array
+                  value:
+                    description: Value a static value of the log field. Can be uses to add static log fields
+                    nullable: true
+                    type: string
                 required:
                 - name
                 type: object
