@@ -133,6 +133,9 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 
 // Delete implements Predicate
 func (p loggingPredicate) Delete(e event.DeleteEvent) bool {
+	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
+		return p.Config.matches(e.Meta)
+	}
 	return p.logEvent(e.Meta, e.Object)
 }
 
