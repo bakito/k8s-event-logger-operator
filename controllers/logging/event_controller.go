@@ -28,7 +28,6 @@ import (
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -120,7 +119,7 @@ func (p loggingPredicate) Create(e event.CreateEvent) bool {
 	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.Meta)
 	}
-	return p.logEvent(e.Meta, e.Object)
+	return p.logEvent(e.Object)
 }
 
 // Update implements Predicate
@@ -128,7 +127,7 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 	if _, ok := e.ObjectOld.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.MetaNew)
 	}
-	return p.logEvent(e.MetaNew, e.ObjectNew)
+	return p.logEvent(e.ObjectNew)
 }
 
 // Delete implements Predicate
@@ -136,10 +135,10 @@ func (p loggingPredicate) Delete(e event.DeleteEvent) bool {
 	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.Meta)
 	}
-	return p.logEvent(e.Meta, e.Object)
+	return false
 }
 
-func (p loggingPredicate) logEvent(_ metav1.Object, e runtime.Object) bool {
+func (p loggingPredicate) logEvent(e runtime.Object) bool {
 	if p.Config == nil || p.Config.filter == nil {
 		return false
 	}
@@ -256,5 +255,4 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error 
 		Watches(&source.Kind{Type: &corev1.Event{}}, &handler.Funcs{}).
 		WithEventFilter(&loggingPredicate{Config: r.Config, lastVersion: lv}).
 		Complete(r)
-
 }

@@ -66,5 +66,5 @@ spec:
       path:
         - Type
     - name: some-static-value
-      value: "static value"
+      value: ""
 ```

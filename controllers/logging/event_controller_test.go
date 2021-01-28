@@ -161,7 +161,7 @@ func Test_logEvent_no_filter(t *testing.T) {
 	mock.EXPECT().WithValues().Times(0)
 
 	lp := &loggingPredicate{}
-	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{})
+	lp.logEvent(&corev1.Event{})
 }
 
 func Test_logEvent_wrong_resource_version(t *testing.T) {
@@ -176,7 +176,7 @@ func Test_logEvent_wrong_resource_version(t *testing.T) {
 		lastVersion: "2",
 	}
 
-	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{
+	lp.logEvent(&corev1.Event{
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: "1",
 		},
@@ -198,7 +198,7 @@ func Test_logEvent_true(t *testing.T) {
 		Config:      &Config{filter: &Filter{}},
 	}
 
-	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{
+	lp.logEvent(&corev1.Event{
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: "3",
 		},
@@ -229,7 +229,7 @@ func Test_logEvent_true_custom_fields(t *testing.T) {
 		},
 	}
 
-	lp.logEvent(&metav1.ObjectMeta{Namespace: testNamespace}, &corev1.Event{
+	lp.logEvent(&corev1.Event{
 		ObjectMeta: metav1.ObjectMeta{
 			ResourceVersion: "3",
 			Name:            "test-event-name",

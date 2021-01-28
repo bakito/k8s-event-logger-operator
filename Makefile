@@ -14,7 +14,7 @@ endif
 all: manager
 
 # Run tests
-test: generate fmt vet manifests
+test: generate tidy fmt vet manifests
 	go test ./... -coverprofile cover.out
 
 # Build manager binary
@@ -51,6 +51,11 @@ fmt:
 # Run go vet against code
 vet:
 	go vet ./...
+
+# go mod tidy
+tidy:
+	go mod tidy
+
 
 # Generate code
 generate: controller-gen
