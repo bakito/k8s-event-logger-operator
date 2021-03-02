@@ -19,7 +19,6 @@ package logging
 import (
 	"context"
 	"reflect"
-	"regexp"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
@@ -152,7 +151,7 @@ func (p loggingPredicate) logEvent(e runtime.Object) bool {
 	}
 	p.lastVersion = evt.ResourceVersion
 
-	if p.shouldLog(evt) {
+	if p.Config.filter.Match(evt) {
 		var eventLogger logr.Logger
 		if len(p.Config.logFields) == 0 {
 			eventLogger = eventLog.WithValues(
@@ -180,45 +179,6 @@ func (p loggingPredicate) logEvent(e runtime.Object) bool {
 		}
 
 		eventLogger.Info(evt.Message)
-	}
-	return false
-}
-
-func (p *loggingPredicate) shouldLog(e *corev1.Event) bool {
-
-	if len(p.Config.filter.Kinds) == 0 {
-		return len(p.Config.filter.EventTypes) == 0 || p.contains(p.Config.filter.EventTypes, e.Type)
-	}
-
-	k, ok := p.Config.filter.Kinds[e.InvolvedObject.Kind]
-	if !ok {
-		return false
-	}
-
-	if len(k.EventTypes) != 0 && !p.contains(k.EventTypes, e.Type) {
-		return false
-	}
-
-	return p.matches(k.MatchingPatterns, k.SkipOnMatch, e.Message)
-}
-
-func (p *loggingPredicate) matches(patterns []*regexp.Regexp, skipOnMatch bool, val string) bool {
-	if len(patterns) == 0 {
-		return true
-	}
-	for _, p := range patterns {
-		if p.MatchString(val) {
-			return !skipOnMatch
-		}
-	}
-	return skipOnMatch
-}
-
-func (p *loggingPredicate) contains(list []string, val string) bool {
-	for _, v := range list {
-		if v == val {
-			return true
-		}
 	}
 	return false
 }

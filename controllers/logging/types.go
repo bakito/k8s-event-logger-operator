@@ -1,56 +1,88 @@
 package logging
 
 import (
+	"k8s.io/utils/pointer"
 	"regexp"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// KindFilter filter for kind
-type KindFilter struct {
-	EventTypes       []string         `json:"eventTypes,omitempty"`
-	MatchingPatterns []*regexp.Regexp `json:"matchingPatterns,omitempty"`
-	SkipOnMatch      bool             `json:"skipOnMatch,omitempty"`
-}
+func newFilter(c eventloggerv1.EventLoggerSpec) filter.Filter {
+	filters := filter.Slice{}
 
-// Filter event filter
-type Filter struct {
-	Kinds      map[string]*KindFilter `json:"kinds,omitempty"`
-	EventTypes []string               `json:"eventTypes,omitempty"`
-}
-
-// Equals check if the filter equals the other
-func (f *Filter) Equals(o *Filter) bool {
-	return cmp.Equal(f, o, cmpopts.EquateEmpty())
-}
-
-func newFilter(c eventloggerv1.EventLoggerSpec) *Filter {
-	f := &Filter{}
-	f.EventTypes = c.EventTypes
-	f.Kinds = make(map[string]*KindFilter)
-	for _, k := range c.Kinds {
-		kp := &k
-		f.Kinds[k.Name] = &KindFilter{
-			MatchingPatterns: []*regexp.Regexp{},
-		}
-		if kp.EventTypes == nil {
-			f.Kinds[k.Name].EventTypes = c.EventTypes
-		} else {
-			f.Kinds[k.Name].EventTypes = kp.EventTypes
-		}
-
-		if k.MatchingPatterns != nil {
-			f.Kinds[k.Name].SkipOnMatch = k.SkipOnMatch != nil && *k.SkipOnMatch
-			for _, mp := range k.MatchingPatterns {
-				f.Kinds[k.Name].MatchingPatterns = append(f.Kinds[k.Name].MatchingPatterns, regexp.MustCompile(mp))
-			}
-		}
+	if len(c.EventTypes) > 0 {
+		filters = append(filters, filter.New(func(e *corev1.Event) bool {
+			return contains(c.EventTypes, e.Type)
+		}))
 	}
-	return f
+
+	if len(c.Kinds) > 0 {
+		filterForKinds := filter.Slice{}
+		for _, k := range c.Kinds {
+			if len(k.EventTypes) == 0 {
+				k.EventTypes = c.EventTypes
+			}
+
+			filterForKinds = append(filterForKinds, newFilterForKind(k))
+		}
+
+		filters = append(filters, filterForKinds.Any())
+	}
+
+	if len(filters) == 0 {
+		return filter.Always
+	}
+
+	return filters.Any()
+}
+
+func newFilterForKind(k eventloggerv1.Kind) filter.Filter {
+	filters := filter.Slice{}
+
+	filters = append(filters, filter.New(func(e *corev1.Event) bool {
+		return k.Name == e.InvolvedObject.Kind
+	}))
+
+	if k.ApiGroup != "" {
+		filters = append(filters, filter.New(func(e *corev1.Event) bool {
+			return k.ApiGroup == e.InvolvedObject.GroupVersionKind().Group
+		}))
+	}
+
+	if len(k.EventTypes) > 0 {
+		filters = append(filters, filter.New(func(e *corev1.Event) bool {
+			return contains(k.EventTypes, e.Type)
+		}))
+	}
+
+	if len(k.Reasons) > 0 {
+		filters = append(filters, filter.New(func(e *corev1.Event) bool {
+			return contains(k.Reasons, e.Reason)
+		}))
+	}
+
+	if k.MatchingPatterns != nil {
+		filters = append(filters, newFilterForMatchingPatterns(k.MatchingPatterns, pointer.BoolPtrDerefOr(k.SkipOnMatch, false)))
+	}
+
+	return filters.All()
+}
+
+func newFilterForMatchingPatterns(patterns []string, skipOnMatch bool) filter.Filter {
+	filters := filter.Slice{}
+	for _, mp := range patterns {
+		matcher := regexp.MustCompile(mp)
+		filters = append(filters, filter.New(func(e *corev1.Event) bool {
+			return matcher.Match([]byte(e.Message))
+		}))
+	}
+
+	return filter.New(func(e *corev1.Event) bool {
+		return skipOnMatch != filters.Any().Match(e)
+	})
 }
 
 // ConfigFor get config for namespace and name
@@ -68,7 +100,7 @@ type Config struct {
 	watchNamespace string
 	name           string
 	logFields      []eventloggerv1.LogField
-	filter         *Filter
+	filter         filter.Filter
 }
 
 func (c Config) matches(meta metav1.Object) bool {
@@ -76,4 +108,14 @@ func (c Config) matches(meta metav1.Object) bool {
 		return c.podNamespace == meta.GetNamespace() && (c.name == meta.GetName())
 	}
 	return c.watchNamespace == meta.GetNamespace() && (c.name == meta.GetName())
+}
+
+// contains check if a string in a []string exists
+func contains(slice []string, str string) bool {
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }

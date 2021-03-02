@@ -2,16 +2,17 @@ package logging
 
 import (
 	"encoding/json"
-	"regexp"
 	"testing"
 
 	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
 	"github.com/bakito/k8s-event-logger-operator/pkg/mock/logr"
 	"github.com/golang/mock/gomock"
 	. "gotest.tools/assert"
 	is "gotest.tools/assert/cmp"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -28,20 +29,10 @@ var (
 	varFalse = false
 )
 
-func Test_matches(t *testing.T) {
-	lp := &loggingPredicate{}
-
-	Assert(t, lp.matches([]*regexp.Regexp{regexp.MustCompile("abc")}, false, "abc"))
-	Assert(t, lp.matches([]*regexp.Regexp{regexp.MustCompile("^abc$")}, false, "abc"))
-	Assert(t, !lp.matches([]*regexp.Regexp{regexp.MustCompile("^ab$")}, false, "abc"))
-}
-
 func Test_contains(t *testing.T) {
-	lp := &loggingPredicate{}
-
-	Assert(t, lp.contains([]string{"abc", "xyz"}, "abc"))
-	Assert(t, lp.contains([]string{"abc", "xyz"}, "xyz"))
-	Assert(t, !lp.contains([]string{"abc", "xyz"}, "xxx"))
+	Assert(t, contains([]string{"abc", "xyz"}, "abc"))
+	Assert(t, contains([]string{"abc", "xyz"}, "xyz"))
+	Assert(t, !contains([]string{"abc", "xyz"}, "xxx"))
 }
 
 var shouldLogData = []struct {
@@ -83,6 +74,26 @@ var shouldLogData = []struct {
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 		true,
+	},
+	{
+		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
+		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
+		true,
+	},
+	{
+		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
+		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
+		false,
+	},
+	{
+		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: "argoproj.io", EventTypes: []string{}}}},
+		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "argoproj.io", Version: "v1alpha1"}.String()}},
+		true,
+	},
+	{
+		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: "argoproj.io", EventTypes: []string{}}}},
+		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "app.k8s.io", Version: "v1beta1"}.String()}},
+		false,
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Normal"}},
@@ -148,7 +159,7 @@ func Test_shouldLog(t *testing.T) {
 		dStr, err := json.Marshal(&shouldLogData[i])
 		Assert(t, is.Nil(err))
 
-		Assert(t, lp.shouldLog(&data.Event) == data.Expected, "ShouldLogData #%v: %s", i, string(dStr))
+		Assert(t, lp.Config.filter.Match(&data.Event) == data.Expected, "ShouldLogData #%v: %s", i, string(dStr))
 	}
 }
 
@@ -195,7 +206,7 @@ func Test_logEvent_true(t *testing.T) {
 
 	lp := &loggingPredicate{
 		lastVersion: "2",
-		Config:      &Config{filter: &Filter{}},
+		Config:      &Config{filter: filter.Always},
 	}
 
 	lp.logEvent(&corev1.Event{
@@ -219,7 +230,7 @@ func Test_logEvent_true_custom_fields(t *testing.T) {
 	child.EXPECT().Info(gomock.Any()).Times(1)
 
 	lp := &loggingPredicate{
-		Config: &Config{filter: &Filter{},
+		Config: &Config{filter: filter.Always,
 			logFields: []v1.LogField{
 				{Name: "type", Path: []string{"Type"}},
 				{Name: "name", Path: []string{"InvolvedObject", "Name"}},
