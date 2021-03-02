@@ -26,9 +26,13 @@ metadata:
 spec:
   kinds:
     - name: DeploymentConfig # the kind of the event source to be logged
+      apiGroup: apps.openshift.io # optional
       eventTypes: # optional
        - Normal
        - Warning
+      reasons: # optional
+       - DeploymentCreated
+       - ReplicationControllerScaled
       matchingPatterns: # optional - regexp pattern to match event messages
        - .*
       skipOnMatch: false # optional - skip events where messages match the pattern. Default false

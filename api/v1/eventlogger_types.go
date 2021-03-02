@@ -64,9 +64,16 @@ type Kind struct {
 	// +kubebuilder:validation:MinLength=3
 	Name string `json:"name"`
 
+	// +optional
+	ApiGroup string `json:"apiGroup"`
+
 	// EventTypes the event types to log. If empty events are logged as defined in spec.
 	// +kubebuilder:validation:MinItems=0
 	EventTypes []string `json:"eventTypes,omitempty"`
+
+	// Reasons the event reasons to log. If empty events with any reasons are logged.
+	// +kubebuilder:validation:MinItems=0
+	Reasons []string `json:"reasons,omitempty"`
 
 	// MatchingPatterns optional regex pattern that must be contained in the message to be logged
 	// +kubebuilder:validation:MinItems=0
