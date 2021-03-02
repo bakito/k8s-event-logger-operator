@@ -87,7 +87,7 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	newFilter := newFilter(cr.Spec)
 	if r.Config.filter == nil || !r.Config.filter.Equals(newFilter) {
 		r.Config.filter = newFilter
-		reqLogger.WithValues("filter", r.Config.filter).Info("apply new filter")
+		reqLogger.WithValues("filter", r.Config.filter.String()).Info("apply new filter")
 		needUpdate = true
 	}
 

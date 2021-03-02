@@ -36,119 +36,142 @@ func Test_contains(t *testing.T) {
 }
 
 var shouldLogData = []struct {
-	Config   v1.EventLoggerSpec `json:"config"`
-	Event    corev1.Event       `json:"event"`
-	Expected bool               `json:"expected"`
+	Config      v1.EventLoggerSpec `json:"config"`
+	Event       corev1.Event       `json:"event"`
+	Expected    bool               `json:"expected"`
+	Description string             `json:"description"`
 }{
 	{
 		v1.EventLoggerSpec{},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 		true,
+		"true",
 	},
 	{
 		v1.EventLoggerSpec{EventTypes: []string{}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		true,
+		"true",
 	},
 	{
 		v1.EventLoggerSpec{EventTypes: []string{"Normal"}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		true,
+		"( EventType in [Normal] )",
 	},
 	{
 		v1.EventLoggerSpec{EventTypes: []string{"Normal"}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Warning"},
 		false,
+		"( EventType in [Normal] )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 		true,
+		"( ( ( Kind == 'Pod' ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "ConfigMap"}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 		false,
+		"( ( ( Kind == 'ConfigMap' ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 		true,
+		"( ( ( Kind == 'Pod' ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
 		true,
+		"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
 		false,
+		"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: "argoproj.io", EventTypes: []string{}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "argoproj.io", Version: "v1alpha1"}.String()}},
 		true,
+		"( ( ( Kind == 'Application' AND ApiGroup == 'argoproj.io' ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: "argoproj.io", EventTypes: []string{}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "app.k8s.io", Version: "v1beta1"}.String()}},
 		false,
+		"( ( ( Kind == 'Application' AND ApiGroup == 'argoproj.io' ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Normal"}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		true,
+		"( EventType in [Normal] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Warning"}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		false,
+		"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		true,
+		"( ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Warning"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		false,
+		"( ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}, EventTypes: []string{"Warning"}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 		true,
+		"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 		true,
+		"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 		false,
+		"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: &varFalse}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 		true,
+		"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: &varFalse}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 		false,
+		"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: &varTrue}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 		false,
+		"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*message.*/ ) ) ) ) )",
 	},
 	{
 		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: &varTrue}}},
 		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 		true,
+		"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 	},
 }
 
@@ -160,6 +183,7 @@ func Test_shouldLog(t *testing.T) {
 		Assert(t, is.Nil(err))
 
 		Assert(t, lp.Config.filter.Match(&data.Event) == data.Expected, "ShouldLogData #%v: %s", i, string(dStr))
+		Assert(t, lp.Config.filter.String() == data.Description)
 	}
 }
 
