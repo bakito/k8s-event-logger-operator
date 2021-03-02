@@ -4,6 +4,7 @@ WORKDIR /build
 
 RUN apt-get update && apt-get install -y upx
 
+ARG VERSION=master
 ENV GOPROXY=https://goproxy.io \
     GO111MODULE=on \
     CGO_ENABLED=0 \
@@ -11,8 +12,8 @@ ENV GOPROXY=https://goproxy.io \
     GOARCH=amd64
 COPY . .
 
-RUN make test
-RUN ./hack/build.sh k8s-event-logger .
+RUN go build -a -installsuffix cgo -ldflags="-w -s -X github.com/bakito/k8s-event-logger-operator/version.Version=${VERSION}" -o k8s-event-logger && \
+  upx -q k8s-event-logger
 
 # application image
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest 
