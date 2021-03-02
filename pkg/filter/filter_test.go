@@ -13,8 +13,8 @@ func Test_Filter_Match_Always(t *testing.T) {
 }
 
 func Test_Filter_Match_Never(t *testing.T) {
-	Assert(t, Always.Match(&corev1.Event{}) == false)
-	Assert(t, Always.Match(nil) == false)
+	Assert(t, Never.Match(&corev1.Event{}) == false)
+	Assert(t, Never.Match(nil) == false)
 }
 
 func Test_Filter_Match_Func(t *testing.T) {
