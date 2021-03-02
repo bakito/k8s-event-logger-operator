@@ -1,6 +1,6 @@
 before:
   hooks:
-    - helm package ./helm/ --version {{ .Version }} --app-version v{{ .Version }}
+    - rm -f /k8s-event-logger-operator-*.tgz && helm package ./helm/ --version {{ .Version }} --app-version v{{ .Version }}
 builds:
   - skip: true
     main: ./main.go
