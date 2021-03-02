@@ -1,8 +1,10 @@
 package logging
 
 import (
+	"fmt"
 	"k8s.io/utils/pointer"
 	"regexp"
+	"strings"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
@@ -16,7 +18,7 @@ func newFilter(c eventloggerv1.EventLoggerSpec) filter.Filter {
 	if len(c.EventTypes) > 0 {
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
 			return contains(c.EventTypes, e.Type)
-		}))
+		}, fmt.Sprintf("EventType in [%s]", strings.Join(c.EventTypes, ", "))))
 	}
 
 	if len(c.Kinds) > 0 {
@@ -44,24 +46,24 @@ func newFilterForKind(k eventloggerv1.Kind) filter.Filter {
 
 	filters = append(filters, filter.New(func(e *corev1.Event) bool {
 		return k.Name == e.InvolvedObject.Kind
-	}))
+	}, fmt.Sprintf("Kind == '%s'", k.Name)))
 
 	if k.ApiGroup != "" {
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
 			return k.ApiGroup == e.InvolvedObject.GroupVersionKind().Group
-		}))
+		}, fmt.Sprintf("ApiGroup == '%s'", k.ApiGroup)))
 	}
 
 	if len(k.EventTypes) > 0 {
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
 			return contains(k.EventTypes, e.Type)
-		}))
+		}, fmt.Sprintf("EventType in [%s]", strings.Join(k.EventTypes, ", "))))
 	}
 
 	if len(k.Reasons) > 0 {
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
 			return contains(k.Reasons, e.Reason)
-		}))
+		}, fmt.Sprintf("Reason in [%s]", strings.Join(k.Reasons, ", "))))
 	}
 
 	if k.MatchingPatterns != nil {
@@ -77,12 +79,13 @@ func newFilterForMatchingPatterns(patterns []string, skipOnMatch bool) filter.Fi
 		matcher := regexp.MustCompile(mp)
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
 			return matcher.Match([]byte(e.Message))
-		}))
+		}, fmt.Sprintf("Message matches /%s/", mp)))
 	}
 
+	any := filters.Any()
 	return filter.New(func(e *corev1.Event) bool {
-		return skipOnMatch != filters.Any().Match(e)
-	})
+		return skipOnMatch != any.Match(e)
+	}, fmt.Sprintf("( %v XOR %s )", skipOnMatch, any.String()))
 }
 
 // ConfigFor get config for namespace and name
