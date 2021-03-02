@@ -26,8 +26,11 @@ jobs:
       with:
         path-to-profile: cover.out
 
-    - name: Test release
-      run: make test-release
+    - name: Test GoReleaser
+      uses: goreleaser/goreleaser-action@v2
+      with:
+        version: latest
+        args: --skip-publish --snapshot --rm-dist
 
     - name: Build
       run: go build -v ./...
