@@ -69,6 +69,13 @@ docker-build: test
 docker-push:
 	docker push ${IMG}
 
+release: goreleaser
+	goreleaser --rm-dist
+
+test-release: goreleaser
+	goreleaser --skip-publish --snapshot --rm-dist
+
+
 # find or download controller-gen
 # download controller-gen if necessary
 controller-gen:
@@ -113,3 +120,8 @@ bundle: manifests
 .PHONY: bundle-build
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+goreleaser:
+ifeq (, $(shell which goreleaser))
+ $(shell go get github.com/goreleaser/goreleaser)
+endif

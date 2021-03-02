@@ -1,0 +1,16 @@
+builds:
+  - skip: true
+    main: ./main.go
+    ldflags:
+      - -s -w -X github.com/bakito/k8s-event-logger-operator/version.Version={{.Version}}
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+release:
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
