@@ -1,3 +1,6 @@
+before:
+  hooks:
+    - helm package ./helm/ --version {{ .Version }} --app-version v{{ .Version }}
 builds:
   - skip: true
     main: ./main.go
@@ -8,6 +11,8 @@ checksum:
 snapshot:
   name_template: "{{ .Tag }}-next"
 release:
+  extra_files:
+    - glob: ./k8s-event-logger-operator-*.tgz
 changelog:
   sort: asc
   filters:
