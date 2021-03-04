@@ -21,6 +21,7 @@ import (
 	"fmt"
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -84,11 +85,6 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
-	if !cr.HasChanged() {
-		// ignore, no changes
-		return reconcile.Result{}, nil
-	}
-
 	reqLogger.Info("Reconciling event logger")
 
 	if err = cr.Spec.Validate(); err != nil {
@@ -108,7 +104,7 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
-	if saccChanged || roleChanged || rbChanged || podChanged {
+	if cr.HasChanged()|| saccChanged || roleChanged || rbChanged || podChanged {
 		return r.updateCR(ctx, cr, reqLogger, nil)
 	}
 
@@ -178,6 +174,7 @@ func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger
 	}
 	cr.Apply(err)
 	cr.Status.Hash = cr.Spec.Hash()
+	cr.Status.OperatorVersion = version.Version
 	err = r.Update(ctx, cr)
 	return reconcile.Result{}, err
 }
