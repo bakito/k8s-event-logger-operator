@@ -47,6 +47,8 @@ type Reconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 	Config *Config
+	// LoggerMode if enable, the controller does only logging and no update on the custom resource
+	LoggerMode bool
 }
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
@@ -101,6 +103,10 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
 	if err != nil {
 		logger.Error(err, "")
+	}
+	if r.LoggerMode {
+		// return only, no update
+		return reconcile.Result{}, err
 	}
 	cr.Apply(err)
 	err = r.Update(ctx, cr)
