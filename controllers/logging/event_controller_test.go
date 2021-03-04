@@ -2,21 +2,25 @@ package logging
 
 import (
 	"encoding/json"
-	"testing"
+	"k8s.io/utils/pointer"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 
 	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
-	"github.com/bakito/k8s-event-logger-operator/pkg/mock/logr"
-	"github.com/golang/mock/gomock"
-	. "gotest.tools/assert"
-	is "gotest.tools/assert/cmp"
+	mc "github.com/bakito/k8s-event-logger-operator/pkg/mocks/client"
+	ml "github.com/bakito/k8s-event-logger-operator/pkg/mocks/logr"
+	gm "github.com/golang/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -24,323 +28,324 @@ const (
 	testNamespace = "eventlogger-operator"
 )
 
-var (
-	varTrue  = true
-	varFalse = false
-)
+var _ = Describe("Logging", func() {
+	var (
+		mockCtrl *gm.Controller
+	)
 
-func Test_contains(t *testing.T) {
-	Assert(t, contains([]string{"abc", "xyz"}, "abc"))
-	Assert(t, contains([]string{"abc", "xyz"}, "xyz"))
-	Assert(t, !contains([]string{"abc", "xyz"}, "xxx"))
-}
+	BeforeEach(func() {
+		mockCtrl = gm.NewController(GinkgoT())
+	})
+	AfterEach(func() {
+		defer mockCtrl.Finish()
+	})
 
-var shouldLogData = []struct {
+	Context("Reconcile", func() {
+		var (
+			s   *runtime.Scheme
+			r   *Reconciler
+			cl  *mc.MockClient
+			req reconcile.Request
+		)
+
+		BeforeEach(func() {
+			s = scheme.Scheme
+			Ω(v1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
+			cl = mc.NewMockClient(mockCtrl)
+			r = &Reconciler{
+				Client:     cl,
+				Log:        ctrl.Log.WithName("controllers").WithName("Event"),
+				Scheme:     s,
+				Config:     &Config{},
+				LoggerMode: false,
+			}
+			req = reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "foo",
+					Namespace: testNamespace,
+				},
+			}
+		})
+
+		Context("Update", func() {
+			It("should update an existing if LoggerMode is disabled", func() {
+				r.LoggerMode = false
+				cl.EXPECT().Get(gm.Any(), gm.Any(), gm.Any())
+				cl.EXPECT().Update(gm.Any(), gm.Any(), gm.Any())
+				_, err := r.Reconcile(req)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(r.Config.filter).ShouldNot(BeNil())
+			})
+			It("should not update an existing if LoggerMode is enabled", func() {
+				r.LoggerMode = true
+				cl.EXPECT().Get(gm.Any(), gm.Any(), gm.Any())
+				_, err := r.Reconcile(req)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(r.Config.filter).ShouldNot(BeNil())
+			})
+		})
+
+		It("should do noting if not found", func() {
+			cl.EXPECT().Get(gm.Any(), gm.Any(), gm.Any()).Return(errors.NewNotFound(v1.GroupVersion.WithResource("").GroupResource(), ""))
+			_, err := r.Reconcile(req)
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+	})
+
+	Context("logEvent", func() {
+		var (
+			logger *ml.MockLogger
+		)
+
+		BeforeEach(func() {
+			logger = ml.NewMockLogger(mockCtrl)
+			eventLog = logger
+		})
+
+		It("should log nothing", func() {
+			logger.EXPECT().WithValues().Times(0)
+
+			lp := &loggingPredicate{}
+			lp.logEvent(&corev1.Event{})
+		})
+		It("should log nothing if resource version does not match", func() {
+			logger.EXPECT().WithValues().Times(0)
+
+			lp := &loggingPredicate{
+				lastVersion: "2",
+			}
+
+			lp.logEvent(&corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "1",
+				},
+			})
+		})
+		It("should log one message with 14 fields", func() {
+
+			child := ml.NewMockLogger(mockCtrl)
+			logger.EXPECT().WithValues(repeat(gm.Any(), 14)...).Times(1).Return(child)
+			child.EXPECT().Info(gm.Any()).Times(1)
+
+			lp := &loggingPredicate{
+				lastVersion: "2",
+				Config:      &Config{filter: filter.Always},
+			}
+
+			lp.logEvent(&corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "3",
+				},
+			})
+		})
+		It("should log one message with custom fields", func() {
+
+			child := ml.NewMockLogger(mockCtrl)
+			logger.EXPECT().WithValues("type", "test-type").Times(1).Return(child)
+			child.EXPECT().WithValues("name", "test-io-name").Times(1).Return(child)
+			child.EXPECT().WithValues("kind", "test-kind").Times(1).Return(child)
+			child.EXPECT().WithValues("reason", "").Times(1).Return(child)
+			child.EXPECT().Info(gm.Any()).Times(1)
+
+			lp := &loggingPredicate{
+				Config: &Config{filter: filter.Always,
+					logFields: []v1.LogField{
+						{Name: "type", Path: []string{"Type"}},
+						{Name: "name", Path: []string{"InvolvedObject", "Name"}},
+						{Name: "kind", Path: []string{"InvolvedObject", "Kind"}},
+						{Name: "reason", Path: []string{"Reason"}},
+					},
+				},
+			}
+
+			lp.logEvent(&corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "3",
+					Name:            "test-event-name",
+				},
+				Type: "test-type",
+				InvolvedObject: corev1.ObjectReference{
+					Kind: "test-kind",
+					Name: "test-io-name",
+				},
+				Reason: "",
+			})
+		})
+
+		DescribeTable("the > inequality",
+			func(config v1.EventLoggerSpec, event corev1.Event, expected bool, description string) {
+				data := &sld{config, event, expected, description}
+				lp := &loggingPredicate{Config: &Config{filter: newFilter(data.Config)}}
+
+				_, err := json.Marshal(&data)
+				Ω(err).ShouldNot(HaveOccurred())
+				Ω(lp.Config.filter.Match(&data.Event)).Should(Equal(expected))
+				Ω(lp.Config.filter.String()).Should(Equal(data.Description))
+			},
+			Entry("1",
+				v1.EventLoggerSpec{},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
+				true,
+				"true",
+			),
+			Entry("2",
+				v1.EventLoggerSpec{EventTypes: []string{}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
+				true,
+				"true",
+			),
+			Entry("3",
+				v1.EventLoggerSpec{EventTypes: []string{"Normal"}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
+				true,
+				"( EventType in [Normal] )",
+			),
+			Entry("4",
+				v1.EventLoggerSpec{EventTypes: []string{"Normal"}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Warning"},
+				false,
+				"( EventType in [Normal] )",
+			),
+			Entry("5",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
+				true,
+				"( ( ( Kind == 'Pod' ) ) )",
+			),
+			Entry("6",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "ConfigMap"}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
+				false,
+				"( ( ( Kind == 'ConfigMap' ) ) )",
+			),
+			Entry("7",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
+				true,
+				"( ( ( Kind == 'Pod' ) ) )",
+			),
+			Entry("8",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
+				true,
+				"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
+			),
+			Entry("9",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
+				false,
+				"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
+			),
+			Entry("10",
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: "argoproj.io", EventTypes: []string{}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "argoproj.io", Version: "v1alpha1"}.String()}},
+				true,
+				"( ( ( Kind == 'Application' AND ApiGroup == 'argoproj.io' ) ) )",
+			),
+			Entry("11",
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: "argoproj.io", EventTypes: []string{}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "app.k8s.io", Version: "v1beta1"}.String()}},
+				false,
+				"( ( ( Kind == 'Application' AND ApiGroup == 'argoproj.io' ) ) )",
+			),
+			Entry("12",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Normal"}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
+				true,
+				"( EventType in [Normal] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
+			),
+			Entry("13",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Warning"}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
+				false,
+				"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
+			),
+			Entry("14",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
+				true,
+				"( ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
+			),
+			Entry("15",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Warning"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
+				false,
+				"( ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
+			),
+			Entry("16",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}, EventTypes: []string{"Warning"}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
+				true,
+				"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
+			),
+			Entry("17",
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
+				true,
+				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
+			),
+			Entry("18",
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
+				false,
+				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
+			),
+			Entry("19",
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: pointer.BoolPtr(false)}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
+				true,
+				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
+			),
+			Entry("20",
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: pointer.BoolPtr(false)}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
+				false,
+				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
+			),
+			Entry("21",
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: pointer.BoolPtr(true)}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
+				false,
+				"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*message.*/ ) ) ) ) )",
+			),
+			Entry("22",
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: pointer.BoolPtr(true)}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
+				true,
+				"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*Message.*/ ) ) ) ) )",
+			),
+		)
+	})
+
+	Context("contains", func() {
+		It("should contain the value", func() {
+			Ω(contains([]string{"abc", "xyz"}, "abc")).Should(BeTrue())
+			Ω(contains([]string{"abc", "xyz"}, "xyz")).Should(BeTrue())
+		})
+		It("should not contain the value", func() {
+			Ω(contains([]string{"abc", "xyz"}, "xxx")).Should(BeFalse())
+		})
+	})
+})
+
+type sld struct {
 	Config      v1.EventLoggerSpec `json:"config"`
 	Event       corev1.Event       `json:"event"`
 	Expected    bool               `json:"expected"`
 	Description string             `json:"description"`
-}{
-	{
-		v1.EventLoggerSpec{},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
-		true,
-		"true",
-	},
-	{
-		v1.EventLoggerSpec{EventTypes: []string{}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
-		true,
-		"true",
-	},
-	{
-		v1.EventLoggerSpec{EventTypes: []string{"Normal"}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
-		true,
-		"( EventType in [Normal] )",
-	},
-	{
-		v1.EventLoggerSpec{EventTypes: []string{"Normal"}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Warning"},
-		false,
-		"( EventType in [Normal] )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
-		true,
-		"( ( ( Kind == 'Pod' ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "ConfigMap"}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
-		false,
-		"( ( ( Kind == 'ConfigMap' ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
-		true,
-		"( ( ( Kind == 'Pod' ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
-		true,
-		"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
-		false,
-		"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: "argoproj.io", EventTypes: []string{}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "argoproj.io", Version: "v1alpha1"}.String()}},
-		true,
-		"( ( ( Kind == 'Application' AND ApiGroup == 'argoproj.io' ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: "argoproj.io", EventTypes: []string{}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "app.k8s.io", Version: "v1beta1"}.String()}},
-		false,
-		"( ( ( Kind == 'Application' AND ApiGroup == 'argoproj.io' ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Normal"}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
-		true,
-		"( EventType in [Normal] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Warning"}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
-		false,
-		"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
-		true,
-		"( ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Warning"}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
-		false,
-		"( ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}, EventTypes: []string{"Warning"}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
-		true,
-		"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
-		true,
-		"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
-		false,
-		"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: &varFalse}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
-		true,
-		"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: &varFalse}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
-		false,
-		"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: &varTrue}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
-		false,
-		"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*message.*/ ) ) ) ) )",
-	},
-	{
-		v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: &varTrue}}},
-		corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
-		true,
-		"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*Message.*/ ) ) ) ) )",
-	},
 }
 
-func Test_shouldLog(t *testing.T) {
-	for i, data := range shouldLogData {
-		lp := &loggingPredicate{Config: &Config{filter: newFilter(data.Config)}}
-
-		dStr, err := json.Marshal(&shouldLogData[i])
-		Assert(t, is.Nil(err))
-
-		Assert(t, lp.Config.filter.Match(&data.Event) == data.Expected, "ShouldLogData #%v: %s", i, string(dStr))
-		Assert(t, lp.Config.filter.String() == data.Description)
-	}
-}
-
-func Test_logEvent_no_filter(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := logr.NewMockLogger(ctrl)
-	eventLog = mock
-	mock.EXPECT().WithValues().Times(0)
-
-	lp := &loggingPredicate{}
-	lp.logEvent(&corev1.Event{})
-}
-
-func Test_logEvent_wrong_resource_version(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mock := logr.NewMockLogger(ctrl)
-	eventLog = mock
-	mock.EXPECT().WithValues().Times(0)
-
-	lp := &loggingPredicate{
-		lastVersion: "2",
-	}
-
-	lp.logEvent(&corev1.Event{
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: "1",
-		},
-	})
-}
-
-func Test_logEvent_true(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	parent := logr.NewMockLogger(ctrl)
-	child := logr.NewMockLogger(ctrl)
-	eventLog = parent
-	parent.EXPECT().WithValues(repeat(gomock.Any(), 14)...).Times(1).Return(child)
-	child.EXPECT().Info(gomock.Any()).Times(1)
-
-	lp := &loggingPredicate{
-		lastVersion: "2",
-		Config:      &Config{filter: filter.Always},
-	}
-
-	lp.logEvent(&corev1.Event{
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: "3",
-		},
-	})
-}
-
-func Test_logEvent_true_custom_fields(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	parent := logr.NewMockLogger(ctrl)
-	child := logr.NewMockLogger(ctrl)
-	eventLog = parent
-	parent.EXPECT().WithValues("type", "test-type").Times(1).Return(child)
-	child.EXPECT().WithValues("name", "test-io-name").Times(1).Return(child)
-	child.EXPECT().WithValues("kind", "test-kind").Times(1).Return(child)
-	child.EXPECT().WithValues("reason", "").Times(1).Return(child)
-	child.EXPECT().Info(gomock.Any()).Times(1)
-
-	lp := &loggingPredicate{
-		Config: &Config{filter: filter.Always,
-			logFields: []v1.LogField{
-				{Name: "type", Path: []string{"Type"}},
-				{Name: "name", Path: []string{"InvolvedObject", "Name"}},
-				{Name: "kind", Path: []string{"InvolvedObject", "Kind"}},
-				{Name: "reason", Path: []string{"Reason"}},
-			},
-		},
-	}
-
-	lp.logEvent(&corev1.Event{
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: "3",
-			Name:            "test-event-name",
-		},
-		Type: "test-type",
-		InvolvedObject: corev1.ObjectReference{
-			Kind: "test-kind",
-			Name: "test-io-name",
-		},
-		Reason: "",
-	})
-}
-
-func Test_Reconcile_existing(t *testing.T) {
-	s := scheme.Scheme
-	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
-	el := &v1.EventLogger{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "eventlogger",
-			Namespace: testNamespace,
-		},
-		Spec: v1.EventLoggerSpec{
-			Kinds: []v1.Kind{
-				{
-					Name: "Pod",
-				},
-			},
-		},
-	}
-
-	cl := fake.NewFakeClientWithScheme(s, el)
-	cfg := &Config{}
-	r := &Reconciler{
-		Client: cl,
-		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
-		Scheme: s,
-		Config: cfg,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "eventlogger",
-			Namespace: testNamespace,
-		},
-	}
-	_, err := r.Reconcile(req)
-	Assert(t, is.Nil(err))
-	Assert(t, cfg.filter != nil)
-
-}
-
-func Test_Reconcile_deleted(t *testing.T) {
-
-	s := scheme.Scheme
-	Assert(t, is.Nil(v1.SchemeBuilder.AddToScheme(s)))
-
-	cl := fake.NewFakeClientWithScheme(s)
-
-	r := &Reconciler{
-		Client: cl,
-		Log:    ctrl.Log.WithName("controllers").WithName("Event"),
-		Scheme: s,
-		Config: &Config{},
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "foo",
-			Namespace: testNamespace,
-		},
-	}
-	_, err := r.Reconcile(req)
-	Assert(t, is.Nil(err))
-}
-
-func repeat(m gomock.Matcher, times int) []interface{} {
+func repeat(m gm.Matcher, times int) []interface{} {
 	var list []interface{}
 	for i := 0; i < times; i++ {
 		list = append(list, m)

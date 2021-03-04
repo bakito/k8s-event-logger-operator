@@ -94,10 +94,10 @@ func main() {
 	if enableLoggerMode {
 		setupLog.WithValues("configName", configName).Info("Current configuration")
 		if err = (&logging.Reconciler{
-			Client: mgr.GetClient(),
-			Log:    ctrl.Log.WithName("controllers").WithName("Event"),
-			Scheme: mgr.GetScheme(),
-			Config: logging.ConfigFor(configName, podNamespace, watchNamespace),
+			Client:     mgr.GetClient(),
+			Log:        ctrl.Log.WithName("controllers").WithName("Event"),
+			Scheme:     mgr.GetScheme(),
+			Config:     logging.ConfigFor(configName, podNamespace, watchNamespace),
 			LoggerMode: true,
 		}).SetupWithManager(mgr, watchNamespace); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "Event")
@@ -125,10 +125,10 @@ func main() {
 
 		} else {
 			if err = (&logging.Reconciler{
-				Client: mgr.GetClient(),
-				Log:    ctrl.Log.WithName("controllers").WithName("Event"),
-				Scheme: mgr.GetScheme(),
-				Config: logging.ConfigFor(configName, podNamespace, watchNamespace),
+				Client:     mgr.GetClient(),
+				Log:        ctrl.Log.WithName("controllers").WithName("Event"),
+				Scheme:     mgr.GetScheme(),
+				Config:     logging.ConfigFor(configName, podNamespace, watchNamespace),
 				LoggerMode: false,
 			}).SetupWithManager(mgr, watchNamespace); err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "Event")

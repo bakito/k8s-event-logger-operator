@@ -104,7 +104,7 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
-	if cr.HasChanged()|| saccChanged || roleChanged || rbChanged || podChanged {
+	if cr.HasChanged() || saccChanged || roleChanged || rbChanged || podChanged {
 		return r.updateCR(ctx, cr, reqLogger, nil)
 	}
 
