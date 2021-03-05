@@ -66,7 +66,7 @@ type Kind struct {
 
 	// +optional
 	// +nullable
-	ApiGroup *string `json:"apiGroup"`
+	ApiGroup *string `json:"apiGroup,omitempty"`
 
 	// EventTypes the event types to log. If empty events are logged as defined in spec.
 	// +kubebuilder:validation:MinItems=0
