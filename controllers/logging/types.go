@@ -48,10 +48,10 @@ func newFilterForKind(k eventloggerv1.Kind) filter.Filter {
 		return k.Name == e.InvolvedObject.Kind
 	}, fmt.Sprintf("Kind == '%s'", k.Name)))
 
-	if k.ApiGroup != "" {
+	if k.ApiGroup != nil {
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
-			return k.ApiGroup == e.InvolvedObject.GroupVersionKind().Group
-		}, fmt.Sprintf("ApiGroup == '%s'", k.ApiGroup)))
+			return *k.ApiGroup == e.InvolvedObject.GroupVersionKind().Group
+		}, fmt.Sprintf("ApiGroup == '%s'", *k.ApiGroup)))
 	}
 
 	if len(k.EventTypes) > 0 {

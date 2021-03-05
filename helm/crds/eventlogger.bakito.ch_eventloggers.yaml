@@ -52,6 +52,7 @@ spec:
                 description: Kind defines a kind to log events for
                 properties:
                   apiGroup:
+                    nullable: true
                     type: string
                   eventTypes:
                     description: EventTypes the event types to log. If empty events
