@@ -17,7 +17,6 @@ require (
 	github.com/onsi/ginkgo v1.15.0
 	github.com/onsi/gomega v1.10.1
 	golang.org/x/sys v0.0.0-20210304152209-afaa3650a925 // indirect
-	gotest.tools v2.2.0+incompatible
 	k8s.io/api v0.19.4
 	k8s.io/apimachinery v0.19.4
 	k8s.io/client-go v0.19.4

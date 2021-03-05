@@ -1,44 +1,47 @@
-package v1
+package v1_test
 
 import (
-	is "gotest.tools/assert/cmp"
-	"testing"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
-	. "gotest.tools/assert"
+	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 )
 
-func Test_Validate_Success(t *testing.T) {
-	s := &EventLoggerSpec{
-		Annotations: map[string]string{"valid/valid": "valid", "valid": "valid"},
-		Labels:      map[string]string{"valid": "valid"},
-	}
+var _ = Describe("V1", func() {
+	Context("Validate", func() {
+		It("should succeed", func() {
+			s := &v1.EventLoggerSpec{
+				Annotations: map[string]string{"valid/valid": "valid", "valid": "valid"},
+				Labels:      map[string]string{"valid": "valid"},
+			}
+			Ω(s.Validate()).ShouldNot(HaveOccurred())
+		})
+		It("should have invalid label key", func() {
+			s := &v1.EventLoggerSpec{
+				Labels: map[string]string{"in valid": "valid"},
+			}
 
-	Assert(t, is.Nil(s.Validate()))
-}
+			Ω(s.Validate()).Should(HaveOccurred())
+		})
+		It("should have invalid label value", func() {
+			s := &v1.EventLoggerSpec{
+				Labels: map[string]string{"valid": "in valid"},
+			}
 
-func Test_Validate_Invalid_LabelKey(t *testing.T) {
-	s := &EventLoggerSpec{
-		Labels: map[string]string{"in valid": "valid"},
-	}
+			Ω(s.Validate()).Should(HaveOccurred())
+		})
+		It("should have invalid annotation key", func() {
+			s := &v1.EventLoggerSpec{
+				Annotations: map[string]string{"in valid": "valid"},
+			}
 
-	Assert(t, s.Validate() != nil)
-}
+			Ω(s.Validate()).Should(HaveOccurred())
 
-func Test_Validate_Invalid_LabelValue(t *testing.T) {
-	s := &EventLoggerSpec{
-		Labels: map[string]string{"valid": "in valid"},
-	}
+			s = &v1.EventLoggerSpec{
+				Annotations: map[string]string{"in/valid/": "valid"},
+			}
 
-	Assert(t, s.Validate() != nil)
-}
-
-func Test_Validate_Invalid_AnnotationKey(t *testing.T) {
-	s := &EventLoggerSpec{
-		Annotations: map[string]string{"in valid": "valid"},
-	}
-	Assert(t, s.Validate() != nil)
-	s = &EventLoggerSpec{
-		Annotations: map[string]string{"in/valid/": "valid"},
-	}
-	Assert(t, s.Validate() != nil)
-}
+			Ω(s.Validate()).Should(HaveOccurred())
+		})
+	})
+})

@@ -2,7 +2,6 @@ package logging
 
 import (
 	"fmt"
-	"k8s.io/utils/pointer"
 	"regexp"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 func newFilter(c eventloggerv1.EventLoggerSpec) filter.Filter {

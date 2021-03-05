@@ -2,6 +2,9 @@ package logging
 
 import (
 	"encoding/json"
+
+	"sigs.k8s.io/controller-runtime/pkg/event"
+
 	"k8s.io/utils/pointer"
 
 	. "github.com/onsi/ginkgo"
@@ -26,6 +29,7 @@ import (
 
 const (
 	testNamespace = "eventlogger-operator"
+	testName      = "eventlogger-operator-name"
 )
 
 var _ = Describe("Logging", func() {
@@ -334,6 +338,48 @@ var _ = Describe("Logging", func() {
 		})
 		It("should not contain the value", func() {
 			Ω(contains([]string{"abc", "xyz"}, "xxx")).Should(BeFalse())
+		})
+	})
+
+	Context("loggingPredicate", func() {
+		var (
+			lp *loggingPredicate
+			el *v1.EventLogger
+		)
+		BeforeEach(func() {
+			lp = &loggingPredicate{
+				Config: &Config{
+					watchNamespace: testNamespace,
+					podNamespace:   "",
+					name:           testName,
+				},
+			}
+			el = &v1.EventLogger{
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: testNamespace,
+					Name:      testName,
+				},
+			}
+		})
+		Context("Create", func() {
+			It("should match for reconciling with watchNamespace", func() {
+				Ω(lp.Create(event.CreateEvent{Object: el, Meta: el})).Should(BeTrue())
+			})
+			It("should not match for reconciling with watchNamespace", func() {
+				el.ObjectMeta.Name = "foo"
+				Ω(lp.Create(event.CreateEvent{Object: el, Meta: el})).Should(BeFalse())
+			})
+			It("should match for reconciling with podNamespace", func() {
+				lp.Config.watchNamespace = ""
+				lp.Config.podNamespace = testNamespace
+				Ω(lp.Create(event.CreateEvent{Object: el, Meta: el})).Should(BeTrue())
+			})
+			It("should match for reconciling with podNamespace", func() {
+				el.ObjectMeta.Name = "foo"
+				lp.Config.watchNamespace = ""
+				lp.Config.podNamespace = testNamespace
+				Ω(lp.Create(event.CreateEvent{Object: el, Meta: el})).Should(BeFalse())
+			})
 		})
 	})
 })

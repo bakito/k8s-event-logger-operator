@@ -20,6 +20,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/go-logr/logr"

@@ -48,6 +48,7 @@ fmt:
 	go fmt ./...
 	gofmt -s -w .
 
+
 # Run go vet against code
 vet:
 	go vet ./...

@@ -5,14 +5,15 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"regexp"
+	"strings"
+
 	"github.com/bakito/k8s-event-logger-operator/version"
 	english "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/go-playground/validator/v10/translations/en"
-	"reflect"
-	"regexp"
-	"strings"
 )
 
 var (

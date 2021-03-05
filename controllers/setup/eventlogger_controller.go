@@ -19,6 +19,9 @@ package setup
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"os"
+
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/version"
@@ -30,8 +33,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"math/rand"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
