@@ -14,7 +14,7 @@ endif
 all: manager
 
 # Run tests
-test: generate tidy fmt vet manifests
+test: generate mocks tidy fmt vet manifests
 	go test ./... -coverprofile cover.out
 
 # Build manager binary
@@ -48,6 +48,7 @@ fmt:
 	go fmt ./...
 	gofmt -s -w .
 
+
 # Run go vet against code
 vet:
 	go vet ./...
@@ -74,6 +75,11 @@ release: goreleaser
 
 test-release: goreleaser
 	goreleaser --skip-publish --snapshot --rm-dist
+
+# generate mocks
+mocks: mockgen
+	mockgen -destination pkg/mocks/client/mock.go sigs.k8s.io/controller-runtime/pkg/client Client
+	mockgen -destination pkg/mocks/logr/mock.go   github.com/go-logr/logr Logger
 
 
 # find or download controller-gen
@@ -124,4 +130,9 @@ bundle-build:
 goreleaser:
 ifeq (, $(shell which goreleaser))
  $(shell go get github.com/goreleaser/goreleaser)
+endif
+
+mockgen:
+ifeq (, $(shell which mockgen))
+ $(shell go get github.com/golang/mock/mockgen@v1.5)
 endif

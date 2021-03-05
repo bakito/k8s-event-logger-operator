@@ -2,7 +2,6 @@ package logging
 
 import (
 	"fmt"
-	"k8s.io/utils/pointer"
 	"regexp"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 func newFilter(c eventloggerv1.EventLoggerSpec) filter.Filter {
@@ -48,10 +48,10 @@ func newFilterForKind(k eventloggerv1.Kind) filter.Filter {
 		return k.Name == e.InvolvedObject.Kind
 	}, fmt.Sprintf("Kind == '%s'", k.Name)))
 
-	if k.ApiGroup != "" {
+	if k.ApiGroup != nil {
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
-			return k.ApiGroup == e.InvolvedObject.GroupVersionKind().Group
-		}, fmt.Sprintf("ApiGroup == '%s'", k.ApiGroup)))
+			return *k.ApiGroup == e.InvolvedObject.GroupVersionKind().Group
+		}, fmt.Sprintf("ApiGroup == '%s'", *k.ApiGroup)))
 	}
 
 	if len(k.EventTypes) > 0 {

@@ -19,8 +19,6 @@ package logging
 import (
 	"context"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/fatih/structs"
@@ -32,9 +30,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 var (
@@ -47,6 +47,8 @@ type Reconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 	Config *Config
+	// LoggerMode if enable, the controller does only logging and no update on the custom resource
+	LoggerMode bool
 }
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
@@ -102,6 +104,10 @@ func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger
 	if err != nil {
 		logger.Error(err, "")
 	}
+	if r.LoggerMode {
+		// return only, no update
+		return reconcile.Result{}, err
+	}
 	cr.Apply(err)
 	err = r.Update(ctx, cr)
 	return reconcile.Result{}, err
@@ -123,7 +129,7 @@ func (p loggingPredicate) Create(e event.CreateEvent) bool {
 
 // Update implements Predicate
 func (p loggingPredicate) Update(e event.UpdateEvent) bool {
-	if _, ok := e.ObjectOld.(*eventloggerv1.EventLogger); ok {
+	if _, ok := e.ObjectNew.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.MetaNew)
 	}
 	return p.logEvent(e.ObjectNew)
