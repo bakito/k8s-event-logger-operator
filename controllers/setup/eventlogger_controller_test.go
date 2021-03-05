@@ -3,6 +3,7 @@ package setup
 import (
 	"context"
 	"reflect"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -58,6 +59,11 @@ var _ = Describe("Logging", func() {
 				Namespace:     &ns2,
 				NodeSelector:  map[string]string{"ns-key": "ns-value"},
 			},
+			Status: v1.EventLoggerStatus{
+				OperatorVersion: "0",
+				Hash:            "",
+				LastProcessed:   metav1.Date(2020, 1, 1, 1, 1, 1, 1, time.Local),
+			},
 		}
 
 	})
@@ -79,6 +85,7 @@ var _ = Describe("Logging", func() {
 				}, updated)
 				Ω(err).ShouldNot(HaveOccurred())
 				Ω(updated.Status.LastProcessed.String()).ShouldNot(BeEmpty())
+				Ω(updated.Status.Hash).ShouldNot(BeEmpty())
 				Ω(updated.Status.OperatorVersion).Should(Equal(version.Version))
 			})
 		})

@@ -380,6 +380,58 @@ var _ = Describe("Logging", func() {
 				lp.Config.podNamespace = testNamespace
 				Ω(lp.Create(event.CreateEvent{Object: el, Meta: el})).Should(BeFalse())
 			})
+			It("should not reconcile or log for another object", func() {
+				pod := &corev1.Pod{}
+				Ω(lp.Create(event.CreateEvent{Object: pod, Meta: pod})).Should(BeFalse())
+			})
+		})
+		Context("Update", func() {
+			It("should match for reconciling with watchNamespace", func() {
+				Ω(lp.Update(event.UpdateEvent{ObjectNew: el, MetaNew: el})).Should(BeTrue())
+			})
+			It("should not match for reconciling with watchNamespace", func() {
+				el.ObjectMeta.Name = "foo"
+				Ω(lp.Update(event.UpdateEvent{ObjectNew: el, MetaNew: el})).Should(BeFalse())
+			})
+			It("should match for reconciling with podNamespace", func() {
+				lp.Config.watchNamespace = ""
+				lp.Config.podNamespace = testNamespace
+				Ω(lp.Update(event.UpdateEvent{ObjectNew: el, MetaNew: el})).Should(BeTrue())
+			})
+			It("should match for reconciling with podNamespace", func() {
+				el.ObjectMeta.Name = "foo"
+				lp.Config.watchNamespace = ""
+				lp.Config.podNamespace = testNamespace
+				Ω(lp.Update(event.UpdateEvent{ObjectNew: el, MetaNew: el})).Should(BeFalse())
+			})
+			It("should not reconcile or log for another object", func() {
+				pod := &corev1.Pod{}
+				Ω(lp.Update(event.UpdateEvent{ObjectNew: pod, MetaNew: pod})).Should(BeFalse())
+			})
+		})
+		Context("Delete", func() {
+			It("should match for reconciling with watchNamespace", func() {
+				Ω(lp.Delete(event.DeleteEvent{Object: el, Meta: el})).Should(BeTrue())
+			})
+			It("should not match for reconciling with watchNamespace", func() {
+				el.ObjectMeta.Name = "foo"
+				Ω(lp.Delete(event.DeleteEvent{Object: el, Meta: el})).Should(BeFalse())
+			})
+			It("should match for reconciling with podNamespace", func() {
+				lp.Config.watchNamespace = ""
+				lp.Config.podNamespace = testNamespace
+				Ω(lp.Delete(event.DeleteEvent{Object: el, Meta: el})).Should(BeTrue())
+			})
+			It("should match for reconciling with podNamespace", func() {
+				el.ObjectMeta.Name = "foo"
+				lp.Config.watchNamespace = ""
+				lp.Config.podNamespace = testNamespace
+				Ω(lp.Delete(event.DeleteEvent{Object: el, Meta: el})).Should(BeFalse())
+			})
+			It("should not reconcile or log for another object", func() {
+				pod := &corev1.Pod{}
+				Ω(lp.Delete(event.DeleteEvent{Object: pod, Meta: pod})).Should(BeFalse())
+			})
 		})
 	})
 })

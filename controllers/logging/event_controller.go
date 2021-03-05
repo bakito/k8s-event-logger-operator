@@ -129,7 +129,7 @@ func (p loggingPredicate) Create(e event.CreateEvent) bool {
 
 // Update implements Predicate
 func (p loggingPredicate) Update(e event.UpdateEvent) bool {
-	if _, ok := e.ObjectOld.(*eventloggerv1.EventLogger); ok {
+	if _, ok := e.ObjectNew.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.MetaNew)
 	}
 	return p.logEvent(e.ObjectNew)
