@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.15.0
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/gomega v1.11.0
 	golang.org/x/sys v0.0.0-20210304152209-afaa3650a925 // indirect
 	k8s.io/api v0.19.4
 	k8s.io/apimachinery v0.19.4
