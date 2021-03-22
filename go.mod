@@ -17,7 +17,7 @@ require (
 	github.com/onsi/gomega v1.11.0
 	golang.org/x/sys v0.0.0-20210304152209-afaa3650a925 // indirect
 	k8s.io/api v0.19.4
-	k8s.io/apimachinery v0.19.4
+	k8s.io/apimachinery v0.20.5
 	k8s.io/client-go v0.19.4
 	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
 	sigs.k8s.io/controller-runtime v0.6.4
