@@ -13,7 +13,7 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.2.0
-	github.com/onsi/ginkgo v1.16.1
+	github.com/onsi/ginkgo v1.16.2
 	github.com/onsi/gomega v1.11.0
 	golang.org/x/sys v0.0.0-20210304152209-afaa3650a925 // indirect
 	k8s.io/api v0.19.4
