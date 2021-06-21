@@ -33,8 +33,7 @@ func (in *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-eventlogger-bakito-ch-v1-eventlogger,mutating=true,failurePolicy=fail,groups=eventlogger.bakito.ch,resources=eventloggers,verbs=create;update,versions=v1,name=meventlogger.kb.io
-
+// +kubebuilder:webhook:path=/mutate-eventlogger-bakito-ch-v1-eventlogger,mutating=true,failurePolicy=fail,sideEffects=None,groups=eventlogger.bakito.ch,resources=eventloggers,verbs=create;update,versions=v1,name=meventlogger.kb.io,admissionReviewVersions={v1,v1beta1}
 var _ webhook.Defaulter = &EventLogger{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
@@ -42,8 +41,7 @@ func (in *EventLogger) Default() {
 	eventloggerlog.Info("default", "name", in.Name)
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-eventlogger-bakito-ch-v1-eventlogger,mutating=false,failurePolicy=fail,groups=eventlogger.bakito.ch,resources=eventloggers,versions=v1,name=veventlogger.kb.io
-
+// +kubebuilder:webhook:verbs=create;update,path=/validate-eventlogger-bakito-ch-v1-eventlogger,mutating=false,failurePolicy=fail,sideEffects=None,groups=eventlogger.bakito.ch,resources=eventloggers,versions=v1,name=veventlogger.kb.io,admissionReviewVersions={v1,v1beta1}
 var _ webhook.Validator = &EventLogger{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
