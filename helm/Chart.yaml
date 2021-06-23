@@ -1,9 +1,7 @@
 apiVersion: v2
 name: k8s-event-logger-operator
 description: Kubernetes event logger operator
-
 type: application
-
-version: 1.7
-
-appVersion: v1.7
+version: "1.8.1"
+appVersion: "1.8.1"
+icon:

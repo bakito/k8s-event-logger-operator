@@ -32,6 +32,11 @@ jobs:
         version: latest
         args: --skip-publish --snapshot --rm-dist
 
+    - name: Lint Helm Chart
+      uses: WyriHaximus/github-action-helm3@v2
+      with:
+        exec: helm lint helm/
+
     - name: Build
       run: go build -v ./...
 
