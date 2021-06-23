@@ -242,13 +242,13 @@ func testReconcile(initialObjects ...runtime.Object) (client.Client, reconcile.R
 			Namespace: testNamespace,
 		},
 	}
-	res, err := r.Reconcile(req)
+	res, err := r.Reconcile(context.Background(), req)
 	Ω(err).ShouldNot(HaveOccurred())
 
 	return cl, res
 }
 
-func assertEntrySize(cl client.Client, list runtime.Object, expected int) {
+func assertEntrySize(cl client.Client, list client.ObjectList, expected int) {
 	err := cl.List(context.TODO(), list, client.MatchingLabels{"app": "event-logger-eventlogger"})
 
 	Ω(err).ShouldNot(HaveOccurred())

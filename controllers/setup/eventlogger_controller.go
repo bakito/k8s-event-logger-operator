@@ -68,8 +68,7 @@ type Reconciler struct {
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile EventLogger to setup event logger pods
-func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
 
 	// Fetch the EventLogger cr
@@ -115,10 +114,10 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 func (r *Reconciler) createOrReplace(
 	ctx context.Context,
 	cr *eventloggerv1.EventLogger,
-	res runtime.Object,
+	res client.Object,
 	reqLogger logr.Logger,
 	updateCheck func(curr runtime.Object, next runtime.Object) updateReplace) (bool, error) {
-	query := res.DeepCopyObject()
+	query := res.DeepCopyObject().(client.Object)
 	mo := res.(metav1.Object)
 	// Check if this Resource already exists
 	err := r.Get(ctx, types.NamespacedName{Name: mo.GetName(), Namespace: mo.GetNamespace()}, query)
@@ -129,7 +128,7 @@ func (r *Reconciler) createOrReplace(
 		}
 
 		reqLogger.Info(fmt.Sprintf("Creating a new %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
-		err = r.Create(ctx, res.(runtime.Object))
+		err = r.Create(ctx, res.(client.Object))
 		if err != nil {
 			return false, err
 		}
@@ -143,7 +142,7 @@ func (r *Reconciler) createOrReplace(
 		check := updateCheck(query, res)
 		if check == update {
 			reqLogger.Info(fmt.Sprintf("Updating %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
-			err = r.Update(ctx, res.(runtime.Object))
+			err = r.Update(ctx, res.(client.Object))
 
 			if err != nil {
 				return false, err
@@ -152,12 +151,12 @@ func (r *Reconciler) createOrReplace(
 		} else if check == replace {
 			reqLogger.Info(fmt.Sprintf("Replacing %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
 
-			err = r.Delete(ctx, query.(runtime.Object))
+			err = r.Delete(ctx, query)
 
 			if err != nil {
 				return false, err
 			}
-			err = r.Create(ctx, query.(runtime.Object))
+			err = r.Create(ctx, query)
 
 			if err != nil {
 				return false, err
@@ -180,7 +179,7 @@ func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger
 	return reconcile.Result{}, err
 }
 
-func (r *Reconciler) saveDelete(ctx context.Context, obj runtime.Object) error {
+func (r *Reconciler) saveDelete(ctx context.Context, obj client.Object) error {
 	err := r.Delete(ctx, obj)
 	if err != nil {
 		if !errors.IsNotFound(err) {

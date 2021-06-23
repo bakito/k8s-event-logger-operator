@@ -54,8 +54,7 @@ type Reconciler struct {
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile EventLogger to update the current config
-func (r *Reconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
 	if r.Config.name == "" {
 		r.Config.name = req.Name
@@ -122,7 +121,7 @@ type loggingPredicate struct {
 // Create implements Predicate
 func (p loggingPredicate) Create(e event.CreateEvent) bool {
 	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
-		return p.Config.matches(e.Meta)
+		return p.Config.matches(e.Object)
 	}
 	return p.logEvent(e.Object)
 }
@@ -130,7 +129,7 @@ func (p loggingPredicate) Create(e event.CreateEvent) bool {
 // Update implements Predicate
 func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 	if _, ok := e.ObjectNew.(*eventloggerv1.EventLogger); ok {
-		return p.Config.matches(e.MetaNew)
+		return p.Config.matches(e.ObjectNew)
 	}
 	return p.logEvent(e.ObjectNew)
 }
@@ -138,7 +137,7 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 // Delete implements Predicate
 func (p loggingPredicate) Delete(e event.DeleteEvent) bool {
 	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
-		return p.Config.matches(e.Meta)
+		return p.Config.matches(e.Object)
 	}
 	return false
 }
