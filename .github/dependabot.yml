@@ -9,6 +9,3 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-    ignore:
-      - dependency-name: "sigs.k8s.io/controller-runtime"
-      - dependency-name: "k8s.io/*"
