@@ -67,20 +67,23 @@ docker-build: test
 docker-push:
 	docker push ${IMG}
 
+.PHONY: release
 release: goreleaser
-	goreleaser --rm-dist
+	$(GORELEASER) --rm-dist
 
+.PHONY: test-release
 test-release: goreleaser
-	goreleaser --skip-publish --snapshot --rm-dist
+	$(GORELEASER) --skip-publish --snapshot --rm-dist
 
 # generate mocks
+.PHONY: mocks
 mocks: mockgen
-	mockgen -destination pkg/mocks/client/mock.go sigs.k8s.io/controller-runtime/pkg/client Client
-	mockgen -destination pkg/mocks/logr/mock.go   github.com/go-logr/logr Logger
+	$(MOCKGEN) -destination pkg/mocks/client/mock.go sigs.k8s.io/controller-runtime/pkg/client Client
+
+	$(MOCKGEN) -destination pkg/mocks/logr/mock.go   github.com/go-logr/logr Logger
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	go get sigs.k8s.io/controller-runtime/pkg/log/zap
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
@@ -97,20 +100,9 @@ rm -rf $$TMP_DIR ;\
 }
 endef
 
-kustomize:
-ifeq (, $(shell which kustomize))
-	@{ \
-	set -e ;\
-	KUSTOMIZE_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$KUSTOMIZE_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go get sigs.k8s.io/kustomize/kustomize/v3@v3.5.4 ;\
-	rm -rf $$KUSTOMIZE_GEN_TMP_DIR ;\
-	}
-KUSTOMIZE=$(GOBIN)/kustomize
-else
-KUSTOMIZE=$(shell which kustomize)
-endif
+KUSTOMIZE = $(shell pwd)/bin/kustomize
+kustomize: ## Download kustomize locally if necessary.
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
 
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
@@ -125,12 +117,10 @@ bundle: manifests
 bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
-goreleaser:
-ifeq (, $(shell which goreleaser))
- $(shell go get github.com/goreleaser/goreleaser)
-endif
+GORELEASER = $(shell pwd)/bin/goreleaser
+goreleaser: ## Download goreleaser locally if necessary.
+	$(call go-get-tool,$(GORELEASER),github.com/goreleaser/goreleaser)
 
-mockgen:
-ifeq (, $(shell which mockgen))
- $(shell go get github.com/golang/mock/mockgen@v1.5)
-endif
+MOCKGEN = $(shell pwd)/bin/mockgen
+mockgen: ## Download mockgen locally if necessary.
+	$(call go-get-tool,$(MOCKGEN),github.com/golang/mock/mockgen@v1.6.0)
