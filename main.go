@@ -38,6 +38,11 @@ import (
 	// +kubebuilder:scaffold:imports
 )
 
+const (
+	// EnvLeaderElectionResourceLock leader election release lock mode
+	EnvLeaderElectionResourceLock = "LEADER_ELECTION_RESOURCE_LOCK"
+)
+
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
@@ -79,12 +84,13 @@ func main() {
 	podNamespace := os.Getenv(cnst.EnvPodNamespace)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
-		Port:               9443,
-		LeaderElection:     enableLeaderElection && !enableLoggerMode,
-		LeaderElectionID:   "leader.eventlogger.bakito.ch",
-		Namespace:          watchNamespace,
+		Scheme:                     scheme,
+		MetricsBindAddress:         metricsAddr,
+		Port:                       9443,
+		LeaderElection:             enableLeaderElection && !enableLoggerMode,
+		LeaderElectionID:           "leader.eventlogger.bakito.ch",
+		LeaderElectionResourceLock: os.Getenv(EnvLeaderElectionResourceLock),
+		Namespace:                  watchNamespace,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
