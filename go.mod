@@ -11,7 +11,7 @@ require (
 	github.com/go-playground/validator/v10 v10.7.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.6
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
 	k8s.io/api v0.21.2
