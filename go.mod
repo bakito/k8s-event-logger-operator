@@ -6,7 +6,7 @@ require (
 	github.com/bakito/operator-utils v1.3.2
 	github.com/fatih/structs v1.1.0
 	github.com/go-logr/logr v0.4.0
-	github.com/go-playground/locales v0.13.0
+	github.com/go-playground/locales v0.14.0
 	github.com/go-playground/universal-translator v0.17.0
 	github.com/go-playground/validator/v10 v10.8.0
 	github.com/golang/mock v1.6.0
