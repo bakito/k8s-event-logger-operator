@@ -4,4 +4,3 @@ description: Kubernetes event logger operator
 type: application
 version: "1.8.1"
 appVersion: "1.8.1"
-icon:
