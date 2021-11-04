@@ -69,6 +69,8 @@ docker-push:
 
 .PHONY: release
 release: goreleaser
+	@version=$$(semver); \
+	git tag -s $$version -m"Release $$version"
 	$(GORELEASER) --rm-dist
 
 .PHONY: test-release

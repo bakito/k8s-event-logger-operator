@@ -1,6 +1,3 @@
-before:
-  hooks:
-    - rm -f k8s-event-logger-operator-*.tgz && helm package ./helm/ --version {{ .Version }} --app-version v{{ .Version }}
 builds:
   - skip: true
     main: ./main.go
@@ -10,9 +7,6 @@ checksum:
   name_template: 'checksums.txt'
 snapshot:
   name_template: "{{ .Tag }}-next"
-release:
-  extra_files:
-    - glob: ./k8s-event-logger-operator-*.tgz
 changelog:
   sort: asc
   filters:
