@@ -53,7 +53,7 @@ jobs:
         uses: vlaurin/action-ghcr-prune@main
         with:
           token: ${{ secrets.PRUNE_IMAGE_TOKEN }}
-          container: sealed-secrets-web
+          container: k8s-event-logger
           dry-run: false # Dry-run first, then change to `false`
           older-than: 7 # days
           untagged: true
