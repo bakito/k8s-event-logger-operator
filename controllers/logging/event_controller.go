@@ -37,9 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var (
-	eventLog = ctrl.Log.WithName("event")
-)
+var eventLog = ctrl.Log.WithName("event")
 
 // Reconciler reconciles a Event object
 type Reconciler struct {
@@ -119,7 +117,7 @@ type loggingPredicate struct {
 }
 
 // Create implements Predicate
-func (p loggingPredicate) Create(e event.CreateEvent) bool {
+func (p *loggingPredicate) Create(e event.CreateEvent) bool {
 	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.Object)
 	}
@@ -127,7 +125,7 @@ func (p loggingPredicate) Create(e event.CreateEvent) bool {
 }
 
 // Update implements Predicate
-func (p loggingPredicate) Update(e event.UpdateEvent) bool {
+func (p *loggingPredicate) Update(e event.UpdateEvent) bool {
 	if _, ok := e.ObjectNew.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.ObjectNew)
 	}
@@ -135,14 +133,14 @@ func (p loggingPredicate) Update(e event.UpdateEvent) bool {
 }
 
 // Delete implements Predicate
-func (p loggingPredicate) Delete(e event.DeleteEvent) bool {
+func (p *loggingPredicate) Delete(e event.DeleteEvent) bool {
 	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.Object)
 	}
 	return false
 }
 
-func (p loggingPredicate) logEvent(e runtime.Object) bool {
+func (p *loggingPredicate) logEvent(e runtime.Object) bool {
 	if p.Config == nil || p.Config.filter == nil {
 		return false
 	}
@@ -154,7 +152,7 @@ func (p loggingPredicate) logEvent(e runtime.Object) bool {
 	if evt.ResourceVersion <= p.lastVersion {
 		return false
 	}
-	p.lastVersion = evt.ResourceVersion
+	p.lastVersion = evt.ResourceVersion // SA4005:
 
 	if p.Config.filter.Match(evt) {
 		var eventLogger logr.Logger
@@ -189,7 +187,6 @@ func (p loggingPredicate) logEvent(e runtime.Object) bool {
 }
 
 func getLatestRevision(ctx context.Context, mgr manager.Manager, namespace string) (string, error) {
-
 	cl, err := client.New(mgr.GetConfig(), client.Options{})
 	if err != nil {
 		return "", err
@@ -211,7 +208,6 @@ func getLatestRevision(ctx context.Context, mgr manager.Manager, namespace strin
 // SetupWithManager setup with manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error {
 	lv, err := getLatestRevision(context.Background(), mgr, namespace)
-
 	if err != nil {
 		return err
 	}

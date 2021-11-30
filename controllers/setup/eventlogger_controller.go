@@ -18,8 +18,9 @@ package setup
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"os"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
@@ -41,7 +42,6 @@ import (
 
 const (
 	defaultContainerName = "k8s-event-logger-operator"
-	letterBytes          = "abcdefghijklmnopqrstuvwxyz"
 )
 
 var (
@@ -128,7 +128,7 @@ func (r *Reconciler) createOrReplace(
 		}
 
 		reqLogger.Info(fmt.Sprintf("Creating a new %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
-		err = r.Create(ctx, res.(client.Object))
+		err = r.Create(ctx, res)
 		if err != nil {
 			return false, err
 		}
@@ -142,7 +142,7 @@ func (r *Reconciler) createOrReplace(
 		check := updateCheck(query, res)
 		if check == update {
 			reqLogger.Info(fmt.Sprintf("Updating %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
-			err = r.Update(ctx, res.(client.Object))
+			err = r.Update(ctx, res)
 
 			if err != nil {
 				return false, err
@@ -198,11 +198,20 @@ const (
 )
 
 func randString() string {
-	b := make([]byte, 8)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	var result []byte
+	for {
+		if len(result) >= 8 {
+			return string(result)
+		}
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(127)))
+		if err != nil {
+			return ""
+		}
+		n := num.Int64()
+		if n >= 97 && n <= 122 {
+			result = append(result, byte(n))
+		}
 	}
-	return string(b)
 }
 
 func loggerName(cr *eventloggerv1.EventLogger) string {
@@ -221,7 +230,6 @@ func podChanged(old, new *corev1.Pod) bool {
 }
 
 func podEnv(pod *corev1.Pod, name string) string {
-
 	for _, env := range pod.Spec.Containers[0].Env {
 		if env.Name == name {
 			return env.Value
@@ -232,7 +240,6 @@ func podEnv(pod *corev1.Pod, name string) string {
 
 // SetupWithManager setup with manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
-
 	if err := r.setupDefaults(mgr.GetAPIReader(), types.NamespacedName{
 		Namespace: os.Getenv(cnst.EnvPodNamespace),
 		Name:      os.Getenv(cnst.EnvPodName),
@@ -281,7 +288,6 @@ func (r *Reconciler) setupEventLoggerImage(client client.Reader, nn types.Namesp
 	}
 	p := &corev1.Pod{}
 	err := client.Get(context.TODO(), nn, p)
-
 	if err != nil {
 		return err
 	}

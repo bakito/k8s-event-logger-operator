@@ -3,19 +3,18 @@ package v1_test
 import (
 	"encoding/json"
 
+	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"k8s.io/utils/pointer"
 )
 
 var _ = Describe("V1", func() {
-	Context("ApiGroup serialisation", func() {
+	Context("APIGroup serialisation", func() {
 		It("should serialize an empty string", func() {
 			k := &v1.Kind{
 				Name:     "a",
-				ApiGroup: pointer.StringPtr(""),
+				APIGroup: pointer.StringPtr(""),
 			}
 			b, err := json.Marshal(k)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -32,7 +31,7 @@ var _ = Describe("V1", func() {
 		It("should serialize an the apiGroup value", func() {
 			k := &v1.Kind{
 				Name:     "a",
-				ApiGroup: pointer.StringPtr("b"),
+				APIGroup: pointer.StringPtr("b"),
 			}
 			b, err := json.Marshal(k)
 			Ω(err).ShouldNot(HaveOccurred())

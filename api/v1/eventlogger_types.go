@@ -66,7 +66,7 @@ type Kind struct {
 
 	// +optional
 	// +nullable
-	ApiGroup *string `json:"apiGroup,omitempty"`
+	APIGroup *string `json:"apiGroup,omitempty"`
 
 	// EventTypes the event types to log. If empty events are logged as defined in spec.
 	// +kubebuilder:validation:MinItems=0
@@ -143,5 +143,4 @@ func (in *EventLogger) Apply(err error) {
 	}
 	in.Status.LastProcessed = metav1.Now()
 	in.Status.OperatorVersion = version.Version
-
 }

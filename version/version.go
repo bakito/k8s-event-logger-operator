@@ -1,6 +1,4 @@
 package version
 
-var (
-	// Version the module version
-	Version = "v1.7"
-)
+// Version the module version
+var Version = "v1.7"

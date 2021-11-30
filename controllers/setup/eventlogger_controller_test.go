@@ -5,19 +5,17 @@ import (
 	"reflect"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-
 	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/version"
 	gm "github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/pointer"
@@ -65,7 +63,6 @@ var _ = Describe("Logging", func() {
 				LastProcessed:   metav1.Date(2020, 1, 1, 1, 1, 1, 1, time.Local),
 			},
 		}
-
 	})
 	AfterEach(func() {
 		defer mockCtrl.Finish()
@@ -202,10 +199,17 @@ var _ = Describe("Logging", func() {
 			})
 		})
 	})
+	Context("randString", func() {
+		It("generate a random string", func() {
+			for i := 0; i < 100; i++ {
+				r := randString()
+				Ω(r).Should(MatchRegexp("^[a-z]{8}$"))
+			}
+		})
+	})
 })
 
-func testReconcile(initialObjects ...runtime.Object) (client.Client, reconcile.Result) {
-
+func testReconcile(initialObjects ...client.Object) (client.Client, reconcile.Result) {
 	s := scheme.Scheme
 
 	Ω(v1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
@@ -225,7 +229,7 @@ func testReconcile(initialObjects ...runtime.Object) (client.Client, reconcile.R
 	}
 	initialObjects = append(initialObjects, operatorPod)
 
-	cl := fake.NewFakeClientWithScheme(s, initialObjects...)
+	cl := fake.NewClientBuilder().WithScheme(s).WithObjects(initialObjects...).Build()
 
 	r := &Reconciler{
 		Client:           cl,

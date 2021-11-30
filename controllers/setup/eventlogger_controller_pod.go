@@ -38,10 +38,10 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 		client.InNamespace(cr.Namespace),
 		client.MatchingLabels(map[string]string{
 			"app":        loggerName(cr),
-			"created-by": "eventlogger"}),
+			"created-by": "eventlogger",
+		}),
 	}
 	err := r.List(ctx, podList, opts...)
-
 	if err != nil {
 		return false, err
 	}
@@ -53,7 +53,8 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 	}
 
 	if replacePod || len(podList.Items) > 1 {
-		for _, p := range podList.Items {
+		for i := range podList.Items {
+			p := podList.Items[i]
 			reqLogger.Info(fmt.Sprintf("Deleting %s", pod.Kind), "namespace", pod.GetNamespace(), "name", pod.GetName())
 			err = r.Delete(ctx, &p, &client.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 			if err != nil {
@@ -85,7 +86,6 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	var metricsAddr string
 	if metricsAddrFlag != nil {
 		metricsAddr = metricsAddrFlag.Value.String()
-
 	}
 	if metricsAddr == "" {
 		metricsAddr = cnst.DefaultMetricsAddr

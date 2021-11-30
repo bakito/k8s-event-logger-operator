@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -25,8 +26,10 @@ var (
 // Custom type for context key, so we don't have to use 'string' directly
 type contextKey string
 
-var specKey = contextKey("spec")
-var errorsKey = contextKey("errors")
+var (
+	specKey   = contextKey("spec")
+	errorsKey = contextKey("errors")
+)
 
 // HasChanged check if the spec or operator version has changed
 func (in *EventLogger) HasChanged() bool {
@@ -168,7 +171,7 @@ func translateFunc(ut ut.Translator, fe validator.FieldError) string {
 
 // Validate validates the entire event logger spec for errors and returns an error (it can be casted to
 // eventLoggerValidatorError, containing a list of errors inside). When error is printed as string, it will
-// automatically contains the full list of validation errors.
+// automatically contain the full list of validation errors.
 func (v *eventLoggerValidator) Validate() error {
 	// validate spec
 	err := v.val.StructCtx(v.ctx, v.spec)
@@ -178,14 +181,15 @@ func (v *eventLoggerValidator) Validate() error {
 
 	// collect human-readable errors
 	result := eventLoggerValidatorError{}
-	vErrors := err.(validator.ValidationErrors) // nolint: errcheck
+	var vErrors validator.ValidationErrors
+	errors.As(err, &vErrors)
 	for _, vErr := range vErrors {
 		errStr := fmt.Sprintf("%s: %s", vErr.Namespace(), vErr.Translate(v.trans))
 		result.addError(errStr)
 	}
 
 	// collect additional errors stored in context
-	for _, errStr := range v.ctx.Value(errorsKey).(*eventLoggerValidatorError).errList { // nolint: errcheck
+	for _, errStr := range v.ctx.Value(errorsKey).(*eventLoggerValidatorError).errList {
 		result.addError(errStr)
 	}
 

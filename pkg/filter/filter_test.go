@@ -4,7 +4,6 @@ import (
 	. "github.com/bakito/k8s-event-logger-operator/pkg/filter"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 )
 

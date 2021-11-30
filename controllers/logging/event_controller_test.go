@@ -4,19 +4,14 @@ import (
 	"context"
 	"encoding/json"
 
-	"sigs.k8s.io/controller-runtime/pkg/event"
-
-	"k8s.io/utils/pointer"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
-
 	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
 	mc "github.com/bakito/k8s-event-logger-operator/pkg/mocks/client"
 	ml "github.com/bakito/k8s-event-logger-operator/pkg/mocks/logr"
 	gm "github.com/golang/mock/gomock"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +19,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -100,9 +97,7 @@ var _ = Describe("Logging", func() {
 	})
 
 	Context("logEvent", func() {
-		var (
-			logger *ml.MockLogger
-		)
+		var logger *ml.MockLogger
 
 		BeforeEach(func() {
 			logger = ml.NewMockLogger(mockCtrl)
@@ -129,7 +124,6 @@ var _ = Describe("Logging", func() {
 			})
 		})
 		It("should log one message with 14 fields", func() {
-
 			child := ml.NewMockLogger(mockCtrl)
 			logger.EXPECT().WithValues(repeat(gm.Any(), 14)...).Times(1).Return(child)
 			child.EXPECT().Info(gm.Any()).Times(1)
@@ -146,7 +140,6 @@ var _ = Describe("Logging", func() {
 			})
 		})
 		It("should log one message with custom fields", func() {
-
 			child := ml.NewMockLogger(mockCtrl)
 			logger.EXPECT().WithValues("type", "test-type").Times(1).Return(child)
 			child.EXPECT().WithValues("name", "test-io-name").Times(1).Return(child)
@@ -155,7 +148,8 @@ var _ = Describe("Logging", func() {
 			child.EXPECT().Info(gm.Any()).Times(1)
 
 			lp := &loggingPredicate{
-				Config: &Config{filter: filter.Always,
+				Config: &Config{
+					filter: filter.Always,
 					logFields: []v1.LogField{
 						{Name: "type", Path: []string{"Type"}},
 						{Name: "name", Path: []string{"InvolvedObject", "Name"}},
@@ -249,16 +243,16 @@ var _ = Describe("Logging", func() {
 				"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
 			),
 			Entry("10",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: pointer.StringPtr("argoproj.io"), EventTypes: []string{}}}},
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", APIGroup: pointer.StringPtr("argoproj.io"), EventTypes: []string{}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "argoproj.io", Version: "v1alpha1"}.String()}},
 				true,
-				"( ( ( Kind == 'Application' AND ApiGroup == 'argoproj.io' ) ) )",
+				"( ( ( Kind == 'Application' AND APIGroup == 'argoproj.io' ) ) )",
 			),
 			Entry("11",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", ApiGroup: pointer.StringPtr("argoproj.io"), EventTypes: []string{}}}},
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", APIGroup: pointer.StringPtr("argoproj.io"), EventTypes: []string{}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "app.k8s.io", Version: "v1beta1"}.String()}},
 				false,
-				"( ( ( Kind == 'Application' AND ApiGroup == 'argoproj.io' ) ) )",
+				"( ( ( Kind == 'Application' AND APIGroup == 'argoproj.io' ) ) )",
 			),
 			Entry("12",
 
