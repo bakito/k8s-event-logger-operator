@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/bakito/operator-utils v1.3.2
 	github.com/fatih/structs v1.1.0
-	github.com/go-logr/logr v0.4.0
+	github.com/go-logr/logr v1.2.1
 	github.com/go-playground/locales v0.14.0
 	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-playground/validator/v10 v10.9.0
