@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/utils/pointer"
 )
