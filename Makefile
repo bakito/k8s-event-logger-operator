@@ -82,7 +82,7 @@ test-release: goreleaser
 mocks: mockgen
 	$(MOCKGEN) -destination pkg/mocks/client/mock.go sigs.k8s.io/controller-runtime/pkg/client Client
 
-	$(MOCKGEN) -destination pkg/mocks/logr/mock.go   github.com/go-logr/logr Logger
+	$(MOCKGEN) -destination pkg/mocks/logr/mock.go   github.com/go-logr/logr LogSink
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.

@@ -8,6 +8,7 @@ import (
 	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
 	mc "github.com/bakito/k8s-event-logger-operator/pkg/mocks/client"
 	ml "github.com/bakito/k8s-event-logger-operator/pkg/mocks/logr"
+	"github.com/go-logr/logr"
 	gm "github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -96,21 +97,23 @@ var _ = Describe("Logging", func() {
 	})
 
 	Context("logEvent", func() {
-		var logger *ml.MockLogger
+		var mockSink *ml.MockLogSink
 
 		BeforeEach(func() {
-			logger = ml.NewMockLogger(mockCtrl)
-			eventLog = logger
+			mockSink = ml.NewMockLogSink(mockCtrl)
+			mockSink.EXPECT().Init(gm.Any())
+			mockSink.EXPECT().Enabled(gm.Any()).AnyTimes().Return(true)
+			eventLog = logr.New(mockSink)
 		})
 
 		It("should log nothing", func() {
-			logger.EXPECT().WithValues().Times(0)
+			mockSink.EXPECT().WithValues().Times(0)
 
 			lp := &loggingPredicate{}
 			lp.logEvent(&corev1.Event{})
 		})
 		It("should log nothing if resource version does not match", func() {
-			logger.EXPECT().WithValues().Times(0)
+			mockSink.EXPECT().WithValues().Times(0)
 
 			lp := &loggingPredicate{
 				lastVersion: "2",
@@ -123,9 +126,11 @@ var _ = Describe("Logging", func() {
 			})
 		})
 		It("should log one message with 14 fields", func() {
-			child := ml.NewMockLogger(mockCtrl)
-			logger.EXPECT().WithValues(repeat(gm.Any(), 14)...).Times(1).Return(child)
-			child.EXPECT().Info(gm.Any()).Times(1)
+			childSink := ml.NewMockLogSink(mockCtrl)
+			childSink.EXPECT().Init(gm.Any()).AnyTimes()
+			childSink.EXPECT().Enabled(gm.Any()).AnyTimes().Return(true)
+			mockSink.EXPECT().WithValues(repeat(gm.Any(), 14)...).Times(1).Return(childSink)
+			childSink.EXPECT().Info(gm.Any(), gm.Any()).Times(1)
 
 			lp := &loggingPredicate{
 				lastVersion: "2",
@@ -139,12 +144,14 @@ var _ = Describe("Logging", func() {
 			})
 		})
 		It("should log one message with custom fields", func() {
-			child := ml.NewMockLogger(mockCtrl)
-			logger.EXPECT().WithValues("type", "test-type").Times(1).Return(child)
-			child.EXPECT().WithValues("name", "test-io-name").Times(1).Return(child)
-			child.EXPECT().WithValues("kind", "test-kind").Times(1).Return(child)
-			child.EXPECT().WithValues("reason", "").Times(1).Return(child)
-			child.EXPECT().Info(gm.Any()).Times(1)
+			childSink := ml.NewMockLogSink(mockCtrl)
+			childSink.EXPECT().Init(gm.Any()).AnyTimes()
+			childSink.EXPECT().Enabled(gm.Any()).AnyTimes().Return(true)
+			mockSink.EXPECT().WithValues("type", "test-type").Times(1).Return(childSink)
+			childSink.EXPECT().WithValues("name", "test-io-name").Times(1).Return(childSink)
+			childSink.EXPECT().WithValues("kind", "test-kind").Times(1).Return(childSink)
+			childSink.EXPECT().WithValues("reason", "").Times(1).Return(childSink)
+			childSink.EXPECT().Info(gm.Any(), gm.Any()).Times(1)
 
 			lp := &loggingPredicate{
 				Config: &Config{

@@ -28,11 +28,15 @@ import (
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/bakito/operator-utils/pkg/pprof"
+	"github.com/go-logr/zapr"
+	zap2 "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -70,12 +74,17 @@ func main() {
 
 	flag.StringVar(&configName, cnst.ArgConfigName, "",
 		"The name of the eventlogger config to work with.")
-	opts := zap.Options{}
-	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
-	logger := zap.New(zap.UseFlagOptions(&opts))
-	ctrl.SetLogger(logger)
+	o := func(o *zap.Options) {
+		o.DestWriter = os.Stderr
+		o.Development = false
+		encCfg := zap2.NewProductionEncoderConfig()
+		encCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+		o.Encoder = zapcore.NewJSONEncoder(encCfg)
+	}
+	ctrl.SetLogger(zapr.NewLogger(zap.NewRaw(o)))
+	klog.SetLogger(ctrl.Log)
 
 	printVersion()
 
