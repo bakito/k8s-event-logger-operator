@@ -123,10 +123,10 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 			Kind: "Pod",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        loggerName(cr) + "-" + randString(),
-			Namespace:   cr.Namespace,
-			Labels:      labels,
-			Annotations: annotations,
+			GenerateName: loggerName(cr) + "-",
+			Namespace:    cr.Namespace,
+			Labels:       labels,
+			Annotations:  annotations,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{

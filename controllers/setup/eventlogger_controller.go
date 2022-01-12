@@ -18,9 +18,7 @@ package setup
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
-	"math/big"
 	"os"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
@@ -196,23 +194,6 @@ const (
 	replace updateReplace = "replace"
 	no      updateReplace = "no"
 )
-
-func randString() string {
-	var result []byte
-	for {
-		if len(result) >= 8 {
-			return string(result)
-		}
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(127)))
-		if err != nil {
-			return ""
-		}
-		n := num.Int64()
-		if n >= 97 && n <= 122 {
-			result = append(result, byte(n))
-		}
-	}
-}
 
 func loggerName(cr *eventloggerv1.EventLogger) string {
 	return "event-logger-" + cr.Name

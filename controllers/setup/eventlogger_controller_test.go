@@ -199,14 +199,6 @@ var _ = Describe("Logging", func() {
 			})
 		})
 	})
-	Context("randString", func() {
-		It("generate a random string", func() {
-			for i := 0; i < 100; i++ {
-				r := randString()
-				Ω(r).Should(MatchRegexp("^[a-z]{8}$"))
-			}
-		})
-	})
 })
 
 func testReconcile(initialObjects ...client.Object) (client.Client, reconcile.Result) {
