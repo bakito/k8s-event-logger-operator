@@ -31,8 +31,8 @@ import (
 )
 
 func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.EventLogger, pod *corev1.Pod,
-	reqLogger logr.Logger) (bool, error) {
-
+	reqLogger logr.Logger) (bool, error,
+) {
 	podList := &corev1.PodList{}
 	opts := []client.ListOption{
 		client.InNamespace(cr.Namespace),
