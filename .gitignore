@@ -27,3 +27,4 @@ bin
 /helm/*-values.yaml
 dist
 gomock*
+certs

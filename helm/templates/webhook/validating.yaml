@@ -1,0 +1,33 @@
+{{- if .Values.webhook.enabled -}}
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validating-webhook-configuration
+  {{- if .Values.webhook.openShiftServiceCert.enabled }}
+  annotations:
+    service.beta.openshift.io/inject-cabundle: "true"
+  {{- end }}
+webhooks:
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      caBundle: {{ .Values.webhook.caBundle }}
+      service:
+        name: {{ include "k8s-event-logger-operator.fullname" . }}
+        namespace: {{ .Release.Namespace }}
+        path: /validate-eventlogger-bakito-ch-v1-eventlogger
+    failurePolicy: Fail
+    name: veventlogger.bakito.ch
+    rules:
+      - apiGroups:
+          - eventlogger.bakito.ch
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - eventloggers
+    sideEffects: None
+{{- end -}}

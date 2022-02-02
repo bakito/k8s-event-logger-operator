@@ -8,6 +8,7 @@ image:
 
 eventLogger:
   leaderElection: true
+  leaderElectionResourceLock:
   resources:
     requests:
       cpu: 100m
@@ -20,6 +21,15 @@ logging: # see https://github.com/operator-framework/operator-sdk/blob/master/do
   level: info
   timeEncoding: iso8601
 
+webhook:
+  enabled: false
+  certManager:
+    enabled: false
+  openShiftServiceCert:
+    enabled: false
+  certsSecret:
+    name: 
+  caBundle: Cg==
 
 nameOverride: ""
 fullnameOverride: ""

@@ -1,17 +1,17 @@
 domain: bakito.ch
-layout: go.kubebuilder.io/v2
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
 projectName: k8s-event-logger-operator
 repo: github.com/bakito/k8s-event-logger-operator
 resources:
 - group: eventlogger
   kind: EventLogger
   version: v1
-- group: eventlogger
-  kind: Event
-  version: v1
-- group: eventlogger
-  kind: Pod
-  version: v1
-version: 3-alpha
-plugins:
-  go.sdk.operatorframework.io/v2-alpha: {}
+  webhooks:
+    defaulting: false
+    validation: true
+    webhookVersion: v1
+version: "3"

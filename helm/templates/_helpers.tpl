@@ -73,3 +73,10 @@ Create the name of the role to use
     {{ default "default" .Values.rbac.roleName }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Get the webhook cert secret name
+*/}}
+{{- define "k8s-event-logger-operator.webhookCertSecretName" -}}
+{{- default (printf "%s-webhook" (include "k8s-event-logger-operator.fullname" .))  .Values.webhook.certsSecret.name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}

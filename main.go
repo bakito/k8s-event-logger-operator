@@ -38,6 +38,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
@@ -95,6 +96,7 @@ func main() {
 		Scheme:                     scheme,
 		MetricsBindAddress:         metricsAddr,
 		Port:                       9443,
+		CertDir:                    "certs",
 		LeaderElection:             enableLeaderElection && !enableLoggerMode,
 		LeaderElectionID:           "leader.eventlogger.bakito.ch",
 		LeaderElectionResourceLock: os.Getenv(EnvLeaderElectionResourceLock),
@@ -136,7 +138,6 @@ func main() {
 					os.Exit(1)
 				}
 			}
-
 		} else {
 			if err = (&logging.Reconciler{
 				Client:     mgr.GetClient(),
@@ -158,6 +159,15 @@ func main() {
 			setupLog.Error(err, "unable to create pprof service")
 			os.Exit(1)
 		}
+	}
+
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
 	}
 
 	setupLog.Info("starting manager")

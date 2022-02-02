@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "k8s-event-logger-operator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
   {{- include "k8s-event-logger-operator.labels" . | nindent 4 }}
 spec:
@@ -47,9 +48,38 @@ spec:
             - name: LOGGER_POD_LIMIT_MEM
               value: "{{ .Values.eventLogger.resources.limits.memory }}"
             - name: "ENABLE_WEBHOOKS"
-              value: "false"
+              value: "{{ .Values.webhook.enabled }}"
+            {{- if .Values.eventLogger.leaderElectionResourceLock }}
+            - name: EnvLeaderElectionResourceLock
+              value: .Values.eventLogger.leaderElectionResourceLock
+            {{- end }}
           resources:
-      {{- toYaml .Values.resources | nindent 12 }}
+          {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          ports:
+            - containerPort: 8080
+              name: metrics
+            {{- if .Values.webhook.enabled }}
+            - containerPort: 9443
+              name: webhook
+          {{- end }}
+          {{- if .Values.webhook.enabled  }}
+          volumeMounts:
+            - mountPath: /opt/go/certs
+              name: "webhook-certs"
+              readOnly: true
+          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
       {{- toYaml . | nindent 8 }}
@@ -60,5 +90,12 @@ spec:
       {{- end }}
       {{- with .Values.tolerations }}
       tolerations:
-    {{- toYaml . | nindent 8 }}
-  {{- end }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webhook.enabled }}
+      volumes:
+        - name: "webhook-certs"
+          secret:
+            defaultMode: 420
+            secretName: {{ include "k8s-event-logger-operator.webhookCertSecretName" . }}
+      {{- end }}

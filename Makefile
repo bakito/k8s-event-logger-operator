@@ -21,25 +21,8 @@ test: generate mocks tidy fmt vet manifests
 manager: generate fmt vet
 	go build -o bin/manager main.go
 
-# Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet manifests
-	go run ./main.go
-
-# Install CRDs into a cluster
-install: manifests kustomize
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-
-# Uninstall CRDs from a cluster
-uninstall: manifests kustomize
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
-
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize
-	cd config/manager && kustomize edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
-
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./pkg/..." paths="./api/..." paths="./controllers/..." output:crd:artifacts:config=config/crd/bases
 	cp config/crd/bases/*.yaml helm/crds/
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -83,6 +66,10 @@ mocks: mockgen
 	$(MOCKGEN) -destination pkg/mocks/client/mock.go sigs.k8s.io/controller-runtime/pkg/client Client
 
 	$(MOCKGEN) -destination pkg/mocks/logr/mock.go   github.com/go-logr/logr LogSink
+
+.PHONY: lint-helm
+lint-helm:
+	helm lint helm/ --set webhook.enabled=true --set webhook.certManager.enabled=true
 
 CONTROLLER_GEN = ./bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.

@@ -1,0 +1,27 @@
+{{- if and (.Values.webhook.enabled)  (.Values.webhook.certManager.enabled) -}}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "k8s-event-logger-operator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+  {{- include "k8s-event-logger-operator.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "k8s-event-logger-operator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+  {{- include "k8s-event-logger-operator.labels" . | nindent 4 }}
+spec:
+  dnsNames:
+  - {{ include "k8s-event-logger-operator.fullname" . }}.{{ .Release.Namespace }}.svc
+  - {{ include "k8s-event-logger-operator.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: {{ include "k8s-event-logger-operator.fullname" . }}
+  secretName: {{ include "k8s-event-logger-operator.webhookCertSecretName" . }}
+{{- end -}}
