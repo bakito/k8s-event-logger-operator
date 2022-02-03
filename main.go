@@ -100,6 +100,7 @@ func main() {
 		LeaderElection:             enableLeaderElection && !enableLoggerMode,
 		LeaderElectionID:           "leader.eventlogger.bakito.ch",
 		LeaderElectionResourceLock: os.Getenv(EnvLeaderElectionResourceLock),
+		HealthProbeBindAddress:     ":8081",
 		Namespace:                  watchNamespace,
 	})
 	if err != nil {
