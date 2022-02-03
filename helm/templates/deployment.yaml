@@ -50,7 +50,7 @@ spec:
             - name: "ENABLE_WEBHOOKS"
               value: "{{ .Values.webhook.enabled }}"
             {{- if .Values.eventLogger.leaderElectionResourceLock }}
-            - name: EnvLeaderElectionResourceLock
+            - name: LEADER_ELECTION_RESOURCE_LOCK
               value: .Values.eventLogger.leaderElectionResourceLock
             {{- end }}
           resources:
