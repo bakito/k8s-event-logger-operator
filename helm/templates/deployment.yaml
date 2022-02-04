@@ -51,7 +51,7 @@ spec:
               value: "{{ .Values.webhook.enabled }}"
             {{- if .Values.eventLogger.leaderElectionResourceLock }}
             - name: LEADER_ELECTION_RESOURCE_LOCK
-              value: {{. Values.eventLogger.leaderElectionResourceLock }}
+              value: {{ .Values.eventLogger.leaderElectionResourceLock }}
             {{- end }}
           resources:
           {{- toYaml .Values.resources | nindent 12 }}
