@@ -23,7 +23,6 @@ import (
 
 // EventLoggerSpec defines the desired state of EventLogger
 type EventLoggerSpec struct {
-
 	// Kinds the kinds to log the events for
 	// +kubebuilder:validation:MinItems=1
 	Kinds []Kind `json:"kinds,omitempty"`

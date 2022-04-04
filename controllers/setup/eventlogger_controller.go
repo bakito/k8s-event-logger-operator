@@ -114,7 +114,8 @@ func (r *Reconciler) createOrReplace(
 	cr *eventloggerv1.EventLogger,
 	res client.Object,
 	reqLogger logr.Logger,
-	updateCheck func(curr runtime.Object, next runtime.Object) updateReplace) (bool, error) {
+	updateCheck func(curr runtime.Object, next runtime.Object) updateReplace,
+) (bool, error) {
 	query := res.DeepCopyObject().(client.Object)
 	mo := res.(metav1.Object)
 	// Check if this Resource already exists
