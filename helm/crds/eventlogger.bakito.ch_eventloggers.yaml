@@ -1,6 +1,6 @@
 
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
@@ -15,150 +15,150 @@ spec:
     plural: eventloggers
     singular: eventlogger
   scope: Namespaced
-  validation:
-    openAPIV3Schema:
-      description: EventLogger is the Schema for the eventloggers API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: EventLoggerSpec defines the desired state of EventLogger
-          properties:
-            annotations:
-              additionalProperties:
-                type: string
-              description: Labels additional annotations for the logger pod
-              type: object
-            eventTypes:
-              description: EventTypes the event types to log. If empty all events
-                are logged.
-              items:
-                type: string
-              minItems: 0
-              type: array
-            kinds:
-              description: Kinds the kinds to log the events for
-              items:
-                description: Kind defines a kind to log events for
-                properties:
-                  apiGroup:
-                    nullable: true
-                    type: string
-                  eventTypes:
-                    description: EventTypes the event types to log. If empty events
-                      are logged as defined in spec.
-                    items:
-                      type: string
-                    minItems: 0
-                    type: array
-                  matchingPatterns:
-                    description: MatchingPatterns optional regex pattern that must
-                      be contained in the message to be logged
-                    items:
-                      type: string
-                    minItems: 0
-                    type: array
-                  name:
-                    minLength: 3
-                    type: string
-                  reasons:
-                    description: Reasons the event reasons to log. If empty events
-                      with any reasons are logged.
-                    items:
-                      type: string
-                    minItems: 0
-                    type: array
-                  skipOnMatch:
-                    description: SkipOnMatch skip the entry if matched
-                    type: boolean
-                required:
-                - name
-                type: object
-              minItems: 1
-              type: array
-            labels:
-              additionalProperties:
-                type: string
-              description: Labels additional labels for the logger pod
-              type: object
-            logFields:
-              description: LogFields fields ot the event to be logged.
-              items:
-                description: LogField defines a log field
-                properties:
-                  name:
-                    description: name of the log field
-                    type: string
-                  path:
-                    description: Path within the corev1.Event struct https://github.com/kubernetes/api/blob/master/core/v1/types.go
-                    items:
-                      type: string
-                    minItems: 1
-                    type: array
-                  value:
-                    description: Value a static value of the log field. Can be uses
-                      to add static log fields
-                    nullable: true
-                    type: string
-                required:
-                - name
-                type: object
-              type: array
-            namespace:
-              description: namespace the namespace to watch on, may be an empty string
-              nullable: true
-              type: string
-            nodeSelector:
-              additionalProperties:
-                type: string
-              description: 'NodeSelector is a selector which must be true for the
-                pod to fit on a node. Selector which must match a node''s labels for
-                the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
-              type: object
-            scrapeMetrics:
-              description: ScrapeMetrics if true, prometheus scrape annotations are
-                added to the pod
-              type: boolean
-            serviceAccount:
-              description: ServiceAccount the service account to use for the logger
-                pod
-              type: string
-          type: object
-        status:
-          description: EventLoggerStatus defines the observed state of EventLogger
-          properties:
-            error:
-              description: Error
-              type: string
-            hash:
-              description: Hash
-              type: string
-            lastProcessed:
-              description: LastProcessed the timestamp the cr was last processed
-              format: date-time
-              type: string
-            operatorVersion:
-              description: OperatorVersion the version of the operator that processed
-                the cr
-              type: string
-          required:
-          - lastProcessed
-          - operatorVersion
-          type: object
-      type: object
-  version: v1
   versions:
   - name: v1
+    schema:
+      openAPIV3Schema:
+        description: EventLogger is the Schema for the eventloggers API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: EventLoggerSpec defines the desired state of EventLogger
+            properties:
+              annotations:
+                additionalProperties:
+                  type: string
+                description: Labels additional annotations for the logger pod
+                type: object
+              eventTypes:
+                description: EventTypes the event types to log. If empty all events
+                  are logged.
+                items:
+                  type: string
+                minItems: 0
+                type: array
+              kinds:
+                description: Kinds the kinds to log the events for
+                items:
+                  description: Kind defines a kind to log events for
+                  properties:
+                    apiGroup:
+                      nullable: true
+                      type: string
+                    eventTypes:
+                      description: EventTypes the event types to log. If empty events
+                        are logged as defined in spec.
+                      items:
+                        type: string
+                      minItems: 0
+                      type: array
+                    matchingPatterns:
+                      description: MatchingPatterns optional regex pattern that must
+                        be contained in the message to be logged
+                      items:
+                        type: string
+                      minItems: 0
+                      type: array
+                    name:
+                      minLength: 3
+                      type: string
+                    reasons:
+                      description: Reasons the event reasons to log. If empty events
+                        with any reasons are logged.
+                      items:
+                        type: string
+                      minItems: 0
+                      type: array
+                    skipOnMatch:
+                      description: SkipOnMatch skip the entry if matched
+                      type: boolean
+                  required:
+                  - name
+                  type: object
+                minItems: 1
+                type: array
+              labels:
+                additionalProperties:
+                  type: string
+                description: Labels additional labels for the logger pod
+                type: object
+              logFields:
+                description: LogFields fields ot the event to be logged.
+                items:
+                  description: LogField defines a log field
+                  properties:
+                    name:
+                      description: name of the log field
+                      type: string
+                    path:
+                      description: Path within the corev1.Event struct https://github.com/kubernetes/api/blob/master/core/v1/types.go
+                      items:
+                        type: string
+                      minItems: 1
+                      type: array
+                    value:
+                      description: Value a static value of the log field. Can be uses
+                        to add static log fields
+                      nullable: true
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              namespace:
+                description: namespace the namespace to watch on, may be an empty
+                  string
+                nullable: true
+                type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                description: 'NodeSelector is a selector which must be true for the
+                  pod to fit on a node. Selector which must match a node''s labels
+                  for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/'
+                type: object
+              scrapeMetrics:
+                description: ScrapeMetrics if true, prometheus scrape annotations
+                  are added to the pod
+                type: boolean
+              serviceAccount:
+                description: ServiceAccount the service account to use for the logger
+                  pod
+                type: string
+            type: object
+          status:
+            description: EventLoggerStatus defines the observed state of EventLogger
+            properties:
+              error:
+                description: Error
+                type: string
+              hash:
+                description: Hash
+                type: string
+              lastProcessed:
+                description: LastProcessed the timestamp the cr was last processed
+                format: date-time
+                type: string
+              operatorVersion:
+                description: OperatorVersion the version of the operator that processed
+                  the cr
+                type: string
+            required:
+            - lastProcessed
+            - operatorVersion
+            type: object
+        type: object
     served: true
     storage: true
 status:
