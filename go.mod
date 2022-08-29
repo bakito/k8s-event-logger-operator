@@ -14,7 +14,7 @@ require (
 	github.com/google/go-cmp v0.5.8
 	github.com/google/uuid v1.3.0
 	github.com/onsi/ginkgo/v2 v2.1.4
-	github.com/onsi/gomega v1.20.0
+	github.com/onsi/gomega v1.20.1
 	go.uber.org/zap v1.22.0
 	k8s.io/api v0.24.4
 	k8s.io/apimachinery v0.24.4
