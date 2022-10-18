@@ -1,4 +1,4 @@
-FROM bitnami/golang:1.18 as builder
+FROM bitnami/golang:1.19 as builder
 
 WORKDIR /build
 
