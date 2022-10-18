@@ -3,12 +3,17 @@
 # Declare variables to be passed into your templates.
 
 image:
+  # --  Repository to use
   repository: ghcr.io/bakito/k8s-event-logger
-  pullPolicy: Always
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
 
 eventLogger:
+  # --  Enable leader election for the controller
   leaderElection: true
+  # --  Leader election lock type
   leaderElectionResourceLock:
+  # -- Resource limits and requests for the operator pods.
   resources:
     requests:
       cpu: 100m
@@ -18,35 +23,49 @@ eventLogger:
       memory: 256Mi
 
 logging: # see https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md
+  # -- Log level
   level: info
+  # -- Log time encoding
   timeEncoding: iso8601
 
 webhook:
+  # -- Specifies whether validation webhook should be created.
   enabled: false
+
   certManager:
+    # -- Enable cert manager setup
     enabled: false
+
   openShiftServiceCert:
+    # -- Enable OpenShift service certificate
     enabled: false
   certsSecret:
-    name: 
+    # -- Certificate secret name
+    name:
+  # -- certificate ca bundle
   caBundle: Cg==
 
+# -- String to partially override "argo-rollouts.fullname" template
 nameOverride: ""
+
+# -- String to fully override "argo-rollouts.fullname" template
 fullnameOverride: ""
 
 serviceAccount:
-  # Specifies whether a service account should be created
+  # -- Specifies whether a service account should be created
   create: true
-  # The name of the service account to use.
+  # -- The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
 
 rbac:
+  # -- Specifies whether rbac should be created
   create: true
-  # The name of the role and clusterrole to use.
+  # -- The name of the role and clusterrole to use.
   # If not set and create is true, a name is generated using the fullname template
   roleName:
 
+# -- Resource limits and requests for the operator pods.
 resources:
   requests:
     cpu: 100m
@@ -55,8 +74,11 @@ resources:
     cpu: 200m
     memory: 512Mi
 
-nodeSelector: {}
+# -- [Node selector]
+nodeSelector: { }
 
-tolerations: []
+# -- [Tolerations] for use with node taints
+tolerations: [ ]
 
-affinity: {}
+# -- Assign custom [affinity] rules to the deployment
+affinity: { }

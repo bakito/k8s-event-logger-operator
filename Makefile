@@ -81,12 +81,14 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 SEMVER ?= $(LOCALBIN)/semver
 HELM_DOCS ?= $(LOCALBIN)/helm-docs
 MOCKGEN ?= $(LOCALBIN)/mockgen
+GORELEASER ?= $(LOCALBIN)/goreleaser
 
 ## Tool Versions
 CONTROLLER_TOOLS_VERSION ?= v0.10.0
 SEMVER_VERSION ?= latest
 HELM_DOCS_VERSION ?= v1.11.0
 MOCKGEN_VERSION ?= v1.6.0
+GORELEASER_VERSION ?= latest
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
@@ -103,10 +105,10 @@ mockgen: $(MOCKGEN) ## Download mockgen locally if necessary.
 $(MOCKGEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/mockgen|| GOBIN=$(LOCALBIN) go install github.com/golang/mock/mockgen@$(MOCKGEN_VERSION)
 
-GORELEASER = ./bin/goreleaser
-goreleaser: ## Download goreleaser locally if necessary.
-	$(call go-get-tool,$(GORELEASER),github.com/goreleaser/goreleaser)
+.PHONY: goreleaser
+goreleaser: $(GORELEASER) ## Download goreleaser locally if necessary.
+$(GORELEASER): $(LOCALBIN)
+	test -s $(LOCALBIN)/goreleaser|| GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@$(GORELEASER_VERSION)
 
-MOCKGEN = ./bin/mockgen
-mockgen: ## Download mockgen locally if necessary.
-	$(call go-get-tool,$(MOCKGEN),github.com/golang/mock/mockgen@v1.6.0)
+docs: helm-docs
+	@$(LOCALBIN)/helm-docs
