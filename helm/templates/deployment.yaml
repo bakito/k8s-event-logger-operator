@@ -14,6 +14,9 @@ spec:
     metadata:
       labels:
     {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 8 }}
+    {{- with .Values.extraPodLabels }}
+    {{- toYaml . | nindent 8 }}
+    {{- end }}
     spec:
       serviceAccountName: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
       containers:
