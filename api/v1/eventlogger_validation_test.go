@@ -39,6 +39,7 @@ var _ = Describe("V1", func() {
 			s := &v1.EventLoggerSpec{
 				Annotations: map[string]string{"in valid": "valid"},
 			}
+			Ω(s.Validate()).Should(HaveOccurred())
 			s = &v1.EventLoggerSpec{
 				Annotations: map[string]string{"in:valid:": "valid"},
 			}
