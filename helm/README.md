@@ -1,6 +1,7 @@
 # k8s-event-logger-operator
 
-![Version: 1.10.2](https://img.shields.io/badge/Version-1.10.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.10.2](https://img.shields.io/badge/AppVersion-v1.10.2-informational?style=flat-square)
+
+![Version: 1.10.2](https://img.shields.io/badge/Version-1.10.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.10.2](https://img.shields.io/badge/AppVersion-v1.10.2-informational?style=flat-square) 
 
 This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 
@@ -13,31 +14,31 @@ helm install k8s-event-logger-operator bakito/k8s-event-logger-operator
 
 ## Values
 
-| Key | Type | Default | Description                                                                                                                 |
-|-----|------|---------|-----------------------------------------------------------------------------------------------------------------------------|
-| affinity | object | `{}` | Assign custom [affinity] rules to the deployment                                                                            |
-| eventLogger.leaderElection | bool | `true` | Enable leader election for the controller                                                                                   |
-| eventLogger.leaderElectionResourceLock | string | `nil` | Leader election lock type                                                                                                   |
-| eventLogger.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}` | Resource limits and requests for the operator pods.                                                                         |
-| extraPodLabels | object | `{}` | Extra pod labels. |                                                                                                          |
-| fullnameOverride | string | `""` | String to fully override "argo-rollouts.fullname" template                                                                  |
-| image.pullPolicy | string | `"IfNotPresent"` | Image pull policy                                                                                                           |
-| image.repository | string | `"ghcr.io/bakito/k8s-event-logger"` | Repository to use                                                                                                           |
-| logging.level | string | `"info"` | Log level                                                                                                                   |
-| logging.timeEncoding | string | `"iso8601"` | Log time encoding                                                                                                           |
-| nameOverride | string | `""` | String to partially override "argo-rollouts.fullname" template                                                              |
-| nodeSelector | object | `{}` | [Node selector]                                                                                                             |
-| rbac.create | bool | `true` | Specifies whether rbac should be created                                                                                    |
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| affinity | object | `{}` | Assign custom [affinity] rules to the deployment |
+| eventLogger.leaderElection | bool | `true` | Enable leader election for the controller |
+| eventLogger.leaderElectionResourceLock | string | `nil` | Leader election lock type |
+| eventLogger.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}` | Resource limits and requests for the operator pods. |
+| extraPodLabels | object | `{}` | Add additional pod [labels] |
+| fullnameOverride | string | `""` | String to fully override "argo-rollouts.fullname" template |
+| image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
+| image.repository | string | `"ghcr.io/bakito/k8s-event-logger"` | Repository to use |
+| logging.level | string | `"info"` | Log level |
+| logging.timeEncoding | string | `"iso8601"` | Log time encoding |
+| nameOverride | string | `""` | String to partially override "argo-rollouts.fullname" template |
+| nodeSelector | object | `{}` | [Node selector] |
+| rbac.create | bool | `true` | Specifies whether rbac should be created |
 | rbac.roleName | string | `nil` | The name of the role and clusterrole to use. If not set and create is true, a name is generated using the fullname template |
-| resources | object | `{"limits":{"cpu":"200m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Resource limits and requests for the operator pods.                                                                         |
-| serviceAccount.create | bool | `true` | Specifies whether a service account should be created                                                                       |
-| serviceAccount.name | string | `nil` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template      |
-| tolerations | list | `[]` | [Tolerations] for use with node taints                                                                                      |
-| webhook.caBundle | string | `"Cg=="` | certificate ca bundle                                                                                                       |
-| webhook.certManager.enabled | bool | `false` | Enable cert manager setup                                                                                                   |
-| webhook.certsSecret.name | string | `nil` | Certificate secret name                                                                                                     |
-| webhook.enabled | bool | `false` | Specifies whether validation webhook should be created.                                                                     |
-| webhook.openShiftServiceCert.enabled | bool | `false` | Enable OpenShift service certificate                                                                                        |
+| resources | object | `{"limits":{"cpu":"200m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Resource limits and requests for the operator pods. |
+| serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
+| serviceAccount.name | string | `nil` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
+| tolerations | list | `[]` | [Tolerations] for use with node taints |
+| webhook.caBundle | string | `"Cg=="` | certificate ca bundle |
+| webhook.certManager.enabled | bool | `false` | Enable cert manager setup |
+| webhook.certsSecret.name | string | `nil` | Certificate secret name |
+| webhook.enabled | bool | `false` | Specifies whether validation webhook should be created. |
+| webhook.openShiftServiceCert.enabled | bool | `false` | Enable OpenShift service certificate |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs](https://github.com/norwoodj/helm-docs)
