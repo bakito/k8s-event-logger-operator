@@ -19,27 +19,30 @@ var _ = Describe("V1", func() {
 			s := &v1.EventLoggerSpec{
 				Labels: map[string]string{"in valid": "valid"},
 			}
-
+			Ω(s.Validate()).Should(HaveOccurred())
+			s = &v1.EventLoggerSpec{
+				Labels: map[string]string{"in:valid": "valid"},
+			}
 			Ω(s.Validate()).Should(HaveOccurred())
 		})
 		It("should have invalid label value", func() {
 			s := &v1.EventLoggerSpec{
 				Labels: map[string]string{"valid": "in valid"},
 			}
-
+			Ω(s.Validate()).Should(HaveOccurred())
+			s = &v1.EventLoggerSpec{
+				Labels: map[string]string{"valid": "in:valid"},
+			}
 			Ω(s.Validate()).Should(HaveOccurred())
 		})
 		It("should have invalid annotation key", func() {
 			s := &v1.EventLoggerSpec{
 				Annotations: map[string]string{"in valid": "valid"},
 			}
-
 			Ω(s.Validate()).Should(HaveOccurred())
-
 			s = &v1.EventLoggerSpec{
-				Annotations: map[string]string{"in/valid/": "valid"},
+				Annotations: map[string]string{"in:valid:": "valid"},
 			}
-
 			Ω(s.Validate()).Should(HaveOccurred())
 		})
 	})
