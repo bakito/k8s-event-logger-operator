@@ -4,3 +4,7 @@ description: This operator creates a logging pod that logs corev1.Event informat
 type: application
 version: "1.10.2"
 appVersion: "v1.10.2"
+
+annotations:
+  artifacthub.io/changes: |
+    - Add extra pod labels

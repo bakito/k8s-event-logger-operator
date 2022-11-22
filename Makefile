@@ -95,6 +95,11 @@ controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessar
 $(CONTROLLER_GEN): $(LOCALBIN)
 	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_TOOLS_VERSION)
 
+.PHONY: semver
+semver: $(SEMVER) ## Download semver locally if necessary.
+$(SEMVER): $(LOCALBIN)
+	test -s $(LOCALBIN)/semver || GOBIN=$(LOCALBIN) go install github.com/bakito/semver@$(SEMVER_VERSION)
+
 .PHONY: helm-docs
 helm-docs: $(HELM_DOCS) ## Download helm-docs locally if necessary.
 $(HELM_DOCS): $(LOCALBIN)
