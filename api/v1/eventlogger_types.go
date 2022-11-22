@@ -32,10 +32,10 @@ type EventLoggerSpec struct {
 	EventTypes []string `json:"eventTypes,omitempty"`
 
 	// Labels additional labels for the logger pod
-	Labels map[string]string `json:"labels,omitempty" validate:"k8s-label-keys,k8s-label-values"`
+	Labels map[string]string `json:"labels,omitempty" validate:"k8s-label-annotation-keys,k8s-label-values"`
 
 	// Labels additional annotations for the logger pod
-	Annotations map[string]string `json:"annotations,omitempty" validate:"k8s-annotation-keys"`
+	Annotations map[string]string `json:"annotations,omitempty" validate:"k8s-label-annotation-keys"`
 
 	// ScrapeMetrics if true, prometheus scrape annotations are added to the pod
 	ScrapeMetrics *bool `json:"scrapeMetrics,omitempty"`
@@ -52,7 +52,7 @@ type EventLoggerSpec struct {
 	// Selector which must match a node's labels for the pod to be scheduled on that node.
 	// More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
 	// +optional
-	NodeSelector map[string]string `json:"nodeSelector,omitempty" validate:"k8s-label-keys,k8s-label-values"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty" validate:"k8s-label-annotation-keys,k8s-label-values"`
 
 	// LogFields fields ot the event to be logged.
 	LogFields []LogField `json:"logFields,omitempty"`
