@@ -14,11 +14,14 @@ endif
 all: manager
 
 # Run tests
-test: generate mocks tidy fmt vet manifests
+test: tidy test-ci fmt test-ci
+
+# Run tests
+test-ci: generate mocks manifests
 	go test ./... -coverprofile cover.out
 
 # Build manager binary
-manager: generate fmt vet
+manager: generate fmt
 	go build -o bin/manager main.go
 
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -28,15 +31,8 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Run go fmt against code
-fmt:
-	go fmt ./...
-	gofmt -s -w .
-
-
-# Run go vet against code
-vet:
-	go vet ./...
+fmt: golangci-lint
+	$(LOCALBIN)/golangci-lint run --fix
 
 # go mod tidy
 tidy:
@@ -82,13 +78,15 @@ SEMVER ?= $(LOCALBIN)/semver
 HELM_DOCS ?= $(LOCALBIN)/helm-docs
 MOCKGEN ?= $(LOCALBIN)/mockgen
 GORELEASER ?= $(LOCALBIN)/goreleaser
+GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
 
 ## Tool Versions
 CONTROLLER_TOOLS_VERSION ?= v0.10.0
-SEMVER_VERSION ?= latest
+SEMVER_VERSION ?= v1.1.3
 HELM_DOCS_VERSION ?= v1.11.0
 MOCKGEN_VERSION ?= v1.6.0
 GORELEASER_VERSION ?= latest
+GOLANGCI_LINT_VERSION ?= latest
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
@@ -115,5 +113,19 @@ goreleaser: $(GORELEASER) ## Download goreleaser locally if necessary.
 $(GORELEASER): $(LOCALBIN)
 	test -s $(LOCALBIN)/goreleaser|| GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@$(GORELEASER_VERSION)
 
-docs: helm-docs
+.PHONY: golangci-lint
+golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
+$(GOLANGCI_LINT): $(LOCALBIN)
+	test -s $(LOCALBIN)/golangci-lint|| GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+
+docs: helm-docs update-docs
 	@$(LOCALBIN)/helm-docs
+
+update-docs: semver
+	@version=$$($(LOCALBIN)/semver -next); \
+	versionNum=$$($(LOCALBIN)/semver -next -numeric); \
+	sed -i "s/^version:.*$$/version: $${versionNum}/"    ./helm/Chart.yaml; \
+	sed -i "s/^appVersion:.*$$/appVersion: $${version}/" ./helm/Chart.yaml
+
+helm-lint: docs
+	helm lint ./helm

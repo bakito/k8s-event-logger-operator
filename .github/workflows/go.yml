@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version-file: "go.mod"
-      
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
 
@@ -32,7 +32,7 @@ jobs:
           go-version-file: "go.mod"
 
       - name: Test
-        run: make test
+        run: make test-ci
 
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
@@ -44,12 +44,19 @@ jobs:
         with:
           version: latest
           args: --skip-publish --snapshot --rm-dist
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
       - name: Lint Helm Chart
-        uses: WyriHaximus/github-action-helm3@v2
-        with:
-          exec: helm lint helm/
+        run: make helm-lint
 
-      - name: Build
-        run: go build -v ./...
+      - name: Check chart/README.md is correctly generated with 'make docs'
+        run: git diff --exit-code helm/README.md
 
