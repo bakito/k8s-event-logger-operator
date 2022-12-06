@@ -163,8 +163,8 @@ func (p *loggingPredicate) logEvent(e runtime.Object) bool {
 				"reason", evt.Reason,
 				"timestamp", evt.LastTimestamp,
 				"type", evt.Type,
-				"involvedObject ", evt.InvolvedObject,
-				"source ", evt.Source,
+				"involvedObject", evt.InvolvedObject,
+				"source", evt.Source,
 			)
 		} else {
 			m := structs.Map(evt)
