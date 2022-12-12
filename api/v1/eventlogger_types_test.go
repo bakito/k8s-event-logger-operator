@@ -14,7 +14,7 @@ var _ = Describe("V1", func() {
 		It("should serialize an empty string", func() {
 			k := &v1.Kind{
 				Name:     "a",
-				APIGroup: pointer.StringPtr(""),
+				APIGroup: pointer.String(""),
 			}
 			b, err := json.Marshal(k)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -31,7 +31,7 @@ var _ = Describe("V1", func() {
 		It("should serialize an the apiGroup value", func() {
 			k := &v1.Kind{
 				Name:     "a",
-				APIGroup: pointer.StringPtr("b"),
+				APIGroup: pointer.String("b"),
 			}
 			b, err := json.Marshal(k)
 			Ω(err).ShouldNot(HaveOccurred())

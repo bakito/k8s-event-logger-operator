@@ -53,7 +53,7 @@ var _ = Describe("Logging", func() {
 			Spec: v1.EventLoggerSpec{
 				Labels:        map[string]string{"test-label": "foo"},
 				Annotations:   map[string]string{"test-annotation": "bar"},
-				ScrapeMetrics: pointer.BoolPtr(true),
+				ScrapeMetrics: pointer.Bool(true),
 				Namespace:     &ns2,
 				NodeSelector:  map[string]string{"ns-key": "ns-value"},
 			},

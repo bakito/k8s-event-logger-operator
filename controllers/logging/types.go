@@ -67,7 +67,7 @@ func newFilterForKind(k eventloggerv1.Kind) filter.Filter {
 	}
 
 	if k.MatchingPatterns != nil {
-		filters = append(filters, newFilterForMatchingPatterns(k.MatchingPatterns, pointer.BoolPtrDerefOr(k.SkipOnMatch, false)))
+		filters = append(filters, newFilterForMatchingPatterns(k.MatchingPatterns, pointer.BoolDeref(k.SkipOnMatch, false)))
 	}
 
 	return filters.All()
