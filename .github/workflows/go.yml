@@ -54,9 +54,15 @@ jobs:
         run: |
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-      - name: Lint Helm Chart
-        run: make helm-lint
+      - name: Lint
+        run: |
+          cp helm/README.md helm/README.md.old
+          make helm-lint
 
       - name: Check chart/README.md is correctly generated with 'make docs'
-        run: git diff --exit-code helm/README.md
+        run: |
+          # ignore version as it is updated during build
+          sed -i '/!\[Version\:/d' helm/README.md
+          sed -i '/!\[Version\:/d' helm/README.md.old
+          diff helm/README.md.old helm/README.md
 
