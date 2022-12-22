@@ -23,6 +23,7 @@ import (
 	gr "runtime"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/controllers/config"
 	"github.com/bakito/k8s-event-logger-operator/controllers/logging"
 	"github.com/bakito/k8s-event-logger-operator/controllers/setup"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
@@ -40,11 +41,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-)
-
-const (
-	// EnvLeaderElectionResourceLock leader election release lock mode
-	EnvLeaderElectionResourceLock = "LEADER_ELECTION_RESOURCE_LOCK"
 )
 
 var (
@@ -99,7 +95,7 @@ func main() {
 		CertDir:                    "certs",
 		LeaderElection:             enableLeaderElection && !enableLoggerMode,
 		LeaderElectionID:           "leader.eventlogger.bakito.ch",
-		LeaderElectionResourceLock: os.Getenv(EnvLeaderElectionResourceLock),
+		LeaderElectionResourceLock: os.Getenv(cnst.EnvLeaderElectionResourceLock),
 		HealthProbeBindAddress:     ":8081",
 		Namespace:                  watchNamespace,
 	})
@@ -123,12 +119,22 @@ func main() {
 	} else {
 		// Setup all Controllers
 		if watchNamespace == "" {
+			cr := &config.Reconciler{
+				Reader: mgr.GetAPIReader(),
+				Log:    ctrl.Log.WithName("controllers").WithName("Config"),
+				Scheme: mgr.GetScheme(),
+			}
+			if err = (cr).SetupWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create controller", "controller", "Config")
+				os.Exit(1)
+			}
 			if err = (&setup.Reconciler{
 				Client: mgr.GetClient(),
-				Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
+				Log:    ctrl.Log.WithName("controllers").WithName("EventLogger"),
 				Scheme: mgr.GetScheme(),
+				Config: cr.Ctx(),
 			}).SetupWithManager(mgr); err != nil {
-				setupLog.Error(err, "unable to create controller", "controller", "Pod")
+				setupLog.Error(err, "unable to create controller", "controller", "EventLogger")
 				os.Exit(1)
 			}
 			setupLog.Info("Running in global mode.")

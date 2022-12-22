@@ -18,18 +18,14 @@ package setup
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -39,17 +35,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+type updateReplace string
+
 const (
-	defaultContainerName = "k8s-event-logger-operator"
+	update  updateReplace = "update"
+	replace updateReplace = "replace"
+	no      updateReplace = "no"
 )
 
-var (
-	gracePeriod      int64
-	defaultPodReqCPU = resource.MustParse("100m")
-	defaultPodReqMem = resource.MustParse("64Mi")
-	defaultPodMaxCPU = resource.MustParse("200m")
-	defaultPodMaxMem = resource.MustParse("128Mi")
-)
+var gracePeriod int64
 
 // Reconciler reconciles a Pod object
 type Reconciler struct {
@@ -57,12 +51,7 @@ type Reconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 
-	eventLoggerImage string
-	podReqCPU        resource.Quantity
-	podReqMem        resource.Quantity
-	podMaxCPU        resource.Quantity
-	podMaxMem        resource.Quantity
-	securityContext  corev1.SecurityContext
+	Config context.Context
 }
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
@@ -190,14 +179,6 @@ func (r *Reconciler) saveDelete(ctx context.Context, obj client.Object) error {
 	return nil
 }
 
-type updateReplace string
-
-const (
-	update  updateReplace = "update"
-	replace updateReplace = "replace"
-	no      updateReplace = "no"
-)
-
 func loggerName(cr *eventloggerv1.EventLogger) string {
 	return "event-logger-" + cr.Name
 }
@@ -224,13 +205,6 @@ func podEnv(pod *corev1.Pod, name string) string {
 
 // SetupWithManager setup with manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
-	if err := r.setupDefaults(mgr.GetAPIReader(), types.NamespacedName{
-		Namespace: os.Getenv(cnst.EnvPodNamespace),
-		Name:      os.Getenv(cnst.EnvPodName),
-	}); err != nil {
-		return err
-	}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&eventloggerv1.EventLogger{}).
 		Owns(&corev1.Pod{}).
@@ -238,61 +212,4 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)
-}
-
-func (r *Reconciler) setupDefaults(client client.Reader, nn types.NamespacedName) error {
-	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodReqCPU); ok {
-		r.podReqCPU = resource.MustParse(cpu)
-	} else {
-		r.podReqCPU = defaultPodReqCPU
-	}
-	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodReqMem); ok {
-		r.podReqMem = resource.MustParse(mem)
-	} else {
-		r.podReqMem = defaultPodReqMem
-	}
-	if cpu, ok := os.LookupEnv(cnst.EnvLoggerPodMaxCPU); ok {
-		r.podMaxCPU = resource.MustParse(cpu)
-	} else {
-		r.podMaxCPU = defaultPodMaxCPU
-	}
-	if mem, ok := os.LookupEnv(cnst.EnvLoggerPodMaxMem); ok {
-		r.podMaxMem = resource.MustParse(mem)
-	} else {
-		r.podMaxMem = defaultPodMaxMem
-	}
-	if value, ok := os.LookupEnv(cnst.EnvLoggerPodSecurityContext); ok {
-		sc := corev1.SecurityContext{}
-		if err := json.Unmarshal([]byte(value), &sc); err != nil {
-			return err
-		}
-		r.securityContext = sc
-	}
-
-	return r.setupEventLoggerImage(client, nn)
-}
-
-func (r *Reconciler) setupEventLoggerImage(client client.Reader, nn types.NamespacedName) error {
-	if podImage, ok := os.LookupEnv(cnst.EnvEventLoggerImage); ok && podImage != "" {
-		r.eventLoggerImage = podImage
-		return nil
-	}
-	p := &corev1.Pod{}
-	err := client.Get(context.TODO(), nn, p)
-	if err != nil {
-		return err
-	}
-
-	if len(p.Spec.Containers) == 1 {
-		r.eventLoggerImage = p.Spec.Containers[0].Image
-		return nil
-
-	}
-	for _, c := range p.Spec.Containers {
-		if c.Name == defaultContainerName {
-			r.eventLoggerImage = c.Image
-			return nil
-		}
-	}
-	return fmt.Errorf("could not evaluate the event logger image to use")
 }

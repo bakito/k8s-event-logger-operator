@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "k8s-event-logger-operator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+  {{- include "k8s-event-logger-operator.labels" . | nindent 4 }}
+data:
+  container_template.yaml: |
+    resources:
+    {{- toYaml .Values.eventLogger.resources | nindent 6 }}
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8081
+      initialDelaySeconds: 15
+      periodSeconds: 20
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: 8081
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    {{- with .Values.eventLogger.securityContext }}
+    securityContext:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}

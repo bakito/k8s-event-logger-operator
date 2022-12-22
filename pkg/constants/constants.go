@@ -1,6 +1,10 @@
 package constants
 
 const (
+
+	// EnvLeaderElectionResourceLock leader election release lock mode
+	EnvLeaderElectionResourceLock = "LEADER_ELECTION_RESOURCE_LOCK"
+
 	// ArgEnableLoggerMode enable logger mode
 	ArgEnableLoggerMode = "enable-logger-mode"
 
@@ -25,21 +29,6 @@ const (
 	// EnvEventLoggerImage env variable name for the image if the event logger
 	EnvEventLoggerImage = "EVENT_LOGGER_IMAGE"
 
-	// EnvLoggerPodReqCPU set the logger pod request cpu
-	EnvLoggerPodReqCPU = "LOGGER_POD_REQUEST_CPU"
-
-	// EnvLoggerPodReqMem set the logger pod request memory
-	EnvLoggerPodReqMem = "LOGGER_POD_REQUEST_MEM"
-
-	// EnvLoggerPodMaxCPU set the logger pod max cpu
-	EnvLoggerPodMaxCPU = "LOGGER_POD_LIMIT_CPU"
-
-	// EnvLoggerPodMaxMem set the logger pod max memory
-	EnvLoggerPodMaxMem = "LOGGER_POD_LIMIT_MEM"
-
-	// EnvLoggerPodSecurityContext set a security context for the event logger pod
-	EnvLoggerPodSecurityContext = "LOGGER_POD_SECURITY_CONTEXT"
-
 	// EnvEnableWebhook enable webhooks
 	EnvEnableWebhook = "ENABLE_WEBHOOKS"
 
@@ -48,4 +37,10 @@ const (
 
 	// EnvPodNamespace the namespace the pod
 	EnvPodNamespace = "POD_NAMESPACE"
+
+	// EnvConfigMapName the name of the configmap
+	EnvConfigMapName = "CONFIG_MAP_NAME"
+
+	// ConfigKeyContainerTemplate pod template config key
+	ConfigKeyContainerTemplate = "container_template.yaml"
 )

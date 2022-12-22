@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/controllers/config"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -118,6 +119,25 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		saccName = cr.Spec.ServiceAccount
 	}
 
+	container := config.GetCfg(r.Config).ContainerTemplate
+
+	container.Name = "event-logger"
+	container.Command = []string{"/opt/go/k8s-event-logger"}
+	container.Args = []string{
+		"--" + cnst.ArgConfigName, cr.Name,
+		"--" + cnst.ArgMetricsAddr, metricsAddr,
+		"--" + cnst.ArgEnableLoggerMode, "true",
+	}
+	container.Env = []corev1.EnvVar{
+		{Name: cnst.EnvWatchNamespace, Value: watchNamespace},
+		{Name: cnst.EnvPodNamespace, ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				APIVersion: "v1",
+				FieldPath:  "metadata.namespace",
+			},
+		}},
+	}
+
 	pod := &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "Pod",
@@ -130,34 +150,12 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
-				{
-					Name:            "event-logger",
-					Image:           r.eventLoggerImage,
-					ImagePullPolicy: corev1.PullAlways,
-					Command:         []string{"/opt/go/k8s-event-logger"},
-					Args: []string{
-						"--" + cnst.ArgConfigName, cr.Name,
-						"--" + cnst.ArgMetricsAddr, metricsAddr,
-						"--" + cnst.ArgEnableLoggerMode, "true",
-					},
-					Env: []corev1.EnvVar{
-						{Name: cnst.EnvWatchNamespace, Value: watchNamespace},
-						{Name: cnst.EnvPodNamespace, ValueFrom: &corev1.EnvVarSource{
-							FieldRef: &corev1.ObjectFieldSelector{
-								APIVersion: "v1",
-								FieldPath:  "metadata.namespace",
-							},
-						}},
-					},
-					Resources: corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{corev1.ResourceCPU: r.podReqCPU, corev1.ResourceMemory: r.podReqMem},
-						Limits:   corev1.ResourceList{corev1.ResourceCPU: r.podMaxCPU, corev1.ResourceMemory: r.podMaxMem},
-					},
-				},
+				container,
 			},
 			ServiceAccountName: saccName,
 			NodeSelector:       cr.Spec.NodeSelector,
 		},
 	}
+
 	return pod
 }
