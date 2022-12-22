@@ -8,4 +8,4 @@ sources:
   - https://github.com/bakito/k8s-event-logger-operator
 annotations:
   artifacthub.io/changes: |
-    - Add extra pod labels
+    - Allow setting securityContext for controller and logger pods

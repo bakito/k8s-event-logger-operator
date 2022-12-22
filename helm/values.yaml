@@ -13,7 +13,7 @@ eventLogger:
   leaderElection: true
   # --  Leader election lock type
   leaderElectionResourceLock:
-  # -- Resource limits and requests for the operator pods.
+  # -- Resource limits and requests for the logger pods.
   resources:
     requests:
       cpu: 100m
@@ -21,6 +21,14 @@ eventLogger:
     limits:
       cpu: 200m
       memory: 256Mi
+  # -- Security Context for the logger pods.
+  securityContext:
+    allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+    capabilities:
+      drop: [ "ALL" ]
 
 logging: # see https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md
   # -- Log level
@@ -73,6 +81,10 @@ resources:
   limits:
     cpu: 200m
     memory: 512Mi
+
+# -- Security Context for the operator pods.
+securityContext: { }
+
 
 # -- [Node selector]
 nodeSelector: { }

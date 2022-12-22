@@ -18,6 +18,7 @@ package setup
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -61,6 +62,7 @@ type Reconciler struct {
 	podReqMem        resource.Quantity
 	podMaxCPU        resource.Quantity
 	podMaxMem        resource.Quantity
+	securityContext  corev1.SecurityContext
 }
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
@@ -258,6 +260,13 @@ func (r *Reconciler) setupDefaults(client client.Reader, nn types.NamespacedName
 		r.podMaxMem = resource.MustParse(mem)
 	} else {
 		r.podMaxMem = defaultPodMaxMem
+	}
+	if value, ok := os.LookupEnv(cnst.EnvLoggerPodSecurityContext); ok {
+		sc := corev1.SecurityContext{}
+		if err := json.Unmarshal([]byte(value), &sc); err != nil {
+			return err
+		}
+		r.securityContext = sc
 	}
 
 	return r.setupEventLoggerImage(client, nn)

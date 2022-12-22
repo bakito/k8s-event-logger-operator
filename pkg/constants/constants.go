@@ -37,6 +37,9 @@ const (
 	// EnvLoggerPodMaxMem set the logger pod max memory
 	EnvLoggerPodMaxMem = "LOGGER_POD_LIMIT_MEM"
 
+	// EnvLoggerPodSecurityContext set a security context for the event logger pod
+	EnvLoggerPodSecurityContext = "LOGGER_POD_SECURITY_CONTEXT"
+
 	// EnvEnableWebhook enable webhooks
 	EnvEnableWebhook = "ENABLE_WEBHOOKS"
 

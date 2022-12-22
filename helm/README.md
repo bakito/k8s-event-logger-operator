@@ -18,7 +18,8 @@ helm install k8s-event-logger-operator bakito/k8s-event-logger-operator
 | affinity | object | `{}` | Assign custom [affinity] rules to the deployment |
 | eventLogger.leaderElection | bool | `true` | Enable leader election for the controller |
 | eventLogger.leaderElectionResourceLock | string | `nil` | Leader election lock type |
-| eventLogger.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}` | Resource limits and requests for the operator pods. |
+| eventLogger.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}` | Resource limits and requests for the logger pods. |
+| eventLogger.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"runAsNonRoot":true,"seccompProfile":{"type":"RuntimeDefault"}}` | Security Context for the logger pods. |
 | extraPodLabels | object | `{}` | Add additional pod [labels] |
 | fullnameOverride | string | `""` | String to fully override "argo-rollouts.fullname" template |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
@@ -30,6 +31,7 @@ helm install k8s-event-logger-operator bakito/k8s-event-logger-operator
 | rbac.create | bool | `true` | Specifies whether rbac should be created |
 | rbac.roleName | string | `nil` | The name of the role and clusterrole to use. If not set and create is true, a name is generated using the fullname template |
 | resources | object | `{"limits":{"cpu":"200m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Resource limits and requests for the operator pods. |
+| securityContext | object | `{}` | Security Context for the operator pods. |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `nil` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
 | tolerations | list | `[]` | [Tolerations] for use with node taints |
