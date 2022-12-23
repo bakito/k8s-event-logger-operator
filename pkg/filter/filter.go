@@ -32,6 +32,7 @@ func (f *Func) Match(e *corev1.Event) bool {
 	return f.Func(e)
 }
 
+// Equals implements Filter interface
 func (f *Func) Equals(o Filter) bool {
 	return f.String() == o.String()
 }
