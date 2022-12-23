@@ -35,4 +35,12 @@ rules:
       - '*'
     verbs:
       - '*'
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
 {{- end -}}

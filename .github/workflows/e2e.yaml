@@ -3,11 +3,10 @@ name: end-2-end Helm Chart Tests
 on:
   push:
     branches:
-      - main
-      - security-context
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   e2e:
@@ -45,6 +44,6 @@ jobs:
           kubectl apply -f testdata/e2e/kind/configmap-registry.yaml
           # image registry: localhost:5001/
 
-      - name: Install sealed-secrets-web with json format and cert URL
+      - name: Install helm chart
         run: |
           ./testdata/e2e/installChart.sh

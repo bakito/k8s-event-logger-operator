@@ -143,23 +143,28 @@ func GetCfg(ctx context.Context) *Cfg {
 
 // SetupWithManager setup with manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
-	nn := types.NamespacedName{
-		Namespace: os.Getenv(cnst.EnvPodNamespace),
-		Name:      os.Getenv(cnst.EnvConfigMapName),
-	}
+	namespace := os.Getenv(cnst.EnvPodNamespace)
+	cmName := os.Getenv(cnst.EnvConfigMapName)
+	podName := os.Getenv(cnst.EnvPodName)
 
-	if err := r.setupEventLoggerImage(nn); err != nil {
+	if err := r.setupEventLoggerImage(types.NamespacedName{
+		Namespace: namespace,
+		Name:      podName,
+	}); err != nil {
 		return err
 	}
 
-	if err := r.readConfig(r.Ctx(), mgr.GetLogger(), nn); err != nil {
+	if err := r.readConfig(r.Ctx(), mgr.GetLogger(), types.NamespacedName{
+		Namespace: namespace,
+		Name:      cmName,
+	}); err != nil {
 		return err
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.ConfigMap{}).WithEventFilter(filter.NamePredicate{
-		Namespace: nn.Namespace,
-		Names:     []string{nn.Name},
+		Namespace: namespace,
+		Names:     []string{cmName},
 	},
 	).Complete(r)
 }

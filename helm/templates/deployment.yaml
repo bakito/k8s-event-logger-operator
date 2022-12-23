@@ -21,29 +21,31 @@ spec:
       serviceAccountName: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: '{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}'
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - /opt/go/k8s-event-logger
           args:
-            - "--enable-leader-election={{ .Values.eventLogger.leaderElection }}"
+            - '--enable-leader-election={{ .Values.eventLogger.leaderElection }}'
           env:
             - name: OPERATOR_NAME
               value: {{ include "k8s-event-logger-operator.fullname" . }}
-            - name: WATCH_NAMESPACE
-              value: ""
-            - name: POD_NAME
+            - name: 'WATCH_NAMESPACE'
+              value: ''
+            - name: 'POD_NAME'
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.name
-            - name: POD_NAMESPACE
+            - name: 'POD_NAMESPACE'
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: metadata.namespace
-            - name: "ENABLE_WEBHOOKS"
-              value: "{{ .Values.webhook.enabled }}"
+            - name: 'CONFIG_MAP_NAME'
+              value: '{{ include "k8s-event-logger-operator.fullname" . }}'
+            - name: 'ENABLE_WEBHOOKS'
+              value: '{{ .Values.webhook.enabled }}'
             {{- if .Values.eventLogger.leaderElectionResourceLock }}
             - name: LEADER_ELECTION_RESOURCE_LOCK
               value: {{ .Values.eventLogger.leaderElectionResourceLock }}
@@ -72,7 +74,7 @@ spec:
           {{- if .Values.webhook.enabled  }}
           volumeMounts:
             - mountPath: /opt/go/certs
-              name: "webhook-certs"
+              name: 'webhook-certs'
               readOnly: true
           {{- end }}
          {{- with .Values.securityContext }}
@@ -93,7 +95,7 @@ spec:
       {{- end }}
       {{- if .Values.webhook.enabled }}
       volumes:
-        - name: "webhook-certs"
+        - name: 'webhook-certs'
           secret:
             defaultMode: 420
             secretName: {{ include "k8s-event-logger-operator.webhookCertSecretName" . }}
