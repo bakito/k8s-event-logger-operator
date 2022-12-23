@@ -25,13 +25,7 @@ eventLogger:
       cpu: 200m
       memory: 256Mi
   # -- Security Context for the logger pods.
-  securityContext:
-    allowPrivilegeEscalation: false
-    runAsNonRoot: true
-    seccompProfile:
-      type: RuntimeDefault
-    capabilities:
-      drop: [ "ALL" ]
+  securityContext: {}
 
 logging: # see https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md
   # -- Log level
@@ -87,7 +81,6 @@ resources:
 
 # -- Security Context for the operator pods.
 securityContext: { }
-
 
 # -- [Node selector]
 nodeSelector: { }
