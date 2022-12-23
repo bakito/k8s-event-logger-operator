@@ -49,10 +49,15 @@ var _ = Describe("V1", func() {
 			Ω(filter.Match(&corev1.Event{})).Should(BeTrue())
 			Ω(filter.String()).Should(Equal("( ( false OR true ) AND ( true AND true ) )"))
 		})
-		It("same filter should be equal", func() {
+		It("same filters should be equal", func() {
 			filter1 := Slice{Slice{Never, Always}.Any(), Slice{Always, Always}.All()}.All()
 			filter2 := Slice{Slice{Never, Always}.Any(), Slice{Always, Always}.All()}.All()
 			Ω(filter1.Equals(filter2)).Should(BeTrue())
+		})
+		It("different filters should be equal", func() {
+			filter1 := Slice{Slice{Never, Always}.Any(), Slice{Always, Never}.All()}.All()
+			filter2 := Slice{Slice{Never, Always}.Any(), Slice{Always, Always}.All()}.All()
+			Ω(filter1.Equals(filter2)).Should(BeFalse())
 		})
 	})
 })
