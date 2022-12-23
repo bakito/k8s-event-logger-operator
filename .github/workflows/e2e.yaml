@@ -64,11 +64,11 @@ jobs:
 
       - name: Check logs
         run: |
-          k logs -n e2e-test -l app=event-logger-example-eventlogger | grep '"logger":"event"'
+          kubectl logs -n e2e-test -l app=event-logger-example-eventlogger | grep '"logger":"event"'
 
       - name: Print logs
         run: |
           echo 'Pod logs' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          k logs -n e2e-test -l app=event-logger-example-eventlogger >> $GITHUB_STEP_SUMMARY
+          kubectl logs -n e2e-test -l app=event-logger-example-eventlogger >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
