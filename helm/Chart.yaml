@@ -10,3 +10,4 @@ annotations:
   artifacthub.io/changes: |
     - Allow setting securityContext for controller and logger pods
     - Logger Pod container is configured via a ConfigMap
+    - Allow overwriting image.tag
