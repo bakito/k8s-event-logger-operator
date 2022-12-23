@@ -47,3 +47,28 @@ jobs:
       - name: Install helm chart
         run: |
           ./testdata/e2e/installChart.sh
+
+      - name: Setup an EventLogger
+        run: |
+          kubectl apply -f testdata/e2e/test-eventlogger.yaml
+          kubectl wait --namespace e2e-test \
+            --for=condition=ready pod \
+            --selector=app=event-logger-example-eventlogger \
+            --timeout=90s
+
+      - name: Start test pod
+        run: |
+          kubectl apply -f testdata/e2e/test-pod.yaml
+          kubectl wait --namespace e2e-test --for=condition=ready pod nginx --timeout=90s
+          kubectl delete -f testdata/e2e/test-pod.yaml
+
+      - name: Check logs
+        run: |
+          k logs -n e2e-test -l app=event-logger-example-eventlogger | grep '"logger":"event"'
+
+      - name: Print logs
+        run: |
+          echo 'Pod logs' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          k logs -n e2e-test -l app=event-logger-example-eventlogger >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

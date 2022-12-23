@@ -45,7 +45,7 @@ type Reconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 	Config *Config
-	// LoggerMode if enable, the controller does only logging and no update on the custom resource
+	// LoggerMode if enabled, the controller does only logging and no update on the custom resource
 	LoggerMode bool
 }
 
