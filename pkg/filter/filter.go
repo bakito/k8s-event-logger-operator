@@ -3,12 +3,10 @@ package filter
 import (
 	"strings"
 
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	corev1 "k8s.io/api/core/v1"
 )
 
-// Filter is a event filters
+// Filter is an event filters
 type Filter interface {
 	// Match checks if a Event matches the filter
 	Match(*corev1.Event) bool
@@ -36,7 +34,7 @@ func (f *Func) Match(e *corev1.Event) bool {
 
 // Equals implements Filter interface
 func (f *Func) Equals(o Filter) bool {
-	return cmp.Equal(f, o, cmpopts.EquateEmpty())
+	return f.String() == o.String()
 }
 
 func (f *Func) String() string {

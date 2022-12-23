@@ -6,6 +6,7 @@ import (
 	"time"
 
 	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/controllers/config"
 	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/bakito/k8s-event-logger-operator/version"
 	gm "github.com/golang/mock/gomock"
@@ -39,10 +40,6 @@ var _ = Describe("Logging", func() {
 
 	BeforeEach(func() {
 		mockCtrl = gm.NewController(GinkgoT())
-		defaultPodReqCPU = resource.MustParse("111m")
-		defaultPodReqMem = resource.MustParse("222Mi")
-		defaultPodMaxCPU = resource.MustParse("333m")
-		defaultPodMaxMem = resource.MustParse("444Mi")
 		ns2 = "eventlogger-operators"
 
 		el = &v1.EventLogger{
@@ -108,10 +105,10 @@ var _ = Describe("Logging", func() {
 
 				Ω(pod.Spec.Containers).Should(HaveLen(1))
 				container := pod.Spec.Containers[0]
-				Ω(*container.Resources.Requests.Cpu()).Should(Equal(defaultPodReqCPU))
-				Ω(*container.Resources.Requests.Memory()).Should(Equal(defaultPodReqMem))
-				Ω(*container.Resources.Limits.Cpu()).Should(Equal(defaultPodMaxCPU))
-				Ω(*container.Resources.Limits.Memory()).Should(Equal(defaultPodMaxMem))
+				Ω(*container.Resources.Requests.Cpu()).Should(Equal(resource.MustParse("111m")))
+				Ω(*container.Resources.Requests.Memory()).Should(Equal(resource.MustParse("222Mi")))
+				Ω(*container.Resources.Limits.Cpu()).Should(Equal(resource.MustParse("333m")))
+				Ω(*container.Resources.Limits.Memory()).Should(Equal(resource.MustParse("444Mi")))
 
 				evars := make(map[string]corev1.EnvVar)
 				for _, e := range container.Env {
@@ -219,18 +216,47 @@ func testReconcile(initialObjects ...client.Object) (client.Client, reconcile.Re
 			Containers: []corev1.Container{{Image: testImage}},
 		},
 	}
-	initialObjects = append(initialObjects, operatorPod)
+	cfg := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: nn.Namespace,
+			Name:      nn.Name,
+		},
+		Data: map[string]string{c.ConfigKeyContainerTemplate: `
+image: quay.io/bakito/k8s-event-logger
+resources:
+  limits:
+    cpu: 333m
+    memory: 444Mi
+  requests:
+    cpu: 111m
+    memory: 222Mi
+`},
+	}
+
+	initialObjects = append(initialObjects, operatorPod, cfg)
 
 	cl := fake.NewClientBuilder().WithScheme(s).WithObjects(initialObjects...).Build()
 
-	r := &Reconciler{
-		Client:           cl,
-		Log:              ctrl.Log.WithName("controllers").WithName("Pod"),
-		Scheme:           s,
-		eventLoggerImage: testImage,
+	cr := config.Reconciler{
+		Reader: cl,
+		Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
+		Scheme: s,
 	}
 
-	Ω(r.setupDefaults(cl, nn)).ShouldNot(HaveOccurred())
+	_, err := cr.Reconcile(cr.Ctx(), reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      cfg.Name,
+			Namespace: cfg.Namespace,
+		},
+	})
+	Ω(err).ShouldNot(HaveOccurred())
+
+	r := &Reconciler{
+		Client: cl,
+		Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
+		Scheme: s,
+		Config: cr.Ctx(),
+	}
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{

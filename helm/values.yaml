@@ -5,15 +5,18 @@
 image:
   # --  Repository to use
   repository: ghcr.io/bakito/k8s-event-logger
+  # -- Overrides the image tag (default is the chart appVersion)
+  tag:
   # -- Image pull policy
   pullPolicy: IfNotPresent
+  # -- Additional command args
 
 eventLogger:
   # --  Enable leader election for the controller
   leaderElection: true
   # --  Leader election lock type
   leaderElectionResourceLock:
-  # -- Resource limits and requests for the operator pods.
+  # -- Resource limits and requests for the logger pods.
   resources:
     requests:
       cpu: 100m
@@ -21,6 +24,8 @@ eventLogger:
     limits:
       cpu: 200m
       memory: 256Mi
+  # -- Security Context for the logger pods.
+  securityContext: {}
 
 logging: # see https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md
   # -- Log level
@@ -73,6 +78,9 @@ resources:
   limits:
     cpu: 200m
     memory: 512Mi
+
+# -- Security Context for the operator pods.
+securityContext: { }
 
 # -- [Node selector]
 nodeSelector: { }

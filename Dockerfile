@@ -1,4 +1,4 @@
-FROM bitnami/golang:1.19 as builder
+FROM golang:1.19 as builder
 
 WORKDIR /build
 
@@ -15,7 +15,7 @@ RUN go build -a -installsuffix cgo -ldflags="-w -s -X github.com/bakito/k8s-even
   upx -q k8s-event-logger
 
 # application image
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM alpine:latest
 WORKDIR /opt/go
 
 LABEL maintainer="bakito <github@bakito.ch>"

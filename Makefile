@@ -87,7 +87,7 @@ MOCKGEN_VERSION ?= v1.6.0
 GOLANGCI_LINT_VERSION ?= v1.50.1
 GORELEASER_VERSION ?= v1.13.1
 HELM_DOCS_VERSION ?= v1.11.0
-CONTROLLER_GEN_VERSION ?= v0.10.0
+CONTROLLER_GEN_VERSION ?= v0.11.1
 
 ## Tool Installer
 .PHONY: semver
@@ -118,7 +118,13 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 ## Update Tools
 .PHONY: update-toolbox-tools
 update-toolbox-tools:
-	@rm -f $(LOCALBIN)/semver $(LOCALBIN)/mockgen $(LOCALBIN)/golangci-lint $(LOCALBIN)/goreleaser $(LOCALBIN)/helm-docs $(LOCALBIN)/controller-gen
+	@rm -f \
+		$(LOCALBIN)/semver \
+		$(LOCALBIN)/mockgen \
+		$(LOCALBIN)/golangci-lint \
+		$(LOCALBIN)/goreleaser \
+		$(LOCALBIN)/helm-docs \
+		$(LOCALBIN)/controller-gen
 	toolbox makefile -f $$(pwd)/Makefile \
 		github.com/bakito/semver \
 		github.com/golang/mock/mockgen \
