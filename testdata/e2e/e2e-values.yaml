@@ -1,0 +1,4 @@
+image:
+  repository: localhost:5001/k8s-event-logger
+  tag: e2e
+  pullPolicy: Always
