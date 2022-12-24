@@ -1,4 +1,6 @@
-[![Go](https://github.com/bakito/k8s-event-logger-operator/actions/workflows/go.yml/badge.svg)](https://github.com/bakito/k8s-event-logger-operator/actions/workflows/go.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/bakito/k8s-event-logger-operator)](https://goreportcard.com/report/github.com/bakito/k8s-event-logger-operator)
+[![Go](https://github.com/bakito/k8s-event-logger-operator/actions/workflows/go.yml/badge.svg)](https://github.com/bakito/k8s-event-logger-operator/actions/workflows/go.yml) 
+[![e2e](https://github.com/bakito/k8s-event-logger-operator/actions/workflows/e2e.yaml/badge.svg)](https://github.com/bakito/k8s-event-logger-operator/actions/workflows/e2e.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bakito/k8s-event-logger-operator)](https://goreportcard.com/report/github.com/bakito/k8s-event-logger-operator)
 
 [![GitHub Release](https://img.shields.io/github/release/bakito/k8s-event-logger-operator.svg?style=flat)](https://github.com/bakito/k8s-event-logger-operator/releases) [![Coverage Status](https://coveralls.io/repos/github/bakito/k8s-event-logger-operator/badge.svg?branch=master)](https://coveralls.io/github/bakito/k8s-event-logger-operator?branch=master)
 
