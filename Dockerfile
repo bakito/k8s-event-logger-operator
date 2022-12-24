@@ -15,7 +15,7 @@ RUN go build -a -installsuffix cgo -ldflags="-w -s -X github.com/bakito/k8s-even
   upx -q k8s-event-logger
 
 # application image
-FROM alpine:latest
+FROM scratch
 WORKDIR /opt/go
 
 LABEL maintainer="bakito <github@bakito.ch>"
