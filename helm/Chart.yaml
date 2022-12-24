@@ -11,3 +11,4 @@ annotations:
     - Allow setting securityContext for controller and logger pods
     - Logger Pod container is configured via a ConfigMap
     - Allow overwriting image.tag
+icon: https://raw.githubusercontent.com/bakito/k8s-event-logger-operator/main/docs/chart-logo.png
