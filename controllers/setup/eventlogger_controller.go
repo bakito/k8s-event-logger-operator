@@ -87,6 +87,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 
 	// Define a new Pod object
 	pod := r.podForCR(cr)
+
+	// set owner reference for pod
+	if err := controllerutil.SetOwnerReference(cr, pod, r.Scheme); err != nil {
+		return r.updateCR(ctx, cr, reqLogger, err)
+	}
+
 	// Check if this Pod already exists
 	podChanged, err := r.createOrReplacePod(ctx, cr, pod, reqLogger)
 	if err != nil {
