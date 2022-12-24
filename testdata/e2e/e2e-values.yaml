@@ -2,3 +2,14 @@ image:
   repository: localhost:5001/k8s-event-logger
   tag: e2e
   pullPolicy: Always
+
+securityContext: &securityContext
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop: [ "ALL" ]
+
+eventLogger:
+  securityContext: *securityContext
