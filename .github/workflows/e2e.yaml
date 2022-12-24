@@ -1,4 +1,4 @@
-name: end-2-end Helm Chart Tests
+name: e2e tests
 
 on:
   push:
