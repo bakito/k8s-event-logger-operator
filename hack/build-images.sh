@@ -17,5 +17,5 @@ podman rmi -f registry.access.redhat.com/ubi8/ubi-minimal:latest | true
 podman build -t quay.io/bakito/k8s-event-logger:${RELEASE} --no-cache  -f ./Dockerfile .
 podman push quay.io/bakito/k8s-event-logger:${RELEASE}
 
-git checkout master
+git checkout main
 git branch -d ${RELEASE} -f

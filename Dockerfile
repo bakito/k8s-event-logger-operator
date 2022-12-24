@@ -4,7 +4,7 @@ WORKDIR /build
 
 RUN apt-get update && apt-get install -y upx
 
-ARG VERSION=master
+ARG VERSION=main
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
     GOOS=linux \

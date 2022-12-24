@@ -2,7 +2,7 @@ name: Build images
 
 on:
   push:
-    branches: master
+    branches: main
   release:
     types:
       - published
@@ -37,15 +37,15 @@ jobs:
           platforms: linux/amd64
           build-args: VERSION=${{ github.event.release.tag_name }}
 
-      - name: Build and push master
-        id: docker_build_master
+      - name: Build and push main
+        id: docker_build_main
         uses: docker/build-push-action@v3
         if: ${{ github.event.release.tag_name == '' }}
         with:
           push: true
-          tags: ghcr.io/bakito/k8s-event-logger:master,quay.io/bakito/k8s-event-logger:master
+          tags: ghcr.io/bakito/k8s-event-logger:main,quay.io/bakito/k8s-event-logger:main
           platforms: linux/amd64
-          build-args: VERSION=master
+          build-args: VERSION=main
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
 
