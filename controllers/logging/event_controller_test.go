@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/utils/pointer"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -34,10 +35,12 @@ var _ = Describe("Logging", func() {
 	var (
 		mockCtrl *gm.Controller
 		ctx      context.Context
+		cl       *mc.MockClient
 	)
 
 	BeforeEach(func() {
 		mockCtrl = gm.NewController(GinkgoT())
+		cl = mc.NewMockClient(mockCtrl)
 		ctx = context.Background()
 	})
 	AfterEach(func() {
@@ -48,14 +51,12 @@ var _ = Describe("Logging", func() {
 		var (
 			s   *runtime.Scheme
 			r   *Reconciler
-			cl  *mc.MockClient
 			req reconcile.Request
 		)
 
 		BeforeEach(func() {
 			s = scheme.Scheme
 			Ω(v1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
-			cl = mc.NewMockClient(mockCtrl)
 			r = &Reconciler{
 				Client:     cl,
 				Log:        ctrl.Log.WithName("controllers").WithName("Event"),
@@ -112,11 +113,22 @@ var _ = Describe("Logging", func() {
 			lp := &loggingPredicate{}
 			lp.logEvent(&corev1.Event{})
 		})
+		It("should log nothing if object is not an event", func() {
+			mockSink.EXPECT().WithValues().Times(0)
+
+			lp := &loggingPredicate{
+				lastVersion: "2",
+				Config:      &Config{filter: filter.Always},
+			}
+
+			lp.logEvent(&corev1.Pod{})
+		})
 		It("should log nothing if resource version does not match", func() {
 			mockSink.EXPECT().WithValues().Times(0)
 
 			lp := &loggingPredicate{
 				lastVersion: "2",
+				Config:      &Config{filter: filter.Always},
 			}
 
 			lp.logEvent(&corev1.Event{
@@ -331,6 +343,31 @@ var _ = Describe("Logging", func() {
 				true,
 				"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 			),
+			Entry("23",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
+				false,
+				"( ( ( Kind == 'Pod' AND Reason NOT in [Created, Started] ) ) )",
+			),
+			Entry("24",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
+				true,
+				"( ( ( Kind == 'Pod' AND Reason NOT in [Created, Started] ) ) )",
+			),
+			Entry("25",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{
+					Name: "Pod", EventTypes: []string{},
+					SkipReasons: []string{"Created"},
+					Reasons:     []string{"Created"},
+				}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
+				false,
+				"( ( ( Kind == 'Pod' AND Reason NOT in [Created] AND Reason in [Created] ) ) )",
+			),
 		)
 	})
 
@@ -435,6 +472,16 @@ var _ = Describe("Logging", func() {
 				pod := &corev1.Pod{}
 				Ω(lp.Delete(event.DeleteEvent{Object: pod})).Should(BeFalse())
 			})
+		})
+	})
+	Context("getLatestRevision", func() {
+		It("should find the last revision", func() {
+			cl.EXPECT().List(gm.Any(), gm.Any(), gm.Any()).Do(func(_ context.Context, el *corev1.EventList, _ ...client.ListOption) {
+				el.ResourceVersion = "3"
+			})
+			rev, err := getLatestRevision(ctx, cl, "")
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(rev).Should(Equal("3"))
 		})
 	})
 })

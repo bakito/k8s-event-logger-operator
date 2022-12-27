@@ -183,6 +183,11 @@ func (in *Kind) DeepCopyInto(out *Kind) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.SkipReasons != nil {
+		in, out := &in.SkipReasons, &out.SkipReasons
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.MatchingPatterns != nil {
 		in, out := &in.MatchingPatterns, &out.MatchingPatterns
 		*out = make([]string, len(*in))

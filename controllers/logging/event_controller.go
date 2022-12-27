@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -186,19 +185,14 @@ func (p *loggingPredicate) logEvent(e runtime.Object) bool {
 	return false
 }
 
-func getLatestRevision(ctx context.Context, mgr manager.Manager, namespace string) (string, error) {
-	cl, err := client.New(mgr.GetConfig(), client.Options{})
-	if err != nil {
-		return "", err
-	}
-
+func getLatestRevision(ctx context.Context, cl client.Client, namespace string) (string, error) {
 	eventList := &corev1.EventList{}
 	opts := []client.ListOption{
 		client.Limit(0),
 		client.InNamespace(namespace),
 	}
 
-	err = cl.List(ctx, eventList, opts...)
+	err := cl.List(ctx, eventList, opts...)
 	if err != nil {
 		return "", err
 	}
@@ -207,7 +201,12 @@ func getLatestRevision(ctx context.Context, mgr manager.Manager, namespace strin
 
 // SetupWithManager setup with manager
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error {
-	lv, err := getLatestRevision(context.Background(), mgr, namespace)
+	cl, err := client.New(mgr.GetConfig(), client.Options{})
+	if err != nil {
+		return err
+	}
+
+	lv, err := getLatestRevision(context.Background(), cl, namespace)
 	if err != nil {
 		return err
 	}

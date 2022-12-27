@@ -82,6 +82,13 @@ spec:
                     skipOnMatch:
                       description: SkipOnMatch skip the entry if matched
                       type: boolean
+                    skipReasons:
+                      description: SkipReasons event reasons to log to skip. If empty
+                        events with any reasons are logged.
+                      items:
+                        type: string
+                      minItems: 0
+                      type: array
                   required:
                   - name
                   type: object
