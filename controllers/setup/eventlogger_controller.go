@@ -18,7 +18,6 @@ package setup
 
 import (
 	"context"
-	"fmt"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/version"
@@ -26,21 +25,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-type updateReplace string
-
-const (
-	update  updateReplace = "update"
-	replace updateReplace = "replace"
-	no      updateReplace = "no"
 )
 
 var gracePeriod int64
@@ -80,7 +69,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
-	saccChanged, roleChanged, rbChanged, err := r.setupRbac(ctx, cr, reqLogger)
+	saccChanged, roleChanged, rbChanged, err := r.setupRbac(ctx, cr)
 	if err != nil {
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
@@ -104,64 +93,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	return reconcile.Result{}, nil
-}
-
-func (r *Reconciler) createOrReplace(
-	ctx context.Context,
-	cr *eventloggerv1.EventLogger,
-	res client.Object,
-	reqLogger logr.Logger,
-	updateCheck func(curr runtime.Object, next runtime.Object) updateReplace,
-) (bool, error) {
-	query := res.DeepCopyObject().(client.Object)
-	mo := res.(metav1.Object)
-	// Check if this Resource already exists
-	err := r.Get(ctx, types.NamespacedName{Name: mo.GetName(), Namespace: mo.GetNamespace()}, query)
-	if err != nil && errors.IsNotFound(err) {
-		// Set EventLogger cr as the owner and controller
-		if err := controllerutil.SetControllerReference(cr, mo, r.Scheme); err != nil {
-			return false, err
-		}
-
-		reqLogger.Info(fmt.Sprintf("Creating a new %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
-		err = r.Create(ctx, res)
-		if err != nil {
-			return false, err
-		}
-		return true, nil
-
-	} else if err != nil {
-		return false, err
-	}
-
-	if updateCheck != nil {
-		check := updateCheck(query, res)
-		if check == update {
-			reqLogger.Info(fmt.Sprintf("Updating %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
-			err = r.Update(ctx, res)
-
-			if err != nil {
-				return false, err
-			}
-			return true, nil
-		} else if check == replace {
-			reqLogger.Info(fmt.Sprintf("Replacing %s", query.GetObjectKind().GroupVersionKind().Kind), "namespace", mo.GetNamespace(), "name", mo.GetName())
-
-			err = r.Delete(ctx, query)
-
-			if err != nil {
-				return false, err
-			}
-			err = r.Create(ctx, query)
-
-			if err != nil {
-				return false, err
-			}
-			return true, nil
-		}
-	}
-	// Resource already exists
-	return false, nil
 }
 
 func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
