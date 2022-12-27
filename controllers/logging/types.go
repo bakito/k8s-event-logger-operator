@@ -60,6 +60,12 @@ func newFilterForKind(k eventloggerv1.Kind) filter.Filter {
 		}, fmt.Sprintf("EventType in [%s]", strings.Join(k.EventTypes, ", "))))
 	}
 
+	if len(k.SkipReasons) > 0 {
+		filters = append(filters, filter.New(func(e *corev1.Event) bool {
+			return !contains(k.SkipReasons, e.Reason)
+		}, fmt.Sprintf("Reason NOT in [%s]", strings.Join(k.SkipReasons, ", "))))
+	}
+
 	if len(k.Reasons) > 0 {
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
 			return contains(k.Reasons, e.Reason)

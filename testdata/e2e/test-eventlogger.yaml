@@ -12,3 +12,5 @@ metadata:
 spec:
   kinds:
     - name: Pod
+      skipReasons:
+        - Pulled

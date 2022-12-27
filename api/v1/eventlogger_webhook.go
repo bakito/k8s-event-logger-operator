@@ -39,7 +39,7 @@ func (in *EventLogger) ValidateCreate() error {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (in *EventLogger) ValidateUpdate(old runtime.Object) error {
+func (in *EventLogger) ValidateUpdate(_ runtime.Object) error {
 	return in.Spec.Validate()
 }
 

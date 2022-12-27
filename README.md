@@ -30,13 +30,15 @@ spec:
     - name: DeploymentConfig # the kind of the event source to be logged
       apiGroup: apps.openshift.io # optional
       eventTypes: # optional
-       - Normal
-       - Warning
+        - Normal
+        - Warning
       reasons: # optional
-       - DeploymentCreated
-       - ReplicationControllerScaled
+        - DeploymentCreated
+        - ReplicationControllerScaled
+      skipReasons: # optional
+        - Unhealthy
       matchingPatterns: # optional - regexp pattern to match event messages
-       - .*
+        - .*
       skipOnMatch: false # optional - skip events where messages match the pattern. Default false
 
 
@@ -58,12 +60,12 @@ spec:
     key: value
 
   serviceAccount: "sa" # optional - if a custom ServiceAccount should be used for the pod. Default ServiceAccount is automatically created
-  
+
   logFields: # optional - map if custom log field names. Key then log field name / Value: the reflection fields to the value within the struct corev1.Event https://github.com/kubernetes/api/blob/master/core/v1/types.go
     - name: name
       path:
         - InvolvedObject
-        - Name 
+        - Name
     - name: kind
       path:
         - InvolvedObject

@@ -331,6 +331,31 @@ var _ = Describe("Logging", func() {
 				true,
 				"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 			),
+			Entry("23",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
+				false,
+				"( ( ( Kind == 'Pod' AND Reason NOT in [Created, Started] ) ) )",
+			),
+			Entry("24",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
+				true,
+				"( ( ( Kind == 'Pod' AND Reason NOT in [Created, Started] ) ) )",
+			),
+			Entry("25",
+
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{
+					Name: "Pod", EventTypes: []string{},
+					SkipReasons: []string{"Created"},
+					Reasons:     []string{"Created"},
+				}}},
+				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
+				false,
+				"( ( ( Kind == 'Pod' AND Reason NOT in [Created] AND Reason in [Created] ) ) )",
+			),
 		)
 	})
 

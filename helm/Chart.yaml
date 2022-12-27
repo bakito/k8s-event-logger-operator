@@ -8,7 +8,5 @@ sources:
   - https://github.com/bakito/k8s-event-logger-operator
 annotations:
   artifacthub.io/changes: |
-    - Allow setting securityContext for controller and logger pods
-    - Logger Pod container is configured via a ConfigMap
-    - Allow overwriting image.tag
+    - add skipReasons property for EventLogger CRD
 icon: https://raw.githubusercontent.com/bakito/k8s-event-logger-operator/main/docs/chart-logo.png
