@@ -75,16 +75,23 @@ func (r *Reconciler) readConfig(ctx context.Context, reqLogger logr.Logger, nn t
 		return err
 	}
 
-	if container.Resources.Requests.Cpu() == nil {
+	if container.Resources.Requests == nil {
+		container.Resources.Requests = map[corev1.ResourceName]resource.Quantity{}
+	}
+	if container.Resources.Limits == nil {
+		container.Resources.Limits = map[corev1.ResourceName]resource.Quantity{}
+	}
+
+	if _, ok := container.Resources.Requests[corev1.ResourceCPU]; !ok {
 		container.Resources.Requests[corev1.ResourceCPU] = defaultPodReqCPU
 	}
-	if container.Resources.Requests.Memory() == nil {
+	if _, ok := container.Resources.Requests[corev1.ResourceMemory]; !ok {
 		container.Resources.Requests[corev1.ResourceMemory] = defaultPodReqMem
 	}
-	if container.Resources.Limits.Cpu() == nil {
+	if _, ok := container.Resources.Limits[corev1.ResourceCPU]; !ok {
 		container.Resources.Limits[corev1.ResourceCPU] = defaultPodMaxCPU
 	}
-	if container.Resources.Limits.Memory() == nil {
+	if _, ok := container.Resources.Limits[corev1.ResourceMemory]; !ok {
 		container.Resources.Limits[corev1.ResourceMemory] = defaultPodMaxMem
 	}
 

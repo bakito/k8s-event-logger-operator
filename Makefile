@@ -14,10 +14,10 @@ endif
 all: manager
 
 # Run tests
-test: tidy test-ci fmt test-ci
+test: tidy fmt generate mocks manifests test-ci
 
 # Run tests
-test-ci: generate mocks manifests
+test-ci:
 	go test ./... -coverprofile cover.out.tmp
 	@cat cover.out.tmp | grep -v "zz_generated.deepcopy.go" > cover.out # filter coverage of generated code
 	@rm -f cover.out.tmp
