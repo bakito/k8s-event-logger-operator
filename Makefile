@@ -70,8 +70,10 @@ lint-helm:
 	helm lint helm/ --set webhook.enabled=true --set webhook.certManager.enabled=true
 
 ## toolbox - start
+## Current working directory
+LOCALDIR ?= $(shell which cygpath > /dev/null 2>&1 && cygpath -m $$(pwd) || pwd)
 ## Location to install dependencies to
-LOCALBIN ?= $(shell pwd)/bin
+LOCALBIN ?= $(LOCALDIR)/bin
 $(LOCALBIN):
 	mkdir -p $(LOCALBIN)
 
@@ -87,7 +89,7 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 SEMVER_VERSION ?= v1.1.3
 MOCKGEN_VERSION ?= v1.6.0
 GOLANGCI_LINT_VERSION ?= v1.50.1
-GORELEASER_VERSION ?= v1.13.1
+GORELEASER_VERSION ?= v1.14.0
 HELM_DOCS_VERSION ?= v1.11.0
 CONTROLLER_GEN_VERSION ?= v0.11.1
 
@@ -127,7 +129,7 @@ update-toolbox-tools:
 		$(LOCALBIN)/goreleaser \
 		$(LOCALBIN)/helm-docs \
 		$(LOCALBIN)/controller-gen
-	toolbox makefile -f $$(pwd)/Makefile \
+	toolbox makefile -f $(LOCALDIR)/Makefile \
 		github.com/bakito/semver \
 		github.com/golang/mock/mockgen \
 		github.com/golangci/golangci-lint/cmd/golangci-lint \

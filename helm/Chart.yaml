@@ -8,5 +8,6 @@ sources:
   - https://github.com/bakito/k8s-event-logger-operator
 annotations:
   artifacthub.io/changes: |
-    - add skipReasons property for EventLogger CRD
+    - Change labels of generated resources from ["app", "created-by"] to ["app.kubernetes.io/component", "app.kubernetes.io/managed-by"]
+    - Created rbac resources have owner references
 icon: https://raw.githubusercontent.com/bakito/k8s-event-logger-operator/main/docs/chart-logo.png

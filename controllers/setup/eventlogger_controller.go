@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -63,8 +62,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
-	reqLogger.Info("Reconciling event logger")
-
 	if err = cr.Spec.Validate(); err != nil {
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
@@ -78,7 +75,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	pod := r.podForCR(cr)
 
 	// set owner reference for pod
-	if err := controllerutil.SetOwnerReference(cr, pod, r.Scheme); err != nil {
+	if err := ctrl.SetControllerReference(cr, pod, r.Scheme); err != nil {
 		return r.updateCR(ctx, cr, reqLogger, err)
 	}
 
@@ -89,6 +86,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	}
 
 	if cr.HasChanged() || saccChanged || roleChanged || rbChanged || podChanged {
+		reqLogger.Info("Reconciling event logger")
 		return r.updateCR(ctx, cr, reqLogger, nil)
 	}
 

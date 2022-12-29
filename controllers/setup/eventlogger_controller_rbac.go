@@ -23,6 +23,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -31,60 +32,17 @@ func (r *Reconciler) setupRbac(ctx context.Context, cr *eventloggerv1.EventLogge
 	sacc, role, rb := rbacForCR(cr)
 
 	if cr.Spec.ServiceAccount == "" {
-		saccRes, err := controllerutil.CreateOrUpdate(ctx, r.Client, sacc, func() error {
-			if sacc.Labels == nil {
-				sacc.Labels = map[string]string{}
-			}
-			sacc.Labels["app"] = loggerName(cr)
-			return nil
-		})
+		saccRes, err := controllerutil.CreateOrUpdate(ctx, r.Client, sacc, r.mutateServiceAccount(sacc, cr))
 		if err != nil {
 			return false, false, false, err
 		}
 
-		roleRes, err := controllerutil.CreateOrUpdate(ctx, r.Client, role, func() error {
-			if role.Labels == nil {
-				role.Labels = map[string]string{}
-			}
-			role.Labels["app"] = loggerName(cr)
-			role.Rules = []rbacv1.PolicyRule{
-				{
-					APIGroups: []string{""},
-					Resources: []string{"events", "pods"},
-					Verbs:     []string{"watch", "get", "list"},
-				},
-				{
-					APIGroups: []string{"eventlogger.bakito.ch"},
-					Resources: []string{"eventloggers"},
-					Verbs:     []string{"get", "list", "patch", "update", "watch"},
-				},
-			}
-			return nil
-		})
+		roleRes, err := controllerutil.CreateOrUpdate(ctx, r.Client, role, r.mutateRole(role, cr))
 		if err != nil {
 			return false, false, false, err
 		}
 
-		rbRes, err := controllerutil.CreateOrUpdate(ctx, r.Client, rb, func() error {
-			if rb.Labels == nil {
-				rb.Labels = map[string]string{}
-			}
-			rb.Labels["app"] = loggerName(cr)
-
-			rb.Subjects = []rbacv1.Subject{
-				{
-					Kind:      "ServiceAccount",
-					Name:      loggerName(cr),
-					Namespace: cr.Namespace,
-				},
-			}
-			rb.RoleRef = rbacv1.RoleRef{
-				Kind:     "Role",
-				APIGroup: "rbac.authorization.k8s.io",
-				Name:     loggerName(cr),
-			}
-			return nil
-		})
+		rbRes, err := controllerutil.CreateOrUpdate(ctx, r.Client, rb, r.mutateRolebinding(rb, cr))
 		if err != nil {
 			return false, false, false, err
 		}
@@ -107,6 +65,52 @@ func (r *Reconciler) setupRbac(ctx context.Context, cr *eventloggerv1.EventLogge
 		return false, false, false, err
 	}
 	return false, false, false, nil
+}
+
+func (r *Reconciler) mutateServiceAccount(sacc *corev1.ServiceAccount, cr *eventloggerv1.EventLogger) func() error {
+	return func() error {
+		sacc.Labels = copyLabels(cr)
+		return ctrl.SetControllerReference(cr, sacc, r.Scheme)
+	}
+}
+
+func (r *Reconciler) mutateRole(role *rbacv1.Role, cr *eventloggerv1.EventLogger) func() error {
+	return func() error {
+		role.Labels = copyLabels(cr)
+		role.Rules = []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{""},
+				Resources: []string{"events", "pods"},
+				Verbs:     []string{"watch", "get", "list"},
+			},
+			{
+				APIGroups: []string{"eventlogger.bakito.ch"},
+				Resources: []string{"eventloggers"},
+				Verbs:     []string{"get", "list", "patch", "update", "watch"},
+			},
+		}
+		return ctrl.SetControllerReference(cr, role, r.Scheme)
+	}
+}
+
+func (r *Reconciler) mutateRolebinding(rb *rbacv1.RoleBinding, cr *eventloggerv1.EventLogger) func() error {
+	return func() error {
+		rb.Labels = copyLabels(cr)
+
+		rb.Subjects = []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      loggerName(cr),
+				Namespace: cr.Namespace,
+			},
+		}
+		rb.RoleRef = rbacv1.RoleRef{
+			Kind:     "Role",
+			APIGroup: "rbac.authorization.k8s.io",
+			Name:     loggerName(cr),
+		}
+		return ctrl.SetControllerReference(cr, rb, r.Scheme)
+	}
 }
 
 func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.Role, *rbacv1.RoleBinding) {

@@ -90,16 +90,18 @@ var _ = Describe("Logging", func() {
 
 				// check created pod
 				pods := &corev1.PodList{}
-				assertEntrySize(cl, pods, 1)
+				assertEntrySize(cl, el, pods, 1)
 				pod := pods.Items[0]
 
-				Ω(pod.ObjectMeta.Labels).Should(HaveKey("app"))
-				Ω(pod.ObjectMeta.Labels).Should(HaveKey("created-by"))
+				Ω(pod.ObjectMeta.Labels).Should(HaveKey(labelComponent))
+				Ω(pod.ObjectMeta.Labels).Should(HaveKey(labelManagedBy))
 				Ω(pod.ObjectMeta.Labels["test-label"]).Should(Equal("foo"))
 				Ω(pod.ObjectMeta.Annotations["test-annotation"]).Should(Equal("bar"))
 				Ω(pod.ObjectMeta.Annotations["prometheus.io/port"]).Should(Equal(c.DefaultMetricsAddr[:1]))
 				Ω(pod.ObjectMeta.Annotations["prometheus.io/scrape"]).Should(Equal("true"))
 				Ω(pod.ObjectMeta.Namespace).Should(Equal(el.GetNamespace()))
+				Ω(pod.ObjectMeta.OwnerReferences).Should(HaveLen(1))
+
 				Ω(pod.Spec.NodeSelector).Should(HaveLen(1))
 				Ω(pod.Spec.NodeSelector["ns-key"]).Should(Equal("ns-value"))
 
@@ -124,7 +126,7 @@ var _ = Describe("Logging", func() {
 				cl, _ := testReconcile(el, pod)
 
 				pods := &corev1.PodList{}
-				assertEntrySize(cl, pods, 1)
+				assertEntrySize(cl, el, pods, 1)
 				pod2 := pods.Items[0]
 				Ω(pod2.Spec.Containers[0].Image).Should(Equal(testImage))
 			})
@@ -136,14 +138,14 @@ var _ = Describe("Logging", func() {
 				cl, _ := testReconcile(el, sacc, role, rb)
 
 				pods := &corev1.PodList{}
-				assertEntrySize(cl, pods, 1)
+				assertEntrySize(cl, el, pods, 1)
 				pod2 := pods.Items[0]
 
 				Ω(pod2.Spec.Containers[0].Image).Should(Equal(testImage))
 
-				assertEntrySize(cl, &corev1.ServiceAccountList{}, 0)
-				assertEntrySize(cl, &rbacv1.RoleList{}, 0)
-				assertEntrySize(cl, &rbacv1.RoleBindingList{}, 0)
+				assertEntrySize(cl, el, &corev1.ServiceAccountList{}, 0)
+				assertEntrySize(cl, el, &rbacv1.RoleList{}, 0)
+				assertEntrySize(cl, el, &rbacv1.RoleBindingList{}, 0)
 			})
 		})
 		Context("ServiceAccount", func() {
@@ -153,8 +155,12 @@ var _ = Describe("Logging", func() {
 
 				// service account
 				saccList := &corev1.ServiceAccountList{}
-				assertEntrySize(cl, saccList, 1)
-				Ω(saccList.Items[0].ObjectMeta.Name).Should(Equal(loggerName(el)))
+				assertEntrySize(cl, el, saccList, 1)
+				sacc := saccList.Items[0]
+				Ω(sacc.ObjectMeta.Name).Should(Equal(loggerName(el)))
+				Ω(sacc.ObjectMeta.Labels).Should(HaveKey(labelComponent))
+				Ω(sacc.ObjectMeta.Labels).Should(HaveKey(labelManagedBy))
+				Ω(sacc.ObjectMeta.OwnerReferences).Should(HaveLen(1))
 			})
 		})
 		Context("Role", func() {
@@ -164,9 +170,13 @@ var _ = Describe("Logging", func() {
 
 				// role
 				roleList := &rbacv1.RoleList{}
-				assertEntrySize(cl, roleList, 1)
+				assertEntrySize(cl, el, roleList, 1)
 				role := roleList.Items[0]
 				Ω(role.ObjectMeta.Name).Should(Equal(loggerName(el)))
+				Ω(role.ObjectMeta.Labels).Should(HaveKey(labelComponent))
+				Ω(role.ObjectMeta.Labels).Should(HaveKey(labelManagedBy))
+				Ω(role.ObjectMeta.OwnerReferences).Should(HaveLen(1))
+
 				Ω(role.Rules).Should(HaveLen(2))
 				Ω(role.Rules[0].APIGroups).Should(Equal([]string{""}))
 				Ω(role.Rules[0].Resources).Should(Equal([]string{"events", "pods"}))
@@ -184,15 +194,19 @@ var _ = Describe("Logging", func() {
 
 				// rolebinding
 				rbList := &rbacv1.RoleBindingList{}
-				assertEntrySize(cl, rbList, 1)
-				Ω(rbList.Items[0].ObjectMeta.Name).Should(Equal(loggerName(el)))
+				assertEntrySize(cl, el, rbList, 1)
+				rb := rbList.Items[0]
+				Ω(rb.ObjectMeta.Name).Should(Equal(loggerName(el)))
+				Ω(rb.ObjectMeta.Labels).Should(HaveKey(labelComponent))
+				Ω(rb.ObjectMeta.Labels).Should(HaveKey(labelManagedBy))
+				Ω(rb.ObjectMeta.OwnerReferences).Should(HaveLen(1))
 
-				Ω(rbList.Items[0].Subjects).Should(HaveLen(1))
-				Ω(rbList.Items[0].Subjects[0].Kind).Should(Equal("ServiceAccount"))
-				Ω(rbList.Items[0].Subjects[0].Name).Should(Equal(loggerName(el)))
-				Ω(rbList.Items[0].Subjects[0].Namespace).Should(Equal(el.GetNamespace()))
-				Ω(rbList.Items[0].RoleRef.Kind).Should(Equal("Role"))
-				Ω(rbList.Items[0].RoleRef.Name).Should(Equal(loggerName(el)))
+				Ω(rb.Subjects).Should(HaveLen(1))
+				Ω(rb.Subjects[0].Kind).Should(Equal("ServiceAccount"))
+				Ω(rb.Subjects[0].Name).Should(Equal(loggerName(el)))
+				Ω(rb.Subjects[0].Namespace).Should(Equal(el.GetNamespace()))
+				Ω(rb.RoleRef.Kind).Should(Equal("Role"))
+				Ω(rb.RoleRef.Name).Should(Equal(loggerName(el)))
 			})
 		})
 	})
@@ -270,8 +284,10 @@ resources:
 	return cl, res
 }
 
-func assertEntrySize(cl client.Client, list client.ObjectList, expected int) {
-	err := cl.List(context.TODO(), list, client.MatchingLabels{"app": "event-logger-eventlogger"})
+func assertEntrySize(cl client.Client, el *v1.EventLogger, list client.ObjectList, expected int) {
+	option := client.MatchingLabels{}
+	applyDefaultLabels(el, option)
+	err := cl.List(context.TODO(), list, option)
 
 	Ω(err).ShouldNot(HaveOccurred())
 	r := reflect.ValueOf(list)
