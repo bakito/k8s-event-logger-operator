@@ -31,20 +31,32 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+const (
+	labelComponent = "app.kubernetes.io/component"
+	labelManagedBy = "app.kubernetes.io/managed-by"
+)
+
 func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.EventLogger, pod *corev1.Pod,
 	reqLogger logr.Logger) (bool, error,
 ) {
-	podList := &corev1.PodList{}
-	opts := []client.ListOption{
-		client.InNamespace(cr.Namespace),
-		client.MatchingLabels(map[string]string{
-			"app":        loggerName(cr),
-			"created-by": "eventlogger",
-		}),
-	}
-	err := r.List(ctx, podList, opts...)
+	// current labels
+	labels := make(map[string]string)
+	applyDefaultLabels(cr, labels)
+	podList, err := r.findPods(ctx, cr, labels)
 	if err != nil {
 		return false, err
+	}
+
+	if len(podList.Items) == 0 {
+		// old labels
+		oldPods, err := r.findPods(ctx, cr, map[string]string{
+			"app":        loggerName(cr),
+			"created-by": "eventlogger",
+		})
+		if err != nil {
+			return false, err
+		}
+		podList.Items = oldPods.Items
 	}
 
 	replacePod := false
@@ -81,6 +93,15 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 	return false, nil
 }
 
+func (r *Reconciler) findPods(ctx context.Context, cr *eventloggerv1.EventLogger, matchLabels map[string]string) (*corev1.PodList, error) {
+	podList := &corev1.PodList{}
+	opts := []client.ListOption{
+		client.InNamespace(cr.Namespace),
+		client.MatchingLabels(matchLabels),
+	}
+	return podList, r.List(ctx, podList, opts...)
+}
+
 // podForCR returns a pod with the same name/namespace as the cr
 func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	metricsAddrFlag := flag.Lookup(cnst.ArgMetricsAddr)
@@ -92,13 +113,6 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		metricsAddr = cnst.DefaultMetricsAddr
 	}
 	metricsPort := metricsAddr[:1]
-
-	labels := make(map[string]string)
-	for k, v := range cr.Spec.Labels {
-		labels[k] = v
-	}
-	labels["app"] = loggerName(cr)
-	labels["created-by"] = "eventlogger"
 
 	annotations := make(map[string]string)
 	for k, v := range cr.Spec.Annotations {
@@ -145,7 +159,7 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: loggerName(cr) + "-",
 			Namespace:    cr.Namespace,
-			Labels:       labels,
+			Labels:       copyLabels(cr),
 			Annotations:  annotations,
 		},
 		Spec: corev1.PodSpec{
@@ -158,4 +172,18 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	}
 
 	return pod
+}
+
+func copyLabels(cr *eventloggerv1.EventLogger) map[string]string {
+	labels := make(map[string]string)
+	for k, v := range cr.Spec.Labels {
+		labels[k] = v
+	}
+	applyDefaultLabels(cr, labels)
+	return labels
+}
+
+func applyDefaultLabels(cr *eventloggerv1.EventLogger, labels map[string]string) {
+	labels[labelComponent] = loggerName(cr)
+	labels[labelManagedBy] = "eventlogger"
 }
