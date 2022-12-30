@@ -70,6 +70,9 @@ rbac:
   # If not set and create is true, a name is generated using the fullname template
   roleName:
 
+# -- Number of old deployment ReplicaSets to retain. The rest will be garbage collected.
+revisionHistoryLimit: 3
+
 # -- Resource limits and requests for the operator pods.
 resources:
   requests:
