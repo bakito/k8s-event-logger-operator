@@ -2,12 +2,11 @@ apiVersion: v2
 name: k8s-event-logger-operator
 description: This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 type: application
-version: 1.11.2
-appVersion: v1.11.2
+version: 1.13.5
+appVersion: v1.13.5
 sources:
   - https://github.com/bakito/k8s-event-logger-operator
 annotations:
   artifacthub.io/changes: |
-    - Change labels of generated resources from ["app", "created-by"] to ["app.kubernetes.io/component", "app.kubernetes.io/managed-by"]
-    - Created rbac resources have owner references
+    - Allow revisionHistoryLimit to be configured in values
 icon: https://raw.githubusercontent.com/bakito/k8s-event-logger-operator/main/docs/chart-logo.png

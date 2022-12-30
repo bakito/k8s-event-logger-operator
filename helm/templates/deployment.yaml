@@ -7,6 +7,7 @@ metadata:
   {{- include "k8s-event-logger-operator.labels" . | nindent 4 }}
 spec:
   replicas: 1
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
   {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 6 }}

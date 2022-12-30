@@ -1,6 +1,6 @@
 # k8s-event-logger-operator
 
-![Version: 1.11.2](https://img.shields.io/badge/Version-1.11.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.11.2](https://img.shields.io/badge/AppVersion-v1.11.2-informational?style=flat-square)
+![Version: 1.13.5](https://img.shields.io/badge/Version-1.13.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.13.5](https://img.shields.io/badge/AppVersion-v1.13.5-informational?style=flat-square)
 
 This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 
@@ -32,6 +32,7 @@ helm install k8s-event-logger-operator bakito/k8s-event-logger-operator
 | rbac.create | bool | `true` | Specifies whether rbac should be created |
 | rbac.roleName | string | `nil` | The name of the role and clusterrole to use. If not set and create is true, a name is generated using the fullname template |
 | resources | object | `{"limits":{"cpu":"200m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Resource limits and requests for the operator pods. |
+| revisionHistoryLimit | int | `3` | Number of old deployment ReplicaSets to retain. The rest will be garbage collected. |
 | securityContext | object | `{}` | Security Context for the operator pods. |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `nil` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
