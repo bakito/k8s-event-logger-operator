@@ -4,15 +4,15 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    ignored_updates:
-      - match:
-          dependency_name: "k8s.io/api"
-      - match:
-          dependency_name: "k8s.io/apimachinery"
+    ignore:
+      - dependency-name: "k8s.io/api"
+      - dependency-name: "k8s.io/apimachinery"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
