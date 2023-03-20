@@ -88,10 +88,10 @@ func newFilterForMatchingPatterns(patterns []string, skipOnMatch bool) filter.Fi
 		}, fmt.Sprintf("Message matches /%s/", mp)))
 	}
 
-	any := filters.Any()
+	f := filters.Any()
 	return filter.New(func(e *corev1.Event) bool {
-		return skipOnMatch != any.Match(e)
-	}, fmt.Sprintf("( %v XOR %s )", skipOnMatch, any.String()))
+		return skipOnMatch != f.Match(e)
+	}, fmt.Sprintf("( %v XOR %s )", skipOnMatch, f.String()))
 }
 
 // ConfigFor get config for namespace and name
