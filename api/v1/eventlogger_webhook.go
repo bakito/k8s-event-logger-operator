@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // SetupWebhookWithManager setup with manager
@@ -34,16 +35,16 @@ func (in *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
 var _ webhook.Validator = &EventLogger{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (in *EventLogger) ValidateCreate() error {
-	return in.Spec.Validate()
+func (in *EventLogger) ValidateCreate() (admission.Warnings, error) {
+	return nil, in.Spec.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (in *EventLogger) ValidateUpdate(_ runtime.Object) error {
-	return in.Spec.Validate()
+func (in *EventLogger) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
+	return nil, in.Spec.Validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (in *EventLogger) ValidateDelete() error {
-	return nil
+func (in *EventLogger) ValidateDelete() (admission.Warnings, error) {
+	return nil, nil
 }

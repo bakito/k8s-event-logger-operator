@@ -16,17 +16,23 @@ var _ = Describe("V1", func() {
 	Context("Valid", func() {
 		Context("ValidateCreate", func() {
 			It("should be valid", func() {
-				Ω(el.ValidateCreate()).ShouldNot(HaveOccurred())
+				w, err := el.ValidateCreate()
+				Ω(w).Should(BeNil())
+				Ω(err).ShouldNot(HaveOccurred())
 			})
 		})
 		Context("ValidateUpdate", func() {
 			It("should be valid", func() {
-				Ω(el.ValidateUpdate(nil)).ShouldNot(HaveOccurred())
+				w, err := el.ValidateUpdate(nil)
+				Ω(w).Should(BeNil())
+				Ω(err).ShouldNot(HaveOccurred())
 			})
 		})
 		Context("ValidateUpdate", func() {
 			It("should be nil", func() {
-				Ω(el.ValidateDelete()).Should(BeNil())
+				w, err := el.ValidateDelete()
+				Ω(w).Should(BeNil())
+				Ω(err).ShouldNot(HaveOccurred())
 			})
 		})
 	})
@@ -36,17 +42,23 @@ var _ = Describe("V1", func() {
 		})
 		Context("ValidateCreate", func() {
 			It("should be invalid", func() {
-				Ω(el.ValidateCreate()).Should(HaveOccurred())
+				w, err := el.ValidateCreate()
+				Ω(w).Should(BeNil())
+				Ω(err).Should(HaveOccurred())
 			})
 		})
 		Context("ValidateUpdate", func() {
 			It("should be invalid", func() {
-				Ω(el.ValidateUpdate(nil)).Should(HaveOccurred())
+				w, err := el.ValidateUpdate(nil)
+				Ω(w).Should(BeNil())
+				Ω(err).Should(HaveOccurred())
 			})
 		})
 		Context("ValidateUpdate", func() {
 			It("should be nil", func() {
-				Ω(el.ValidateDelete()).Should(BeNil())
+				w, err := el.ValidateDelete()
+				Ω(w).Should(BeNil())
+				Ω(err).ShouldNot(HaveOccurred())
 			})
 		})
 	})

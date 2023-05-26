@@ -33,7 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 var eventLog = ctrl.Log.WithName("event")
@@ -212,7 +211,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error 
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&eventloggerv1.EventLogger{}).
-		Watches(&source.Kind{Type: &corev1.Event{}}, &handler.Funcs{}).
+		Watches(&corev1.Event{}, &handler.Funcs{}).
 		WithEventFilter(&loggingPredicate{Config: r.Config, lastVersion: lv}).
 		Complete(r)
 }
