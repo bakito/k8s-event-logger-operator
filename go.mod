@@ -12,7 +12,7 @@ require (
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/onsi/ginkgo/v2 v2.9.5
+	github.com/onsi/ginkgo/v2 v2.9.7
 	github.com/onsi/gomega v1.27.7
 	go.uber.org/zap v1.24.0
 	k8s.io/api v0.27.2
