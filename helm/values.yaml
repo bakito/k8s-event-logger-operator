@@ -94,5 +94,8 @@ tolerations: [ ]
 # -- Assign custom [affinity] rules to the deployment
 affinity: { }
 
+# -- Add additional pod [annotations]
+extraPodAnnotations: { }
+
 # -- Add additional pod [labels]
 extraPodLabels: { }
