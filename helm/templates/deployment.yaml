@@ -18,6 +18,10 @@ spec:
     {{- with .Values.extraPodLabels }}
     {{- toYaml . | nindent 8 }}
     {{- end }}
+    annotations:
+    {{- with .Values.extraPodAnnotations }}
+    {{- toYaml . | nindent 8 }}
+    {{- end }}
     spec:
       serviceAccountName: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
       containers:
