@@ -1,6 +1,6 @@
 # k8s-event-logger-operator
 
-![Version: 1.13.5](https://img.shields.io/badge/Version-1.13.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.13.5](https://img.shields.io/badge/AppVersion-v1.13.5-informational?style=flat-square)
+![Version: 1.13.6](https://img.shields.io/badge/Version-1.13.6-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.13.6](https://img.shields.io/badge/AppVersion-v1.13.6-informational?style=flat-square)
 
 This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 

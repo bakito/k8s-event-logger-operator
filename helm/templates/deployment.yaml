@@ -14,14 +14,14 @@ spec:
   template:
     metadata:
       labels:
-    {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 8 }}
-    {{- with .Values.extraPodLabels }}
-    {{- toYaml . | nindent 8 }}
-    {{- end }}
-    annotations:
-    {{- with .Values.extraPodAnnotations }}
-    {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- include "k8s-event-logger-operator.selectorLabels" . | nindent 8 }}
+      {{- with .Values.extraPodLabels }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.extraPodAnnotations }}
+      annotations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       serviceAccountName: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
       containers:
