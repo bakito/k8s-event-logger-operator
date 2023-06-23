@@ -52,11 +52,11 @@ docker-push:
 release: goreleaser
 	@version=$$(semver); \
 	git tag -s $$version -m"Release $$version"
-	$(GORELEASER) --rm-dist
+	$(GORELEASER) --clean
 
 .PHONY: test-release
 test-release: goreleaser
-	$(GORELEASER) --skip-publish --snapshot --rm-dist
+	$(GORELEASER) --skip-publish --snapshot --clean
 
 # generate mocks
 .PHONY: mocks
@@ -88,10 +88,10 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ## Tool Versions
 SEMVER_VERSION ?= v1.1.3
 MOCKGEN_VERSION ?= v1.6.0
-GOLANGCI_LINT_VERSION ?= v1.52.0
-GORELEASER_VERSION ?= v1.16.2
+GOLANGCI_LINT_VERSION ?= v1.53.3
+GORELEASER_VERSION ?= v1.18.2
 HELM_DOCS_VERSION ?= v1.11.0
-CONTROLLER_GEN_VERSION ?= v0.11.3
+CONTROLLER_GEN_VERSION ?= v0.12.0
 
 ## Tool Installer
 .PHONY: semver
