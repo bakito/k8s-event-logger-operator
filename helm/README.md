@@ -20,6 +20,7 @@ helm install k8s-event-logger-operator bakito/k8s-event-logger-operator
 | eventLogger.leaderElectionResourceLock | string | `nil` | Leader election lock type |
 | eventLogger.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}` | Resource limits and requests for the logger pods. |
 | eventLogger.securityContext | object | `{}` | Security Context for the logger pods. |
+ | extraPodAnnotations | object | `{}` | Add additional pod [annotations] |
 | extraPodLabels | object | `{}` | Add additional pod [labels] |
 | fullnameOverride | string | `""` | String to fully override "argo-rollouts.fullname" template |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
