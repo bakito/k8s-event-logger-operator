@@ -51,6 +51,8 @@ jobs:
 
       - name: Check logs
         run: |
+          kubectl get pods -n e2e-test 
+          kubectl logs -n e2e-test -l app.kubernetes.io/component=event-logger-example-eventlogger
           kubectl logs -n e2e-test -l app.kubernetes.io/component=event-logger-example-eventlogger | grep '"logger":"event"'
 
       - name: Print logs
