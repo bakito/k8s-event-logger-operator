@@ -9,7 +9,7 @@ import (
 	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 func newFilter(c eventloggerv1.EventLoggerSpec) filter.Filter {
@@ -73,7 +73,7 @@ func newFilterForKind(k eventloggerv1.Kind) filter.Filter {
 	}
 
 	if k.MatchingPatterns != nil {
-		filters = append(filters, newFilterForMatchingPatterns(k.MatchingPatterns, pointer.BoolDeref(k.SkipOnMatch, false)))
+		filters = append(filters, newFilterForMatchingPatterns(k.MatchingPatterns, ptr.Deref(k.SkipOnMatch, false)))
 	}
 
 	return filters.All()

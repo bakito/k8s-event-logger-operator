@@ -19,7 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -50,7 +50,7 @@ var _ = Describe("Logging", func() {
 			Spec: v1.EventLoggerSpec{
 				Labels:        map[string]string{"test-label": "foo"},
 				Annotations:   map[string]string{"test-annotation": "bar"},
-				ScrapeMetrics: pointer.Bool(true),
+				ScrapeMetrics: ptr.To(true),
 				Namespace:     &ns2,
 				NodeSelector:  map[string]string{"ns-key": "ns-value"},
 			},
