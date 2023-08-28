@@ -39,8 +39,11 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
+	crtlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 var (
@@ -89,15 +92,21 @@ func main() {
 	podNamespace := os.Getenv(cnst.EnvPodNamespace)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                     scheme,
-		MetricsBindAddress:         metricsAddr,
-		Port:                       9443,
-		CertDir:                    "certs",
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: metricsAddr,
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port:    9443,
+			CertDir: "certs",
+		}),
 		LeaderElection:             enableLeaderElection && !enableLoggerMode,
 		LeaderElectionID:           "leader.eventlogger.bakito.ch",
 		LeaderElectionResourceLock: os.Getenv(cnst.EnvLeaderElectionResourceLock),
 		HealthProbeBindAddress:     ":8081",
-		Namespace:                  watchNamespace,
+		Cache: crtlcache.Options{
+			DefaultNamespaces: map[string]crtlcache.Config{watchNamespace: {}},
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
