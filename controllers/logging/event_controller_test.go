@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -261,13 +261,13 @@ var _ = Describe("Logging", func() {
 				"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
 			),
 			Entry("10",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", APIGroup: pointer.String("argoproj.io"), EventTypes: []string{}}}},
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", APIGroup: ptr.To("argoproj.io"), EventTypes: []string{}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "argoproj.io", Version: "v1alpha1"}.String()}},
 				true,
 				"( ( ( Kind == 'Application' AND APIGroup == 'argoproj.io' ) ) )",
 			),
 			Entry("11",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", APIGroup: pointer.String("argoproj.io"), EventTypes: []string{}}}},
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", APIGroup: ptr.To("argoproj.io"), EventTypes: []string{}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "app.k8s.io", Version: "v1beta1"}.String()}},
 				false,
 				"( ( ( Kind == 'Application' AND APIGroup == 'argoproj.io' ) ) )",
@@ -320,25 +320,25 @@ var _ = Describe("Logging", func() {
 				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 			),
 			Entry("19",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: pointer.Bool(false)}}},
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: ptr.To(false)}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				true,
 				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
 			),
 			Entry("20",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: pointer.Bool(false)}}},
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: ptr.To(false)}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				false,
 				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 			),
 			Entry("21",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: pointer.Bool(true)}}},
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: ptr.To(true)}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				false,
 				"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*message.*/ ) ) ) ) )",
 			),
 			Entry("22",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: pointer.Bool(true)}}},
+				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: ptr.To(true)}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				true,
 				"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*Message.*/ ) ) ) ) )",
