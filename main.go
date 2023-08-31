@@ -59,17 +59,20 @@ func init() {
 
 func main() {
 	var metricsAddr string
+	var healthAddr string
+	var profilingAddr string
 	var configName string
 	var enableLeaderElection bool
 	var enableLoggerMode bool
 	var enableProfiling bool
 	flag.StringVar(&metricsAddr, cnst.ArgMetricsAddr, cnst.DefaultMetricsAddr, "The address the metric endpoint binds to.")
+	flag.StringVar(&healthAddr, cnst.ArgHealthAddr, cnst.DefaultHealthAddr, "The address the health endpoint binds to.")
+	flag.StringVar(&profilingAddr, cnst.ArgProfilingAddr, cnst.DefaultProfilingAddr, "The address the profiling endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, cnst.ArgEnableLeaderElection, false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.BoolVar(&enableLoggerMode, cnst.ArgEnableLoggerMode, false,
 		"Enable logger mode. Enabling this will only log events of the current namespace.")
-	flag.BoolVar(&enableProfiling, cnst.ArgEnableProfiling, false,
-		"Enable profiling on port ':8081'.")
+	flag.BoolVar(&enableProfiling, cnst.ArgEnableProfiling, false, "Enable profiling endpoint.")
 
 	flag.StringVar(&configName, cnst.ArgConfigName, "",
 		"The name of the eventlogger config to work with.")
@@ -100,7 +103,7 @@ func main() {
 		LeaderElection:             enableLeaderElection && !enableLoggerMode,
 		LeaderElectionID:           "leader.eventlogger.bakito.ch",
 		LeaderElectionResourceLock: os.Getenv(cnst.EnvLeaderElectionResourceLock),
-		HealthProbeBindAddress:     ":8081",
+		HealthProbeBindAddress:     healthAddr,
 		Cache: crtlcache.Options{
 			Namespaces: []string{watchNamespace},
 		},
@@ -168,7 +171,7 @@ func main() {
 	// +kubebuilder:scaffold:builder
 
 	if enableProfiling {
-		if err = mgr.Add(pprof.New(":8081")); err != nil {
+		if err = mgr.Add(pprof.New(profilingAddr)); err != nil {
 			setupLog.Error(err, "unable to create pprof service")
 			os.Exit(1)
 		}

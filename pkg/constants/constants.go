@@ -8,14 +8,26 @@ const (
 	// ArgEnableLoggerMode enable logger mode
 	ArgEnableLoggerMode = "enable-logger-mode"
 
-	// ArgMetricsAddr metrics address
-	ArgMetricsAddr = "metrics-addr"
-
 	// ArgConfigName name of the config
 	ArgConfigName = "config-name"
 
+	// ArgMetricsAddr metrics address
+	ArgMetricsAddr = "metrics-addr"
+
 	// DefaultMetricsAddr default metrics address
 	DefaultMetricsAddr = ":8080"
+
+	// ArgHealthAddr health address
+	ArgHealthAddr = "health-addr"
+
+	// DefaultHealthAddr default health address
+	DefaultHealthAddr = ":8081"
+
+	// ArgProfilingAddr profiling address
+	ArgProfilingAddr = "profiling-addr"
+
+	// DefaultProfilingAddr default profiling address
+	DefaultProfilingAddr = ":8082"
 
 	// ArgEnableLeaderElection enable leader election
 	ArgEnableLeaderElection = "enable-leader-election"
