@@ -22,6 +22,7 @@ import (
 	"os"
 	gr "runtime"
 
+
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/controllers/config"
 	"github.com/bakito/k8s-event-logger-operator/controllers/logging"
@@ -42,6 +43,7 @@ import (
 	crtlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
@@ -93,9 +95,18 @@ func main() {
 	watchNamespace := os.Getenv(cnst.EnvWatchNamespace)
 	podNamespace := os.Getenv(cnst.EnvPodNamespace)
 
+	defaultNamespaces := map[string]crtlcache.Config{
+		watchNamespace: {},
+	}
+	if watchNamespace == "" {
+		defaultNamespaces = nil
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             scheme,
-		MetricsBindAddress: metricsAddr,
+		Scheme: scheme,
+		Metrics: server.Options{
+			BindAddress: metricsAddr,
+		},
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port:    9443,
 			CertDir: "certs",
@@ -105,7 +116,7 @@ func main() {
 		LeaderElectionResourceLock: os.Getenv(cnst.EnvLeaderElectionResourceLock),
 		HealthProbeBindAddress:     healthAddr,
 		Cache: crtlcache.Options{
-			Namespaces: []string{watchNamespace},
+			DefaultNamespaces: defaultNamespaces,
 		},
 	})
 	if err != nil {
