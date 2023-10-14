@@ -21,8 +21,6 @@ import (
 	"fmt"
 	"os"
 	gr "runtime"
-
-
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/controllers/config"
 	"github.com/bakito/k8s-event-logger-operator/controllers/logging"
