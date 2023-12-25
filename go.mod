@@ -7,7 +7,7 @@ toolchain go1.21.5
 require (
 	github.com/bakito/operator-utils v1.3.2
 	github.com/fatih/structs v1.1.0
-	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zapr v1.3.0
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
