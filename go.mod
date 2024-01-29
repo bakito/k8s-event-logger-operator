@@ -12,7 +12,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.17.0
 	github.com/golangci/golangci-lint v1.55.2
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/goreleaser/goreleaser v1.23.0
 	github.com/norwoodj/helm-docs v1.12.0
 	github.com/onsi/ginkgo/v2 v2.15.0
