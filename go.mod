@@ -1,6 +1,7 @@
 module github.com/bakito/k8s-event-logger-operator
 
 go 1.21
+toolchain go1.22.0
 
 require (
 	github.com/bakito/operator-utils v1.3.2
@@ -14,7 +15,7 @@ require (
 	github.com/golangci/golangci-lint v1.56.2
 	github.com/google/uuid v1.6.0
 	github.com/goreleaser/goreleaser v1.24.0
-	github.com/norwoodj/helm-docs v1.12.0
+	github.com/norwoodj/helm-docs v1.13.0
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1
 	go.uber.org/mock v0.4.0
