@@ -16,7 +16,7 @@ require (
 	github.com/golangci/golangci-lint v1.56.2
 	github.com/google/uuid v1.6.0
 	github.com/goreleaser/goreleaser v1.24.0
-	github.com/norwoodj/helm-docs v1.13.0
+	github.com/norwoodj/helm-docs v1.13.1
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1
 	go.uber.org/mock v0.4.0
@@ -392,7 +392,7 @@ require (
 	go.uber.org/automaxprocs v1.5.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	gocloud.dev v0.36.0 // indirect
-	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/crypto v0.20.0 // indirect
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc // indirect
 	golang.org/x/exp/typeparams v0.0.0-20231219180239-dc181d75b848 // indirect
 	golang.org/x/mod v0.15.0 // indirect
