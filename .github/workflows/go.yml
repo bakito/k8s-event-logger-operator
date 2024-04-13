@@ -59,8 +59,7 @@ jobs:
           go-version-file: "go.mod"
 
       - name: Install Helm
-        run: |
-          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        uses: azure/setup-helm@v4
 
       - name: Lint
         run: |
