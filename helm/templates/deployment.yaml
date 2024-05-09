@@ -23,6 +23,10 @@ spec:
       {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      {{- with .Values.image.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
       serviceAccountName: {{ include "k8s-event-logger-operator.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}

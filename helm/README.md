@@ -23,6 +23,7 @@ helm install k8s-event-logger-operator bakito/k8s-event-logger-operator
 | extraPodAnnotations | object | `{}` | Add additional pod [annotations] |
 | extraPodLabels | object | `{}` | Add additional pod [labels] |
 | fullnameOverride | string | `""` | String to fully override "argo-rollouts.fullname" template |
+| image.imagePullSecrets | object | `{}` | Image pull secrets |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy |
 | image.repository | string | `"ghcr.io/bakito/k8s-event-logger"` | Repository to use |
 | image.tag | string | `nil` | Overrides the image tag (default is the chart appVersion) |
