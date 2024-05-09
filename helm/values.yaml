@@ -9,6 +9,8 @@ image:
   tag:
   # -- Image pull policy
   pullPolicy: IfNotPresent
+  # -- Image pull secrets
+  imagePullSecrets: { }
   # -- Additional command args
 
 eventLogger:
