@@ -18,6 +18,7 @@ package v1
 
 import (
 	"github.com/bakito/k8s-event-logger-operator/version"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -47,6 +48,11 @@ type EventLoggerSpec struct {
 
 	// ServiceAccount the service account to use for the logger pod
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this EventLoggerSpec.
+	// If specified, these secrets will be passed to individual puller implementations for them to use.
+	// +optional
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
 	// NodeSelector is a selector which must be true for the pod to fit on a node.
 	// Selector which must match a node's labels for the pod to be scheduled on that node.

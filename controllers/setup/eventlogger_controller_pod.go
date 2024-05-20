@@ -167,6 +167,7 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 				container,
 			},
 			ServiceAccountName: saccName,
+			ImagePullSecrets:   cr.Spec.ImagePullSecrets,
 			NodeSelector:       cr.Spec.NodeSelector,
 		},
 	}

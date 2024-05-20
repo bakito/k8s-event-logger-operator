@@ -2,8 +2,8 @@ apiVersion: v2
 name: k8s-event-logger-operator
 description: This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 type: application
-version: 1.13.8
-appVersion: v1.13.8
+version: 1.13.11
+appVersion: v1.13.11
 sources:
   - https://github.com/bakito/k8s-event-logger-operator
 annotations:

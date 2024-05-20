@@ -131,6 +131,21 @@ var _ = Describe("Logging", func() {
 				Ω(pod2.Spec.Containers[0].Image).Should(Equal(testImage))
 			})
 
+			It("should update the imagePullSecrets", func() {
+				el.Spec.ImagePullSecrets = []corev1.LocalObjectReference{{Name: "secret1"}, {Name: "secret2"}}
+
+				cl, res := testReconcile(el)
+				Ω(res.Requeue).Should(BeFalse())
+
+				pods := &corev1.PodList{}
+				assertEntrySize(cl, el, pods, 1)
+				pod2 := pods.Items[0]
+
+				Ω(len(pod2.Spec.ImagePullSecrets)).Should(Equal(2))
+				Ω(pod2.Spec.ImagePullSecrets[0].Name).Should(Equal("secret1"))
+				Ω(pod2.Spec.ImagePullSecrets[1].Name).Should(Equal("secret2"))
+			})
+
 			It("should use an external service account", func() {
 				el.Spec.ServiceAccount = "foo"
 

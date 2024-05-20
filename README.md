@@ -61,6 +61,9 @@ spec:
 
   serviceAccount: "sa" # optional - if a custom ServiceAccount should be used for the pod. Default ServiceAccount is automatically created
 
+  ImagePullSecrets: # optional - list of references to secrets to use for pulling the image.
+    - name: name
+
   logFields: # optional - map if custom log field names. Key then log field name / Value: the reflection fields to the value within the struct corev1.Event https://github.com/kubernetes/api/blob/master/core/v1/types.go
     - name: name
       path:
