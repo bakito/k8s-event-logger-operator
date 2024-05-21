@@ -21,6 +21,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -121,6 +122,11 @@ func (in *EventLoggerSpec) DeepCopyInto(out *EventLoggerSpec) {
 		in, out := &in.Namespace, &out.Namespace
 		*out = new(string)
 		**out = **in
+	}
+	if in.ImagePullSecrets != nil {
+		in, out := &in.ImagePullSecrets, &out.ImagePullSecrets
+		*out = make([]corev1.LocalObjectReference, len(*in))
+		copy(*out, *in)
 	}
 	if in.NodeSelector != nil {
 		in, out := &in.NodeSelector, &out.NodeSelector

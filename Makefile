@@ -29,6 +29,7 @@ manager: generate fmt
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./pkg/..." paths="./api/..." paths="./controllers/..." output:crd:artifacts:config=config/crd/bases
 	cp config/crd/bases/*.yaml helm/crds/
+	yq -i '.spec.versions[0].schema.openAPIV3Schema.properties.spec.properties.imagePullSecrets.items.properties.name.description="Name of the referent."' helm/crds/eventlogger.bakito.ch_eventloggers.yaml
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
