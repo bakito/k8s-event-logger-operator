@@ -10,6 +10,7 @@ on:
 
 jobs:
   e2e:
+    name: Run end-2-end Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
