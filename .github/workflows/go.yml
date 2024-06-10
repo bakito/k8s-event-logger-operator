@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  golangci:
-    name: lint
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,9 +21,10 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          skip-pkg-cache: true
+          skip-cache: true
 
-  build:
+  test:
+    name: Test Code
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,12 +42,8 @@ jobs:
         with:
           path-to-profile: cover.out
 
-      - name: Test GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          version: latest
-          args: --skip-publish --snapshot --rm-dist
   helm:
+    name: Test Helm Chart
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,3 +70,18 @@ jobs:
           sed -i '/!\[Version\:/d' helm/README.md.old
           diff helm/README.md.old helm/README.md
 
+  test-release:
+    name: Test Release
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: Run GoReleaser
+        run: make test-release
