@@ -7,8 +7,7 @@ RUN apt-get update && apt-get install -y upx
 ARG VERSION=main
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+    GOOS=linux
 COPY . .
 
 RUN go build -a -installsuffix cgo -ldflags="-w -s -X github.com/bakito/k8s-event-logger-operator/version.Version=${VERSION}" -o k8s-event-logger && \
