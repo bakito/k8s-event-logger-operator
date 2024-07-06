@@ -1,14 +1,22 @@
 # k8s-event-logger-operator
 
-![Version: 1.13.11](https://img.shields.io/badge/Version-1.13.11-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.13.11](https://img.shields.io/badge/AppVersion-v1.13.11-informational?style=flat-square)
+![Version: 1.13.12](https://img.shields.io/badge/Version-1.13.12-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.13.12](https://img.shields.io/badge/AppVersion-v1.13.12-informational?style=flat-square)
 
 This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 
 ## Installation
 
+### oci
+
+```console
+helm install my-k8s-event-logger-operator oci://ghcr.io/bakito/helm-charts/k8s-event-logger-operator --version 1.13.12
+```
+
+### helm repository
+
 ```console
 helm repo add bakito https://charts.bakito.net
-helm install k8s-event-logger-operator bakito/k8s-event-logger-operator
+helm install my-k8s-event-logger-operator bakito/k8s-event-logger-operator --version 1.13.12
 ```
 
 ## Values
