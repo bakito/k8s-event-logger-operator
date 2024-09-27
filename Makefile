@@ -88,15 +88,29 @@ HELM_DOCS ?= $(LOCALBIN)/helm-docs
 MOCKGEN ?= $(LOCALBIN)/mockgen
 SEMVER ?= $(LOCALBIN)/semver
 
+## Tool Versions
+# renovate: packageName=sigs.k8s.io/controller-tools/cmd/controller-gen
+CONTROLLER_GEN_VERSION ?= v0.16.3
+# renovate: packageName=k8s.io/code-generator/cmd/deepcopy-gen
+DEEPCOPY_GEN_VERSION ?= v0.31.1
+# renovate: packageName=github.com/golangci/golangci-lint/cmd/golangci-lint
+GOLANGCI_LINT_VERSION ?= v1.61.0
+# renovate: packageName=github.com/goreleaser/goreleaser
+GORELEASER_VERSION ?= v2.3.2
+# renovate: packageName=github.com/norwoodj/helm-docs/cmd/helm-docs
+HELM_DOCS_VERSION ?= v1.14.2
+# renovate: packageName=github.com/bakito/semver
+SEMVER_VERSION ?= v1.1.3
+
 ## Tool Installer
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
 $(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen
+	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 .PHONY: deepcopy-gen
 deepcopy-gen: $(DEEPCOPY_GEN) ## Download deepcopy-gen locally if necessary.
 $(DEEPCOPY_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/deepcopy-gen || GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/deepcopy-gen
+	test -s $(LOCALBIN)/deepcopy-gen || GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/deepcopy-gen@$(DEEPCOPY_GEN_VERSION)
 .PHONY: ginkgo
 ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
 $(GINKGO): $(LOCALBIN)
@@ -104,15 +118,15 @@ $(GINKGO): $(LOCALBIN)
 .PHONY: golangci-lint
 golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(GOLANGCI_LINT): $(LOCALBIN)
-	test -s $(LOCALBIN)/golangci-lint || GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	test -s $(LOCALBIN)/golangci-lint || GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 .PHONY: goreleaser
 goreleaser: $(GORELEASER) ## Download goreleaser locally if necessary.
 $(GORELEASER): $(LOCALBIN)
-	test -s $(LOCALBIN)/goreleaser || GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser
+	test -s $(LOCALBIN)/goreleaser || GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@$(GORELEASER_VERSION)
 .PHONY: helm-docs
 helm-docs: $(HELM_DOCS) ## Download helm-docs locally if necessary.
 $(HELM_DOCS): $(LOCALBIN)
-	test -s $(LOCALBIN)/helm-docs || GOBIN=$(LOCALBIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs
+	test -s $(LOCALBIN)/helm-docs || GOBIN=$(LOCALBIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION)
 .PHONY: mockgen
 mockgen: $(MOCKGEN) ## Download mockgen locally if necessary.
 $(MOCKGEN): $(LOCALBIN)
@@ -120,7 +134,7 @@ $(MOCKGEN): $(LOCALBIN)
 .PHONY: semver
 semver: $(SEMVER) ## Download semver locally if necessary.
 $(SEMVER): $(LOCALBIN)
-	test -s $(LOCALBIN)/semver || GOBIN=$(LOCALBIN) go install github.com/bakito/semver
+	test -s $(LOCALBIN)/semver || GOBIN=$(LOCALBIN) go install github.com/bakito/semver@$(SEMVER_VERSION)
 
 ## Update Tools
 .PHONY: update-toolbox-tools
@@ -134,7 +148,13 @@ update-toolbox-tools:
 		$(LOCALBIN)/helm-docs \
 		$(LOCALBIN)/mockgen \
 		$(LOCALBIN)/semver
-	toolbox makefile -f $(LOCALDIR)/Makefile
+	toolbox makefile -f $(LOCALDIR)/Makefile \
+		sigs.k8s.io/controller-tools/cmd/controller-gen@github.com/kubernetes-sigs/controller-tools \
+		k8s.io/code-generator/cmd/deepcopy-gen@github.com/kubernetes/code-generator \
+		github.com/golangci/golangci-lint/cmd/golangci-lint \
+		github.com/goreleaser/goreleaser \
+		github.com/norwoodj/helm-docs/cmd/helm-docs \
+		github.com/bakito/semver
 ## toolbox - end
 
 docs: helm-docs update-docs
