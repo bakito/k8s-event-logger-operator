@@ -1,3 +1,6 @@
+# Include toolbox tasks
+include ./.toolbox.mk
+
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -69,93 +72,6 @@ mocks: mockgen
 .PHONY: lint-helm
 lint-helm:
 	helm lint helm/ --set webhook.enabled=true --set webhook.certManager.enabled=true
-
-## toolbox - start
-## Current working directory
-LOCALDIR ?= $(shell which cygpath > /dev/null 2>&1 && cygpath -m $$(pwd) || pwd)
-## Location to install dependencies to
-LOCALBIN ?= $(LOCALDIR)/bin
-$(LOCALBIN):
-	mkdir -p $(LOCALBIN)
-
-## Tool Binaries
-CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
-DEEPCOPY_GEN ?= $(LOCALBIN)/deepcopy-gen
-GINKGO ?= $(LOCALBIN)/ginkgo
-GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
-GORELEASER ?= $(LOCALBIN)/goreleaser
-HELM_DOCS ?= $(LOCALBIN)/helm-docs
-MOCKGEN ?= $(LOCALBIN)/mockgen
-SEMVER ?= $(LOCALBIN)/semver
-
-## Tool Versions
-# renovate: packageName=sigs.k8s.io/controller-tools/cmd/controller-gen
-CONTROLLER_GEN_VERSION ?= v0.16.3
-# renovate: packageName=k8s.io/code-generator/cmd/deepcopy-gen
-DEEPCOPY_GEN_VERSION ?= v0.31.1
-# renovate: packageName=github.com/golangci/golangci-lint/cmd/golangci-lint
-GOLANGCI_LINT_VERSION ?= v1.61.0
-# renovate: packageName=github.com/goreleaser/goreleaser
-GORELEASER_VERSION ?= v2.3.2
-# renovate: packageName=github.com/norwoodj/helm-docs/cmd/helm-docs
-HELM_DOCS_VERSION ?= v1.14.2
-# renovate: packageName=github.com/bakito/semver
-SEMVER_VERSION ?= v1.1.3
-
-## Tool Installer
-.PHONY: controller-gen
-controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary.
-$(CONTROLLER_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/controller-gen || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
-.PHONY: deepcopy-gen
-deepcopy-gen: $(DEEPCOPY_GEN) ## Download deepcopy-gen locally if necessary.
-$(DEEPCOPY_GEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/deepcopy-gen || GOBIN=$(LOCALBIN) go install k8s.io/code-generator/cmd/deepcopy-gen@$(DEEPCOPY_GEN_VERSION)
-.PHONY: ginkgo
-ginkgo: $(GINKGO) ## Download ginkgo locally if necessary.
-$(GINKGO): $(LOCALBIN)
-	test -s $(LOCALBIN)/ginkgo || GOBIN=$(LOCALBIN) go install github.com/onsi/ginkgo/v2/ginkgo
-.PHONY: golangci-lint
-golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
-$(GOLANGCI_LINT): $(LOCALBIN)
-	test -s $(LOCALBIN)/golangci-lint || GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
-.PHONY: goreleaser
-goreleaser: $(GORELEASER) ## Download goreleaser locally if necessary.
-$(GORELEASER): $(LOCALBIN)
-	test -s $(LOCALBIN)/goreleaser || GOBIN=$(LOCALBIN) go install github.com/goreleaser/goreleaser@$(GORELEASER_VERSION)
-.PHONY: helm-docs
-helm-docs: $(HELM_DOCS) ## Download helm-docs locally if necessary.
-$(HELM_DOCS): $(LOCALBIN)
-	test -s $(LOCALBIN)/helm-docs || GOBIN=$(LOCALBIN) go install github.com/norwoodj/helm-docs/cmd/helm-docs@$(HELM_DOCS_VERSION)
-.PHONY: mockgen
-mockgen: $(MOCKGEN) ## Download mockgen locally if necessary.
-$(MOCKGEN): $(LOCALBIN)
-	test -s $(LOCALBIN)/mockgen || GOBIN=$(LOCALBIN) go install go.uber.org/mock/mockgen
-.PHONY: semver
-semver: $(SEMVER) ## Download semver locally if necessary.
-$(SEMVER): $(LOCALBIN)
-	test -s $(LOCALBIN)/semver || GOBIN=$(LOCALBIN) go install github.com/bakito/semver@$(SEMVER_VERSION)
-
-## Update Tools
-.PHONY: update-toolbox-tools
-update-toolbox-tools:
-	@rm -f \
-		$(LOCALBIN)/controller-gen \
-		$(LOCALBIN)/deepcopy-gen \
-		$(LOCALBIN)/ginkgo \
-		$(LOCALBIN)/golangci-lint \
-		$(LOCALBIN)/goreleaser \
-		$(LOCALBIN)/helm-docs \
-		$(LOCALBIN)/mockgen \
-		$(LOCALBIN)/semver
-	toolbox makefile -f $(LOCALDIR)/Makefile \
-		sigs.k8s.io/controller-tools/cmd/controller-gen@github.com/kubernetes-sigs/controller-tools \
-		k8s.io/code-generator/cmd/deepcopy-gen@github.com/kubernetes/code-generator \
-		github.com/golangci/golangci-lint/cmd/golangci-lint \
-		github.com/goreleaser/goreleaser \
-		github.com/norwoodj/helm-docs/cmd/helm-docs \
-		github.com/bakito/semver
-## toolbox - end
 
 docs: helm-docs update-docs
 	@$(LOCALBIN)/helm-docs
