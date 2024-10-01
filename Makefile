@@ -53,7 +53,7 @@ release: tb.goreleaser
 
 .PHONY: test-release
 test-release: tb.goreleaser
-	$(TB_GORELEASER) --skip-publish --snapshot --clean
+	$(TB_GORELEASER) --skip=publish --snapshot --clean
 
 # generate mocks
 .PHONY: mocks

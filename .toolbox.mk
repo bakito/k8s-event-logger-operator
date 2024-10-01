@@ -46,7 +46,7 @@ $(TB_GOLANGCI_LINT): $(TB_LOCALBIN)
 .PHONY: tb.goreleaser
 tb.goreleaser: $(TB_GORELEASER) ## Download goreleaser locally if necessary.
 $(TB_GORELEASER): $(TB_LOCALBIN)
-	test -s $(TB_LOCALBIN)/goreleaser || GOBIN=$(TB_LOCALBIN) go install github.com/goreleaser/goreleaser@$(TB_GORELEASER_VERSION)
+	test -s $(TB_LOCALBIN)/goreleaser || GOBIN=$(TB_LOCALBIN) go install github.com/goreleaser/goreleaser/v2@$(TB_GORELEASER_VERSION)
 .PHONY: tb.helm-docs
 tb.helm-docs: $(TB_HELM_DOCS) ## Download helm-docs locally if necessary.
 $(TB_HELM_DOCS): $(TB_LOCALBIN)
@@ -80,7 +80,7 @@ tb.update: tb.reset
 		sigs.k8s.io/controller-tools/cmd/controller-gen@github.com/kubernetes-sigs/controller-tools \
 		k8s.io/code-generator/cmd/deepcopy-gen@github.com/kubernetes/code-generator \
 		github.com/golangci/golangci-lint/cmd/golangci-lint \
-		github.com/goreleaser/goreleaser \
+		github.com/goreleaser/goreleaser/v2 \
 		github.com/norwoodj/helm-docs/cmd/helm-docs \
 		github.com/bakito/semver
 ## toolbox - end
