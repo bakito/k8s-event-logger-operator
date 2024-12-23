@@ -134,8 +134,8 @@ type EventLogger struct {
 
 // EventLoggerList contains a list of EventLogger
 type EventLoggerList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta `              json:",inline"`
+	metav1.ListMeta `              json:"metadata,omitempty"`
 	Items           []EventLogger `json:"items"`
 }
 

@@ -95,7 +95,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return reconcile.Result{}, nil
 }
 
-func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
+func (r *Reconciler) updateCR(
+	ctx context.Context,
+	cr *eventloggerv1.EventLogger,
+	logger logr.Logger,
+	err error,
+) (reconcile.Result, error) {
 	if err != nil {
 		logger.Error(err, "")
 	}

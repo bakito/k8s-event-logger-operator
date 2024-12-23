@@ -12,17 +12,21 @@ $(TB_LOCALBIN):
 TB_CONTROLLER_GEN ?= $(TB_LOCALBIN)/controller-gen
 TB_DEEPCOPY_GEN ?= $(TB_LOCALBIN)/deepcopy-gen
 TB_GINKGO ?= $(TB_LOCALBIN)/ginkgo
+TB_GOFUMPT ?= $(TB_LOCALBIN)/gofumpt
 TB_GOLANGCI_LINT ?= $(TB_LOCALBIN)/golangci-lint
+TB_GOLINES ?= $(TB_LOCALBIN)/golines
 TB_GORELEASER ?= $(TB_LOCALBIN)/goreleaser
 TB_HELM_DOCS ?= $(TB_LOCALBIN)/helm-docs
 TB_MOCKGEN ?= $(TB_LOCALBIN)/mockgen
 TB_SEMVER ?= $(TB_LOCALBIN)/semver
 
 ## Tool Versions
-TB_CONTROLLER_GEN_VERSION ?= v0.16.3
-TB_DEEPCOPY_GEN_VERSION ?= v0.31.1
-TB_GOLANGCI_LINT_VERSION ?= v1.61.0
-TB_GORELEASER_VERSION ?= v2.3.2
+TB_CONTROLLER_GEN_VERSION ?= v0.16.5
+TB_DEEPCOPY_GEN_VERSION ?= v0.32.0
+TB_GOFUMPT_VERSION ?= v0.7.0
+TB_GOLANGCI_LINT_VERSION ?= v1.62.2
+TB_GOLINES_VERSION ?= v0.12.2
+TB_GORELEASER_VERSION ?= v2.5.0
 TB_HELM_DOCS_VERSION ?= v1.14.2
 TB_SEMVER_VERSION ?= v1.1.3
 
@@ -39,10 +43,18 @@ $(TB_DEEPCOPY_GEN): $(TB_LOCALBIN)
 tb.ginkgo: $(TB_GINKGO) ## Download ginkgo locally if necessary.
 $(TB_GINKGO): $(TB_LOCALBIN)
 	test -s $(TB_LOCALBIN)/ginkgo || GOBIN=$(TB_LOCALBIN) go install github.com/onsi/ginkgo/v2/ginkgo
+.PHONY: tb.gofumpt
+tb.gofumpt: $(TB_GOFUMPT) ## Download gofumpt locally if necessary.
+$(TB_GOFUMPT): $(TB_LOCALBIN)
+	test -s $(TB_LOCALBIN)/gofumpt || GOBIN=$(TB_LOCALBIN) go install mvdan.cc/gofumpt@$(TB_GOFUMPT_VERSION)
 .PHONY: tb.golangci-lint
 tb.golangci-lint: $(TB_GOLANGCI_LINT) ## Download golangci-lint locally if necessary.
 $(TB_GOLANGCI_LINT): $(TB_LOCALBIN)
 	test -s $(TB_LOCALBIN)/golangci-lint || GOBIN=$(TB_LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(TB_GOLANGCI_LINT_VERSION)
+.PHONY: tb.golines
+tb.golines: $(TB_GOLINES) ## Download golines locally if necessary.
+$(TB_GOLINES): $(TB_LOCALBIN)
+	test -s $(TB_LOCALBIN)/golines || GOBIN=$(TB_LOCALBIN) go install github.com/segmentio/golines@$(TB_GOLINES_VERSION)
 .PHONY: tb.goreleaser
 tb.goreleaser: $(TB_GORELEASER) ## Download goreleaser locally if necessary.
 $(TB_GORELEASER): $(TB_LOCALBIN)
@@ -67,7 +79,9 @@ tb.reset:
 		$(TB_LOCALBIN)/controller-gen \
 		$(TB_LOCALBIN)/deepcopy-gen \
 		$(TB_LOCALBIN)/ginkgo \
+		$(TB_LOCALBIN)/gofumpt \
 		$(TB_LOCALBIN)/golangci-lint \
+		$(TB_LOCALBIN)/golines \
 		$(TB_LOCALBIN)/goreleaser \
 		$(TB_LOCALBIN)/helm-docs \
 		$(TB_LOCALBIN)/mockgen \
@@ -79,7 +93,9 @@ tb.update: tb.reset
 	toolbox makefile -f $(TB_LOCALDIR)/Makefile \
 		sigs.k8s.io/controller-tools/cmd/controller-gen@github.com/kubernetes-sigs/controller-tools \
 		k8s.io/code-generator/cmd/deepcopy-gen@github.com/kubernetes/code-generator \
+		mvdan.cc/gofumpt@github.com/mvdan/gofumpt \
 		github.com/golangci/golangci-lint/cmd/golangci-lint \
+		github.com/segmentio/golines \
 		github.com/goreleaser/goreleaser/v2 \
 		github.com/norwoodj/helm-docs/cmd/helm-docs \
 		github.com/bakito/semver

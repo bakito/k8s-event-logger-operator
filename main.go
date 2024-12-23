@@ -66,11 +66,25 @@ func main() {
 	var enableLeaderElection bool
 	var enableLoggerMode bool
 	var enableProfiling bool
-	flag.StringVar(&metricsAddr, cnst.ArgMetricsAddr, cnst.DefaultMetricsAddr, "The address the metric endpoint binds to.")
+	flag.StringVar(
+		&metricsAddr,
+		cnst.ArgMetricsAddr,
+		cnst.DefaultMetricsAddr,
+		"The address the metric endpoint binds to.",
+	)
 	flag.StringVar(&healthAddr, cnst.ArgHealthAddr, cnst.DefaultHealthAddr, "The address the health endpoint binds to.")
-	flag.StringVar(&profilingAddr, cnst.ArgProfilingAddr, cnst.DefaultProfilingAddr, "The address the profiling endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, cnst.ArgEnableLeaderElection, false,
-		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(
+		&profilingAddr,
+		cnst.ArgProfilingAddr,
+		cnst.DefaultProfilingAddr,
+		"The address the profiling endpoint binds to.",
+	)
+	flag.BoolVar(
+		&enableLeaderElection,
+		cnst.ArgEnableLeaderElection,
+		false,
+		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.",
+	)
 	flag.BoolVar(&enableLoggerMode, cnst.ArgEnableLoggerMode, false,
 		"Enable logger mode. Enabling this will only log events of the current namespace.")
 	flag.BoolVar(&enableProfiling, cnst.ArgEnableProfiling, false, "Enable profiling endpoint.")

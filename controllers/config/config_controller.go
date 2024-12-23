@@ -62,7 +62,11 @@ func (r *Reconciler) readConfig(ctx context.Context, reqLogger logr.Logger, nn t
 
 	reqLogger.Info("Reconciling config")
 
-	noPodTemplate := fmt.Errorf(`configmap %q must contain the container template %q`, nn.String(), cnst.ConfigKeyContainerTemplate)
+	noPodTemplate := fmt.Errorf(
+		`configmap %q must contain the container template %q`,
+		nn.String(),
+		cnst.ConfigKeyContainerTemplate,
+	)
 	if len(cm.Data) == 0 {
 		return noPodTemplate
 	}

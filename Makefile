@@ -1,7 +1,6 @@
 # Include toolbox tasks
 include ./.toolbox.mk
 
-
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
@@ -9,8 +8,11 @@ CRD_OPTIONS ?= "crd"
 
 all: manager
 
+fmt: tb.golines tb.gofumpt
+	$(TB_GOLINES) --base-formatter="$(TB_GOFUMPT)" --max-len=120 --write-output .
+
 # Run tests
-test: tidy fmt generate mocks manifests test-ci
+test: tidy lint generate mocks manifests test-ci
 
 # Run tests
 test-ci:
@@ -19,7 +21,7 @@ test-ci:
 	@rm -f cover.out.tmp
 
 # Build manager binary
-manager: generate fmt
+manager: generate lint
 	go build -o bin/manager main.go
 
 manifests: tb.controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
@@ -30,7 +32,7 @@ manifests: tb.controller-gen ## Generate WebhookConfiguration, ClusterRole and C
 generate: tb.controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(TB_CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-fmt: tb.golangci-lint
+lint: tb.golangci-lint
 	$(TB_GOLANGCI_LINT) run --fix
 
 # go mod tidy
@@ -62,10 +64,6 @@ mocks: tb.mockgen
 
 	$(TB_MOCKGEN) -destination pkg/mocks/logr/mock.go   github.com/go-logr/logr LogSink
 
-.PHONY: lint-helm
-lint-helm:
-	helm lint helm/ --set webhook.enabled=true --set webhook.certManager.enabled=true
-
 docs: tb.helm-docs update-docs
 	@$(TB_HELM_DOCS)
 
@@ -76,4 +74,4 @@ update-docs: tb.semver
 	sed -i "s/^appVersion:.*$$/appVersion: $${version}/" ./helm/Chart.yaml
 
 helm-lint: docs
-	helm lint ./helm
+	helm lint ./helm --set webhook.enabled=true --set webhook.certManager.enabled=true

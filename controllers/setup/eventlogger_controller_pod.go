@@ -82,7 +82,13 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 		if err := controllerutil.SetControllerReference(cr, pod, r.Scheme); err != nil {
 			return false, err
 		}
-		reqLogger.Info(fmt.Sprintf("Creating a new %s", pod.Kind), "namespace", pod.GetNamespace(), "name", pod.GetName())
+		reqLogger.Info(
+			fmt.Sprintf("Creating a new %s", pod.Kind),
+			"namespace",
+			pod.GetNamespace(),
+			"name",
+			pod.GetName(),
+		)
 		err = r.Create(ctx, pod)
 		if err != nil {
 			return false, err
@@ -93,7 +99,11 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 	return false, nil
 }
 
-func (r *Reconciler) findPods(ctx context.Context, cr *eventloggerv1.EventLogger, matchLabels map[string]string) (*corev1.PodList, error) {
+func (r *Reconciler) findPods(
+	ctx context.Context,
+	cr *eventloggerv1.EventLogger,
+	matchLabels map[string]string,
+) (*corev1.PodList, error) {
 	podList := &corev1.PodList{}
 	opts := []client.ListOption{
 		client.InNamespace(cr.Namespace),

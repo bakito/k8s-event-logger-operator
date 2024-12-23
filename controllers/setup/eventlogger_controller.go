@@ -93,7 +93,12 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 	return reconcile.Result{}, nil
 }
 
-func (r *Reconciler) updateCR(ctx context.Context, cr *eventloggerv1.EventLogger, logger logr.Logger, err error) (reconcile.Result, error) {
+func (r *Reconciler) updateCR(
+	ctx context.Context,
+	cr *eventloggerv1.EventLogger,
+	logger logr.Logger,
+	err error,
+) (reconcile.Result, error) {
 	if err != nil {
 		logger.Error(err, "")
 	}
@@ -122,7 +127,8 @@ func podChanged(old, new *corev1.Pod) bool {
 	if old.Spec.ServiceAccountName != new.Spec.ServiceAccountName {
 		return true
 	}
-	if len(old.Spec.Containers) > 0 && len(new.Spec.Containers) > 0 && old.Spec.Containers[0].Image != new.Spec.Containers[0].Image {
+	if len(old.Spec.Containers) > 0 && len(new.Spec.Containers) > 0 &&
+		old.Spec.Containers[0].Image != new.Spec.Containers[0].Image {
 		return true
 	}
 

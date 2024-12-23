@@ -91,7 +91,9 @@ var _ = Describe("Logging", func() {
 		})
 
 		It("should do noting if not found", func() {
-			cl.EXPECT().Get(gm.Any(), gm.Any(), gm.Any()).Return(errors.NewNotFound(v1.GroupVersion.WithResource("").GroupResource(), ""))
+			cl.EXPECT().
+				Get(gm.Any(), gm.Any(), gm.Any()).
+				Return(errors.NewNotFound(v1.GroupVersion.WithResource("").GroupResource(), ""))
 			_, err := r.Reconcile(ctx, req)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
@@ -246,29 +248,51 @@ var _ = Describe("Logging", func() {
 				true,
 				"( ( ( Kind == 'Pod' ) ) )",
 			),
-			Entry("8",
+			Entry(
+				"8",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
 				true,
 				"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
 			),
-			Entry("9",
+			Entry(
+				"9",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}}},
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
 				false,
 				"( ( ( Kind == 'Pod' AND Reason in [Created, Started] ) ) )",
 			),
-			Entry("10",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", APIGroup: ptr.To("argoproj.io"), EventTypes: []string{}}}},
-				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "argoproj.io", Version: "v1alpha1"}.String()}},
+			Entry(
+				"10",
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{{Name: "Application", APIGroup: ptr.To("argoproj.io"), EventTypes: []string{}}},
+				},
+				corev1.Event{
+					InvolvedObject: corev1.ObjectReference{
+						Kind:       "Application",
+						APIVersion: schema.GroupVersion{Group: "argoproj.io", Version: "v1alpha1"}.String(),
+					},
+				},
 				true,
 				"( ( ( Kind == 'Application' AND APIGroup == 'argoproj.io' ) ) )",
 			),
-			Entry("11",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Application", APIGroup: ptr.To("argoproj.io"), EventTypes: []string{}}}},
-				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Application", APIVersion: schema.GroupVersion{Group: "app.k8s.io", Version: "v1beta1"}.String()}},
+			Entry(
+				"11",
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{{Name: "Application", APIGroup: ptr.To("argoproj.io"), EventTypes: []string{}}},
+				},
+				corev1.Event{
+					InvolvedObject: corev1.ObjectReference{
+						Kind:       "Application",
+						APIVersion: schema.GroupVersion{Group: "app.k8s.io", Version: "v1beta1"}.String(),
+					},
+				},
 				false,
 				"( ( ( Kind == 'Application' AND APIGroup == 'argoproj.io' ) ) )",
 			),
@@ -300,9 +324,13 @@ var _ = Describe("Logging", func() {
 				false,
 				"( ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
 			),
-			Entry("16",
+			Entry(
+				"16",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}, EventTypes: []string{"Warning"}},
+				v1.EventLoggerSpec{
+					Kinds:      []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}},
+					EventTypes: []string{"Warning"},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 				true,
 				"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
@@ -319,40 +347,70 @@ var _ = Describe("Logging", func() {
 				false,
 				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 			),
-			Entry("19",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: ptr.To(false)}}},
+			Entry(
+				"19",
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{
+						{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: ptr.To(false)},
+					},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				true,
 				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
 			),
-			Entry("20",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: ptr.To(false)}}},
+			Entry(
+				"20",
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{
+						{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: ptr.To(false)},
+					},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				false,
 				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 			),
-			Entry("21",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: ptr.To(true)}}},
+			Entry(
+				"21",
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{
+						{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: ptr.To(true)},
+					},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				false,
 				"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*message.*/ ) ) ) ) )",
 			),
-			Entry("22",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: ptr.To(true)}}},
+			Entry(
+				"22",
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{
+						{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: ptr.To(true)},
+					},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				true,
 				"( ( ( Kind == 'Pod' AND ( true XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 			),
-			Entry("23",
+			Entry(
+				"23",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}}}},
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{
+						{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}},
+					},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
 				false,
 				"( ( ( Kind == 'Pod' AND Reason NOT in [Created, Started] ) ) )",
 			),
-			Entry("24",
+			Entry(
+				"24",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}}}},
+				v1.EventLoggerSpec{
+					Kinds: []v1.Kind{
+						{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}},
+					},
+				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
 				true,
 				"( ( ( Kind == 'Pod' AND Reason NOT in [Created, Started] ) ) )",
@@ -476,9 +534,11 @@ var _ = Describe("Logging", func() {
 	})
 	Context("getLatestRevision", func() {
 		It("should find the last revision", func() {
-			cl.EXPECT().List(gm.Any(), gm.Any(), gm.Any()).Do(func(_ context.Context, el *corev1.EventList, _ ...client.ListOption) {
-				el.ResourceVersion = "3"
-			})
+			cl.EXPECT().
+				List(gm.Any(), gm.Any(), gm.Any()).
+				Do(func(_ context.Context, el *corev1.EventList, _ ...client.ListOption) {
+					el.ResourceVersion = "3"
+				})
 			rev, err := getLatestRevision(ctx, cl, "")
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(rev).Should(Equal("3"))
