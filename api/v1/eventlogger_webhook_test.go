@@ -1,36 +1,39 @@
-package v1_test
+package v1
 
 import (
-	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("V1", func() {
-	var el *v1.EventLogger
+	var el *EventLogger
+	var val *validateEl
 	BeforeEach(func() {
-		el = &v1.EventLogger{
-			Spec: v1.EventLoggerSpec{},
+		val = &validateEl{}
+		el = &EventLogger{
+			Spec: EventLoggerSpec{},
 		}
 	})
 	Context("Valid", func() {
 		Context("ValidateCreate", func() {
 			It("should be valid", func() {
-				w, err := el.ValidateCreate()
+				w, err := val.ValidateCreate(context.TODO(), el)
 				Ω(w).Should(BeNil())
 				Ω(err).ShouldNot(HaveOccurred())
 			})
 		})
 		Context("ValidateUpdate", func() {
 			It("should be valid", func() {
-				w, err := el.ValidateUpdate(nil)
+				w, err := val.ValidateUpdate(context.TODO(), el, nil)
 				Ω(w).Should(BeNil())
 				Ω(err).ShouldNot(HaveOccurred())
 			})
 		})
 		Context("ValidateUpdate", func() {
 			It("should be nil", func() {
-				w, err := el.ValidateDelete()
+				w, err := val.ValidateDelete(context.TODO(), el)
 				Ω(w).Should(BeNil())
 				Ω(err).ShouldNot(HaveOccurred())
 			})
@@ -42,21 +45,21 @@ var _ = Describe("V1", func() {
 		})
 		Context("ValidateCreate", func() {
 			It("should be invalid", func() {
-				w, err := el.ValidateCreate()
+				w, err := val.ValidateCreate(context.TODO(), el)
 				Ω(w).Should(BeNil())
 				Ω(err).Should(HaveOccurred())
 			})
 		})
 		Context("ValidateUpdate", func() {
 			It("should be invalid", func() {
-				w, err := el.ValidateUpdate(nil)
+				w, err := val.ValidateUpdate(context.TODO(), el, nil)
 				Ω(w).Should(BeNil())
 				Ω(err).Should(HaveOccurred())
 			})
 		})
 		Context("ValidateUpdate", func() {
 			It("should be nil", func() {
-				w, err := el.ValidateDelete()
+				w, err := val.ValidateDelete(context.TODO(), el)
 				Ω(w).Should(BeNil())
 				Ω(err).ShouldNot(HaveOccurred())
 			})
