@@ -67,11 +67,15 @@ mocks: tb.mockgen
 docs: tb.helm-docs update-docs
 	@$(TB_HELM_DOCS)
 
+# Detect OS
+OS := $(shell uname)
+# Define the sed command based on OS
+SED := $(if $(filter Darwin, $(OS)), sed -i "", sed -i)
 update-docs: tb.semver
 	@version=$$($(TB_SEMVER) -next); \
 	versionNum=$$($(TB_SEMVER) -next -numeric); \
-	sed -i "s/^version:.*$$/version: $${versionNum}/"    ./helm/Chart.yaml; \
-	sed -i "s/^appVersion:.*$$/appVersion: $${version}/" ./helm/Chart.yaml
+	$(SED) "s/^version:.*$$/version: $${versionNum}/"    ./helm/Chart.yaml; \
+	$(SED) "s/^appVersion:.*$$/appVersion: $${version}/" ./helm/Chart.yaml
 
 helm-lint: docs
 	helm lint ./helm --set webhook.enabled=true --set webhook.certManager.enabled=true
