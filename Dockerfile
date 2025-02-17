@@ -1,8 +1,8 @@
-FROM golang:1.23-bullseye as builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /build
 
-RUN apt-get update && apt-get install -y upx
+RUN apk update && apk add upx
 
 ARG VERSION=main
 ENV GO111MODULE=on \
