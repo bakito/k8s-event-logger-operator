@@ -161,8 +161,8 @@ func (p *loggingPredicate) logEvent(e runtime.Object) bool {
 		var eventLogger logr.Logger
 		if len(p.Config.logFields) == 0 {
 			eventLogger = eventLog.WithValues(
-				"namespace", evt.ObjectMeta.Namespace,
-				"name", evt.ObjectMeta.Name,
+				"namespace", evt.Namespace,
+				"name", evt.Name,
 				"reason", evt.Reason,
 				"timestamp", evt.LastTimestamp,
 				"type", evt.Type,
