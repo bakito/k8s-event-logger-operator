@@ -464,7 +464,7 @@ var _ = Describe("Logging", func() {
 				Ω(lp.Create(event.CreateEvent{Object: el})).Should(BeTrue())
 			})
 			It("should not match for reconciling with watchNamespace", func() {
-				el.ObjectMeta.Name = "foo"
+				el.Name = "foo"
 				Ω(lp.Create(event.CreateEvent{Object: el})).Should(BeFalse())
 			})
 			It("should match for reconciling with podNamespace", func() {
@@ -473,7 +473,7 @@ var _ = Describe("Logging", func() {
 				Ω(lp.Create(event.CreateEvent{Object: el})).Should(BeTrue())
 			})
 			It("should match for reconciling with podNamespace", func() {
-				el.ObjectMeta.Name = "foo"
+				el.Name = "foo"
 				lp.Config.watchNamespace = ""
 				lp.Config.podNamespace = testNamespace
 				Ω(lp.Create(event.CreateEvent{Object: el})).Should(BeFalse())
@@ -488,7 +488,7 @@ var _ = Describe("Logging", func() {
 				Ω(lp.Update(event.UpdateEvent{ObjectNew: el})).Should(BeTrue())
 			})
 			It("should not match for reconciling with watchNamespace", func() {
-				el.ObjectMeta.Name = "foo"
+				el.Name = "foo"
 				Ω(lp.Update(event.UpdateEvent{ObjectNew: el})).Should(BeFalse())
 			})
 			It("should match for reconciling with podNamespace", func() {
@@ -497,7 +497,7 @@ var _ = Describe("Logging", func() {
 				Ω(lp.Update(event.UpdateEvent{ObjectNew: el})).Should(BeTrue())
 			})
 			It("should match for reconciling with podNamespace", func() {
-				el.ObjectMeta.Name = "foo"
+				el.Name = "foo"
 				lp.Config.watchNamespace = ""
 				lp.Config.podNamespace = testNamespace
 				Ω(lp.Update(event.UpdateEvent{ObjectNew: el})).Should(BeFalse())
@@ -512,7 +512,7 @@ var _ = Describe("Logging", func() {
 				Ω(lp.Delete(event.DeleteEvent{Object: el})).Should(BeTrue())
 			})
 			It("should not match for reconciling with watchNamespace", func() {
-				el.ObjectMeta.Name = "foo"
+				el.Name = "foo"
 				Ω(lp.Delete(event.DeleteEvent{Object: el})).Should(BeFalse())
 			})
 			It("should match for reconciling with podNamespace", func() {
@@ -521,7 +521,7 @@ var _ = Describe("Logging", func() {
 				Ω(lp.Delete(event.DeleteEvent{Object: el})).Should(BeTrue())
 			})
 			It("should match for reconciling with podNamespace", func() {
-				el.ObjectMeta.Name = "foo"
+				el.Name = "foo"
 				lp.Config.watchNamespace = ""
 				lp.Config.podNamespace = testNamespace
 				Ω(lp.Delete(event.DeleteEvent{Object: el})).Should(BeFalse())
