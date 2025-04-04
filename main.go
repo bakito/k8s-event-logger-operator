@@ -124,10 +124,12 @@ func main() {
 			Port:    9443,
 			CertDir: "certs",
 		}),
-		LeaderElection:             enableLeaderElection && !enableLoggerMode,
-		LeaderElectionID:           "leader.eventlogger.bakito.ch",
-		LeaderElectionResourceLock: os.Getenv(cnst.EnvLeaderElectionResourceLock),
-		HealthProbeBindAddress:     healthAddr,
+		LeaderElection:                enableLeaderElection && !enableLoggerMode,
+		LeaderElectionID:              "leader.eventlogger.bakito.ch",
+		LeaderElectionResourceLock:    os.Getenv(cnst.EnvLeaderElectionResourceLock),
+		HealthProbeBindAddress:        healthAddr,
+		LeaderElectionReleaseOnCancel: true,
+	
 		Cache: crtlcache.Options{
 			DefaultNamespaces: defaultNamespaces,
 		},
