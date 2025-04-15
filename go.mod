@@ -1,6 +1,7 @@
 module github.com/bakito/k8s-event-logger-operator
 
 go 1.24.0
+
 require (
 	github.com/bakito/operator-utils v1.3.3
 	github.com/fatih/structs v1.1.0
@@ -12,7 +13,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/onsi/ginkgo/v2 v2.23.3
 	github.com/onsi/gomega v1.36.3
-	go.uber.org/mock v0.5.0
+	go.uber.org/mock v0.5.1
 	go.uber.org/zap v1.27.0
 	k8s.io/api v0.32.3
 	k8s.io/apimachinery v0.32.3
