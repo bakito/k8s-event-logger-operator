@@ -129,7 +129,7 @@ func main() {
 		LeaderElectionResourceLock:    os.Getenv(cnst.EnvLeaderElectionResourceLock),
 		HealthProbeBindAddress:        healthAddr,
 		LeaderElectionReleaseOnCancel: true,
-	
+
 		Cache: crtlcache.Options{
 			DefaultNamespaces: defaultNamespaces,
 		},
