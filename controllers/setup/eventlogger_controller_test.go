@@ -69,7 +69,7 @@ var _ = Describe("Logging", func() {
 		Context("EventLogger", func() {
 			It("update the eventlogger", func() {
 				cl, res := testReconcile(el)
-				Ω(res.Requeue).Should(BeFalse())
+				Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 
 				// check updated status
 				updated := &v1.EventLogger{}
@@ -86,7 +86,7 @@ var _ = Describe("Logging", func() {
 		Context("Pod", func() {
 			It("create a correct pod", func() {
 				cl, res := testReconcile(el)
-				Ω(res.Requeue).Should(BeFalse())
+				Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 
 				// check created pod
 				pods := &corev1.PodList{}
@@ -135,7 +135,7 @@ var _ = Describe("Logging", func() {
 				el.Spec.ImagePullSecrets = []corev1.LocalObjectReference{{Name: "secret1"}, {Name: "secret2"}}
 
 				cl, res := testReconcile(el)
-				Ω(res.Requeue).Should(BeFalse())
+				Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 
 				pods := &corev1.PodList{}
 				assertEntrySize(cl, el, pods, 1)
@@ -166,7 +166,7 @@ var _ = Describe("Logging", func() {
 		Context("ServiceAccount", func() {
 			It("create a correct service account", func() {
 				cl, res := testReconcile(el)
-				Ω(res.Requeue).Should(BeFalse())
+				Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 
 				// service account
 				saccList := &corev1.ServiceAccountList{}
@@ -181,7 +181,7 @@ var _ = Describe("Logging", func() {
 		Context("Role", func() {
 			It("create a correct role", func() {
 				cl, res := testReconcile(el)
-				Ω(res.Requeue).Should(BeFalse())
+				Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 
 				// role
 				roleList := &rbacv1.RoleList{}
@@ -205,7 +205,7 @@ var _ = Describe("Logging", func() {
 		Context("Rolebinding", func() {
 			It("create a correct role binding", func() {
 				cl, res := testReconcile(el)
-				Ω(res.Requeue).Should(BeFalse())
+				Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 
 				// rolebinding
 				rbList := &rbacv1.RoleBindingList{}

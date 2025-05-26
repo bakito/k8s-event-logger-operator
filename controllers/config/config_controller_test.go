@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"time"
 
 	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
@@ -52,7 +53,7 @@ var _ = Describe("Config", func() {
 				},
 			})
 			Ω(err).Should(HaveOccurred())
-			Ω(res.Requeue).Should(BeFalse())
+			Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 		})
 		It("should fail if the container template does not exist", func() {
 			configMap.Data = map[string]string{"foo": "bar"}
@@ -64,7 +65,7 @@ var _ = Describe("Config", func() {
 				},
 			})
 			Ω(err).Should(HaveOccurred())
-			Ω(res.Requeue).Should(BeFalse())
+			Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 		})
 		It("should read the default config", func() {
 			configMap.Data = map[string]string{cnst.ConfigKeyContainerTemplate: ""}
@@ -76,7 +77,7 @@ var _ = Describe("Config", func() {
 				},
 			})
 			Ω(err).ShouldNot(HaveOccurred())
-			Ω(res.Requeue).Should(BeFalse())
+			Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 			cfg := GetCfg(cr.Ctx())
 
 			Ω(cfg.ContainerTemplate.Resources.Requests.Cpu().String()).Should(Equal(defaultPodReqCPU.String()))
@@ -103,7 +104,7 @@ resources:
 				},
 			})
 			Ω(err).ShouldNot(HaveOccurred())
-			Ω(res.Requeue).Should(BeFalse())
+			Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 
 			cfg := GetCfg(cr.Ctx())
 			Ω(cfg.ContainerTemplate.Resources.Requests.Cpu().String()).Should(Equal("111m"))
