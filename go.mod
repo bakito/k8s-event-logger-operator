@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/bakito/operator-utils v1.3.3
 	github.com/fatih/structs v1.1.0
-	github.com/go-logr/logr v1.4.2
+	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
