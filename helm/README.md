@@ -1,6 +1,6 @@
 # k8s-event-logger-operator
 
-![Version: 1.13.12](https://img.shields.io/badge/Version-1.13.12-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.13.12](https://img.shields.io/badge/AppVersion-v1.13.12-informational?style=flat-square)
+![Version: 1.14.2](https://img.shields.io/badge/Version-1.14.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.14.2](https://img.shields.io/badge/AppVersion-v1.14.2-informational?style=flat-square)
 
 This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 
@@ -9,14 +9,14 @@ This operator creates a logging pod that logs corev1.Event information as struct
 ### oci
 
 ```console
-helm install my-k8s-event-logger-operator oci://ghcr.io/bakito/helm-charts/k8s-event-logger-operator --version 1.13.12
+helm install my-k8s-event-logger-operator oci://ghcr.io/bakito/helm-charts/k8s-event-logger-operator --version 1.14.2
 ```
 
 ### helm repository
 
 ```console
 helm repo add bakito https://charts.bakito.net
-helm install my-k8s-event-logger-operator bakito/k8s-event-logger-operator --version 1.13.12
+helm install my-k8s-event-logger-operator bakito/k8s-event-logger-operator --version 1.14.2
 ```
 
 ## Values
@@ -51,7 +51,7 @@ helm install my-k8s-event-logger-operator bakito/k8s-event-logger-operator --ver
 | webhook.caBundle | string | `"Cg=="` | certificate ca bundle |
 | webhook.certManager.enabled | bool | `false` | Enable cert manager setup |
 | webhook.certsSecret.name | string | `nil` | Certificate secret name |
-| webhook.enabled | bool | `false` | Specifies whether validation webhook should be created. |
+| webhook.enabled | bool | `false` | Specifies whether the validation webhook should be created. |
 | webhook.openShiftServiceCert.enabled | bool | `false` | Enable OpenShift service certificate |
 
 ----------------------------------------------
