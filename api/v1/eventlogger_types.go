@@ -54,7 +54,7 @@ type EventLoggerSpec struct {
 	// +optional
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 
-	// NodeSelector is a selector which must be true for the pod to fit on a node.
+	// NodeSelector is a selector that must be true for the pod to fit on a node.
 	// Selector which must match a node's labels for the pod to be scheduled on that node.
 	// More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
 	// +optional
@@ -101,7 +101,7 @@ type LogField struct {
 	// +kubebuilder:validation:MinItems=1
 	Path []string `json:"path,omitempty"`
 
-	// Value a static value of the log field. Can be uses to add static log fields
+	// Value a static value of the log field. Can be used to add static log fields
 	// +optional
 	// +nullable
 	Value *string `json:"value,omitempty"`

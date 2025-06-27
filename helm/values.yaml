@@ -38,7 +38,7 @@ logging: # see https://github.com/operator-framework/operator-sdk/blob/master/do
   timeEncoding: iso8601
 
 webhook:
-  # -- Specifies whether validation webhook should be created.
+  # -- Specifies whether the validation webhook should be created.
   enabled: false
 
   certManager:

@@ -13,3 +13,6 @@ securityContext: &securityContext
 
 eventLogger:
   securityContext: *securityContext
+
+webhook:
+  enabled: true
