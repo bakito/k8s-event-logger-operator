@@ -24,6 +24,7 @@ helm install my-k8s-event-logger-operator bakito/k8s-event-logger-operator --ver
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Assign custom [affinity] rules to the deployment |
+| eventLogger.configReload | bool | `true` | Watch the configmap for changes. |
 | eventLogger.leaderElection | bool | `true` | Enable leader election for the controller |
 | eventLogger.leaderElectionResourceLock | string | `nil` | Leader election lock type |
 | eventLogger.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}` | Resource limits and requests for the logger pods. |

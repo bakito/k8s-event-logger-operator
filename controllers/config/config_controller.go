@@ -157,6 +157,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	namespace := os.Getenv(cnst.EnvPodNamespace)
 	cmName := os.Getenv(cnst.EnvConfigMapName)
 	podName := os.Getenv(cnst.EnvPodName)
+	configReload := os.Getenv(cnst.EnvConfigReload)
 
 	if err := r.setupEventLoggerImage(types.NamespacedName{
 		Namespace: namespace,
@@ -172,12 +173,16 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return err
 	}
 
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.ConfigMap{}).WithEventFilter(filter.NamePredicate{
-		Namespace: namespace,
-		Names:     []string{cmName},
-	},
-	).Complete(r)
+	if configReload == "true" {
+		return ctrl.NewControllerManagedBy(mgr).
+			For(&corev1.ConfigMap{}).WithEventFilter(filter.NamePredicate{
+			Namespace: namespace,
+			Names:     []string{cmName},
+		},
+		).Complete(r)
+	}
+
+	return nil
 }
 
 type Cfg struct {

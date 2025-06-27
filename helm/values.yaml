@@ -28,6 +28,8 @@ eventLogger:
       memory: 256Mi
   # -- Security Context for the logger pods.
   securityContext: {}
+  # -- Watch the configmap for changes.
+  configReload: true
 
 logging: # see https://github.com/operator-framework/operator-sdk/blob/master/doc/user/logging.md
   # -- Log level

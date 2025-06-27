@@ -53,6 +53,8 @@ spec:
                   fieldPath: metadata.namespace
             - name: 'CONFIG_MAP_NAME'
               value: '{{ include "k8s-event-logger-operator.fullname" . }}'
+            - name: 'CONFIG_RELOAD'
+              value: '{{ .Values.eventLogger.configReload }}'
             - name: 'ENABLE_WEBHOOKS'
               value: '{{ .Values.webhook.enabled }}'
             {{- if .Values.eventLogger.leaderElectionResourceLock }}

@@ -53,6 +53,9 @@ const (
 	// EnvConfigMapName the name of the configmap
 	EnvConfigMapName = "CONFIG_MAP_NAME"
 
+	// EnvConfigReload watch the configmap for changes
+	EnvConfigReload = "CONFIG_RELOAD"
+
 	// ConfigKeyContainerTemplate pod template config key
 	ConfigKeyContainerTemplate = "container_template.yaml"
 )
