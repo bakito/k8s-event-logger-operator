@@ -66,10 +66,10 @@ jobs:
       - name: Check chart/README.md is correctly generated with 'make docs'
         run: |
           # ignore version as it is updated during build
-          sed -i '/!\[Version\:/d' chart/README.md
-          sed -i '/!\[Version\:/d' chart/README.md.old
-          sed -i -E 's/--version [0-9]+.[0-9]+.[0-9]+/--version x.x.x/' chart/README.md
-          sed -i -E 's/--version [0-9]+.[0-9]+.[0-9]+/--version x.x.x/' chart/README.md.old
+          sed -i '/!\[Version\:/d' helm/README.md
+          sed -i '/!\[Version\:/d' helm/README.md.old
+          sed -i -E 's/--version [0-9]+.[0-9]+.[0-9]+/--version x.x.x/' helm/README.md
+          sed -i -E 's/--version [0-9]+.[0-9]+.[0-9]+/--version x.x.x/' helm/README.md.old
           diff helm/README.md.old helm/README.md
 
   test-release:
