@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set default values
-DAYS=36500
+DAYS=365
 KEY_SIZE=2048
 COUNTRY="US"
 STATE="State"
