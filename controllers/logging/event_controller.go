@@ -18,6 +18,7 @@ package logging
 
 import (
 	"context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
@@ -160,6 +161,14 @@ func (p *loggingPredicate) logEvent(e runtime.Object) bool {
 	if p.Config.filter.Match(evt) {
 		var eventLogger logr.Logger
 		if len(p.Config.logFields) == 0 {
+			ts := evt.LastTimestamp
+			if ts.IsZero() {
+				ts = evt.FirstTimestamp
+			}
+			if ts.IsZero() {
+				ts = metav1.Time{Time: evt.EventTime.Time}
+			}
+
 			eventLogger = eventLog.WithValues(
 				"namespace", evt.Namespace,
 				"name", evt.Name,
