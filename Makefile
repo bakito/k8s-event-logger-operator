@@ -48,7 +48,7 @@ docker-push:
 	docker push ${IMG}
 
 .PHONY: release
-release: tb.goreleaser
+release: tb.semver tb.goreleaser
 	@version=$$($(TB_SEMVER)); \
 	git tag -s $$version -m"Release $$version"
 	$(TB_GORELEASER) --clean
