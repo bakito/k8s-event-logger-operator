@@ -67,7 +67,7 @@ mocks: tb.mockgen
 
 	$(TB_MOCKGEN) -destination pkg/mocks/logr/mock.go   github.com/go-logr/logr LogSink
 
-docs: tb.helm-docs update-docs
+helm-docs: tb.helm-docs update-docs
 	@$(TB_HELM_DOCS)
 
 # Detect OS
