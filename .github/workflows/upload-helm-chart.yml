@@ -28,6 +28,8 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to ghcr.io
         uses: docker/login-action@v3
@@ -42,7 +44,6 @@ jobs:
           sed -i "s/^version:.*$/version: ${VERSION}/"        ./helm/Chart.yaml
           sed -i "s/^appVersion:.*$/appVersion: v${VERSION}/" ./helm/Chart.yaml
           make helm-docs
-          ./bin/helm-docs
           helm package ./helm/ --version $VERSION --app-version v$VERSION -d dist
           helm push dist/k8s-event-logger-operator-${VERSION}.tgz oci://ghcr.io/bakito/helm-charts
 
