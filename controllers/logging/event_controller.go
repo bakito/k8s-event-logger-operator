@@ -173,7 +173,7 @@ func (p *loggingPredicate) logEvent(e runtime.Object) bool {
 				"namespace", evt.Namespace,
 				"name", evt.Name,
 				"reason", evt.Reason,
-				"timestamp", evt.LastTimestamp,
+				"timestamp", ts,
 				"type", evt.Type,
 				"involvedObject", evt.InvolvedObject,
 				"source", evt.Source,

@@ -3,6 +3,7 @@ package logging
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
@@ -190,6 +191,43 @@ var _ = Describe("Logging", func() {
 					Name: "test-io-name",
 				},
 				Reason: "",
+			})
+		})
+		It("should resolve timestamp", func() {
+			childSink := ml.NewMockLogSink(mockCtrl)
+			childSink.EXPECT().Init(gm.Any()).AnyTimes()
+			childSink.EXPECT().Enabled(gm.Any()).AnyTimes().Return(true)
+			mockSink.EXPECT().WithValues(repeat(gm.Any(), 14)...).Times(3).DoAndReturn(
+				func(a ...interface{}) interface{} {
+					t, ok := a[7].(metav1.Time)
+					if !ok || t.IsZero() {
+						Fail("timestamp not set")
+					}
+					return childSink
+				})
+			childSink.EXPECT().Info(gm.Any(), gm.Any()).Times(3)
+
+			lp := &loggingPredicate{
+				Config: &Config{filter: filter.Always},
+			}
+
+			lp.logEvent(&corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "3",
+				},
+				LastTimestamp: metav1.Now(),
+			})
+			lp.logEvent(&corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "4",
+				},
+				FirstTimestamp: metav1.Now(),
+			})
+			lp.logEvent(&corev1.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					ResourceVersion: "5",
+				},
+				EventTime: metav1.MicroTime{Time: time.Now()},
 			})
 		})
 
