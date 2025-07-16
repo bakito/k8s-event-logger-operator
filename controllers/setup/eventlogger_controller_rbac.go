@@ -42,7 +42,7 @@ func (r *Reconciler) setupRbac(ctx context.Context, cr *eventloggerv1.EventLogge
 			return false, false, false, err
 		}
 
-		rbRes, err := controllerutil.CreateOrUpdate(ctx, r.Client, rb, r.mutateRolebinding(rb, cr))
+		rbRes, err := controllerutil.CreateOrUpdate(ctx, r.Client, rb, r.mutateRoleBinding(rb, cr))
 		if err != nil {
 			return false, false, false, err
 		}
@@ -93,7 +93,7 @@ func (r *Reconciler) mutateRole(role *rbacv1.Role, cr *eventloggerv1.EventLogger
 	}
 }
 
-func (r *Reconciler) mutateRolebinding(rb *rbacv1.RoleBinding, cr *eventloggerv1.EventLogger) func() error {
+func (r *Reconciler) mutateRoleBinding(rb *rbacv1.RoleBinding, cr *eventloggerv1.EventLogger) func() error {
 	return func() error {
 		rb.Labels = copyLabels(cr)
 
