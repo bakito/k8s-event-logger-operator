@@ -10,4 +10,4 @@ annotations:
   artifacthub.io/changes: |
     - add image pull secrets to the EventLogger CRD
     - CRD reformatted in post-processing
-icon: https://raw.githubusercontent.com/bakito/k8s-event-logger-operator/main/docs/chart-logo.png
+icon: https://raw.githubusercontent.com/bakito/k8s-event-logger-operator/main/docs/chart-logo.svg
