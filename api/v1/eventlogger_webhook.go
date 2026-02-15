@@ -18,48 +18,37 @@ package v1
 
 import (
 	"context"
-	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // SetupWebhookWithManager setup with manager
 func (in *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
+	return ctrl.NewWebhookManagedBy(mgr, &EventLogger{}).
 		WithValidator(&validateEl{}).
-		For(in).
 		Complete()
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/validate-eventlogger-bakito-ch-v1-eventlogger,mutating=false,failurePolicy=fail,sideEffects=None,groups=eventlogger.bakito.ch,resources=eventloggers,versions=v1,name=veventlogger.bakito.ch,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.CustomValidator = &validateEl{}
-
 type validateEl struct{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (v *validateEl) ValidateCreate(_ context.Context, o runtime.Object) (warnings admission.Warnings, err error) {
-	return v.validate(o)
+func (v *validateEl) ValidateCreate(_ context.Context, el *EventLogger) (warnings admission.Warnings, err error) {
+	return v.validate(el)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (v *validateEl) ValidateUpdate(_ context.Context, o, _ runtime.Object) (warnings admission.Warnings, err error) {
-	return v.validate(o)
+func (v *validateEl) ValidateUpdate(_ context.Context, el, _ *EventLogger) (warnings admission.Warnings, err error) {
+	return v.validate(el)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (v *validateEl) ValidateDelete(_ context.Context, _ runtime.Object) (warnings admission.Warnings, err error) {
+func (v *validateEl) ValidateDelete(_ context.Context, _ *EventLogger) (warnings admission.Warnings, err error) {
 	return nil, nil
 }
 
-func (v *validateEl) validate(obj runtime.Object) (admission.Warnings, error) {
-	el, ok := obj.(*EventLogger)
-	if !ok {
-		return nil, fmt.Errorf("expected a EventLogger but got a %T", obj)
-	}
-
+func (v *validateEl) validate(el *EventLogger) (admission.Warnings, error) {
 	return nil, el.Spec.Validate()
 }
