@@ -20,6 +20,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"maps"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/controllers/config"
@@ -125,9 +126,7 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	metricsPort := metricsAddr[:1]
 
 	annotations := make(map[string]string)
-	for k, v := range cr.Spec.Annotations {
-		annotations[k] = v
-	}
+	maps.Copy(annotations, cr.Spec.Annotations)
 	if cr.Spec.ScrapeMetrics != nil && *cr.Spec.ScrapeMetrics {
 		annotations["prometheus.io/port"] = metricsPort
 		annotations["prometheus.io/scrape"] = "true"
@@ -187,9 +186,7 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 
 func copyLabels(cr *eventloggerv1.EventLogger) map[string]string {
 	labels := make(map[string]string)
-	for k, v := range cr.Spec.Labels {
-		labels[k] = v
-	}
+	maps.Copy(labels, cr.Spec.Labels)
 	applyDefaultLabels(cr, labels)
 	return labels
 }

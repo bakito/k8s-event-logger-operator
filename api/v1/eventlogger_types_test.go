@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 var _ = Describe("V1", func() {
@@ -17,7 +16,7 @@ var _ = Describe("V1", func() {
 		It("should serialize an empty string", func() {
 			k := &v1.Kind{
 				Name:     "a",
-				APIGroup: ptr.To(""),
+				APIGroup: new(""),
 			}
 			b, err := json.Marshal(k)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -34,7 +33,7 @@ var _ = Describe("V1", func() {
 		It("should serialize an the apiGroup value", func() {
 			k := &v1.Kind{
 				Name:     "a",
-				APIGroup: ptr.To("b"),
+				APIGroup: new("b"),
 			}
 			b, err := json.Marshal(k)
 			Ω(err).ShouldNot(HaveOccurred())

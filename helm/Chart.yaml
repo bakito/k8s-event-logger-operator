@@ -2,12 +2,11 @@ apiVersion: v2
 name: k8s-event-logger-operator
 description: This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 type: application
-version: 1.14.2
-appVersion: v1.14.2
+version: 1.14.3
+appVersion: v1.14.3
 sources:
   - https://github.com/bakito/k8s-event-logger-operator
 annotations:
   artifacthub.io/changes: |
-    - add image pull secrets to the EventLogger CRD
-    - CRD reformatted in post-processing
+    - Allow to define eventLogger pods ImagePullPolicy
 icon: https://raw.githubusercontent.com/bakito/k8s-event-logger-operator/main/docs/chart-logo.svg

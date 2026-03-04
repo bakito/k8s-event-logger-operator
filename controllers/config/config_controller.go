@@ -148,8 +148,7 @@ func GetCfg(ctx context.Context) *Cfg {
 	if !ok {
 		return nil
 	}
-	clone := *c
-	return &clone
+	return new(*c)
 }
 
 // SetupWithManager setup with manager

@@ -3,6 +3,7 @@ package logging
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
@@ -121,10 +122,5 @@ func (c Config) matches(meta metav1.Object) bool {
 
 // contains check if a string in a []string exists
 func contains(slice []string, str string) bool {
-	for _, v := range slice {
-		if v == str {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(slice, str)
 }
