@@ -1,6 +1,6 @@
 # k8s-event-logger-operator
 
-![Version: 1.14.2](https://img.shields.io/badge/Version-1.14.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.14.2](https://img.shields.io/badge/AppVersion-v1.14.2-informational?style=flat-square)
+![Version: 1.14.3](https://img.shields.io/badge/Version-1.14.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.14.3](https://img.shields.io/badge/AppVersion-v1.14.3-informational?style=flat-square)
 
 This operator creates a logging pod that logs corev1.Event information as structured json log. The crd allows to configure the events to be logged.
 
@@ -9,14 +9,14 @@ This operator creates a logging pod that logs corev1.Event information as struct
 ### oci
 
 ```console
-helm install my-k8s-event-logger-operator oci://ghcr.io/bakito/helm-charts/k8s-event-logger-operator --version 1.14.2
+helm install my-k8s-event-logger-operator oci://ghcr.io/bakito/helm-charts/k8s-event-logger-operator --version 1.14.3
 ```
 
 ### helm repository
 
 ```console
 helm repo add bakito https://charts.bakito.net
-helm install my-k8s-event-logger-operator bakito/k8s-event-logger-operator --version 1.14.2
+helm install my-k8s-event-logger-operator bakito/k8s-event-logger-operator --version 1.14.3
 ```
 
 ## Values
@@ -25,6 +25,7 @@ helm install my-k8s-event-logger-operator bakito/k8s-event-logger-operator --ver
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Assign custom [affinity] rules to the deployment |
 | eventLogger.configReload | bool | `true` | Watch the configmap for changes. |
+| eventLogger.imagePullPolicy | string | `"IfNotPresent"` | Image pull policy for the logger pods. |
 | eventLogger.leaderElection | bool | `true` | Enable leader election for the controller |
 | eventLogger.leaderElectionResourceLock | string | `nil` | Leader election lock type |
 | eventLogger.resources | object | `{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"64Mi"}}` | Resource limits and requests for the logger pods. |

@@ -28,6 +28,9 @@ eventLogger:
       memory: 256Mi
   # -- Security Context for the logger pods.
   securityContext: {}
+
+  # -- Image pull policy for the logger pods.
+  imagePullPolicy: IfNotPresent
   # -- Watch the configmap for changes.
   configReload: true
 

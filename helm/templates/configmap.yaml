@@ -9,6 +9,9 @@ data:
   container_template.yaml: |
     resources:
     {{- toYaml .Values.eventLogger.resources | nindent 6 }}
+    {{- with .Values.eventLogger.imagePullPolicy }}
+    imagePullPolicy: {{.}}
+    {{- end }}
     livenessProbe:
       httpGet:
         path: /healthz

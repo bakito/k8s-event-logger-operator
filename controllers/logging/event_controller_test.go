@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -198,7 +197,7 @@ var _ = Describe("Logging", func() {
 			childSink.EXPECT().Init(gm.Any()).AnyTimes()
 			childSink.EXPECT().Enabled(gm.Any()).AnyTimes().Return(true)
 			mockSink.EXPECT().WithValues(repeat(gm.Any(), 14)...).Times(3).DoAndReturn(
-				func(a ...interface{}) interface{} {
+				func(a ...any) any {
 					t, ok := a[7].(metav1.Time)
 					if !ok || t.IsZero() {
 						Fail("timestamp not set")
@@ -309,7 +308,7 @@ var _ = Describe("Logging", func() {
 			Entry(
 				"10",
 				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{{Name: "Application", APIGroup: ptr.To("argoproj.io"), EventTypes: []string{}}},
+					Kinds: []v1.Kind{{Name: "Application", APIGroup: new("argoproj.io"), EventTypes: []string{}}},
 				},
 				corev1.Event{
 					InvolvedObject: corev1.ObjectReference{
@@ -323,7 +322,7 @@ var _ = Describe("Logging", func() {
 			Entry(
 				"11",
 				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{{Name: "Application", APIGroup: ptr.To("argoproj.io"), EventTypes: []string{}}},
+					Kinds: []v1.Kind{{Name: "Application", APIGroup: new("argoproj.io"), EventTypes: []string{}}},
 				},
 				corev1.Event{
 					InvolvedObject: corev1.ObjectReference{
@@ -389,7 +388,7 @@ var _ = Describe("Logging", func() {
 				"19",
 				v1.EventLoggerSpec{
 					Kinds: []v1.Kind{
-						{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: ptr.To(false)},
+						{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: new(false)},
 					},
 				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
@@ -400,7 +399,7 @@ var _ = Describe("Logging", func() {
 				"20",
 				v1.EventLoggerSpec{
 					Kinds: []v1.Kind{
-						{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: ptr.To(false)},
+						{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: new(false)},
 					},
 				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
@@ -411,7 +410,7 @@ var _ = Describe("Logging", func() {
 				"21",
 				v1.EventLoggerSpec{
 					Kinds: []v1.Kind{
-						{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: ptr.To(true)},
+						{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: new(true)},
 					},
 				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
@@ -422,7 +421,7 @@ var _ = Describe("Logging", func() {
 				"22",
 				v1.EventLoggerSpec{
 					Kinds: []v1.Kind{
-						{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: ptr.To(true)},
+						{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: new(true)},
 					},
 				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
@@ -591,9 +590,9 @@ type sld struct {
 	Description string             `json:"description"`
 }
 
-func repeat(m gm.Matcher, times int) []interface{} {
-	var list []interface{}
-	for i := 0; i < times; i++ {
+func repeat(m gm.Matcher, times int) []any {
+	var list []any
+	for range times {
 		list = append(list, m)
 	}
 	return list

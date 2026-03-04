@@ -15,10 +15,17 @@ kubectl create secret tls "${WEBHOOK_CERT_NAME}" -n "${NAMESPACE}" \
 
 WEBHOOK_CERT=$(cat "${SCRIPT_DIR}/certificates/certificate.crt" | base64 | tr -d '\n')
 
-helm upgrade --install k8s-event-logger-operator helm \
+if ! helm upgrade --install k8s-event-logger-operator helm \
   --namespace "${NAMESPACE}" \
   -f "${SCRIPT_DIR}/e2e-values.yaml" \
   --set "webhook.caBundle=${WEBHOOK_CERT}" \
   --set "webhook.certsSecret.name=${WEBHOOK_CERT_NAME}" \
-  --atomic
-
+  --rollback-on-failure
+then
+  echo "ERROR: helm upgrade failed. Dumping diagnostics for namespace: ${NAMESPACE}" >&2
+  echo "--- Pods (wide) ---" >&2
+  kubectl get pods -n "${NAMESPACE}" -o wide >&2 || true
+  echo "--- Events (sorted by lastTimestamp) ---" >&2
+  kubectl get events -n "${NAMESPACE}" --sort-by='.lastTimestamp' >&2 || true
+  exit 1
+fi
