@@ -18,11 +18,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install kind with registry
-        uses: bakito/kind-with-registry-action@main
-
       - name: Build image
         run: ./testdata/e2e/buildImage.sh
+
+      - name: Install kind with registry
+        uses: bakito/kind-with-registry-action@main
+        with:
+          docker_image_name: k8s-event-logger:e2e
 
       - name: Install helm chart
         run: |
@@ -37,10 +39,20 @@ jobs:
       - name: Setup an EventLogger
         run: |
           kubectl apply -f testdata/e2e/test-eventlogger.yaml
-          kubectl wait --namespace e2e-test \
+
+          if ! kubectl wait --namespace e2e-test \
             --for=condition=ready pod \
             --selector=app.kubernetes.io/component=event-logger-example-eventlogger \
             --timeout=90s
+          then
+            echo "ERROR: EventLogger pod did not become ready in namespace e2e-test" >&2
+            echo "--- Pods (wide) ---" >&2
+            kubectl get pods -n e2e-test -o wide >&2 || true
+            echo "--- Events (sorted by lastTimestamp) ---" >&2
+            kubectl get events -n e2e-test --sort-by='.lastTimestamp' >&2 || true
+            exit 1
+          fi
+
 
       - name: Check 'old' eventlogger pod is deleted
         run: |
