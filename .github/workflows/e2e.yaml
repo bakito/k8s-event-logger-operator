@@ -16,13 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Build image
         run: ./testdata/e2e/buildImage.sh
 
       - name: Install kind with registry
-        uses: bakito/kind-with-registry-action@main
+        uses: bakito/kind-with-registry-action@9c031e8b0c6f20fec65ca5a58901d05e585ff5d0 # v1.0.0
         with:
           docker_image_name: k8s-event-logger:e2e
 
