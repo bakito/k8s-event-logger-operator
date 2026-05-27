@@ -166,10 +166,10 @@ func main() {
 				os.Exit(1)
 			}
 			if err = (&setup.Reconciler{
-				Client: mgr.GetClient(),
-				Log:    ctrl.Log.WithName("controllers").WithName("EventLogger"),
-				Scheme: mgr.GetScheme(),
-				Config: cr.Ctx(),
+				Client:    mgr.GetClient(),
+				Log:       ctrl.Log.WithName("controllers").WithName("EventLogger"),
+				Scheme:    mgr.GetScheme(),
+				ConfigCtx: cr.Ctx(),
 			}).SetupWithManager(mgr); err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "EventLogger")
 				os.Exit(1)

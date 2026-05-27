@@ -72,7 +72,7 @@ func k8sLabelAnnotationKeys(_ context.Context, fl validator.FieldLevel) bool {
 // eventLoggerValidator is a custom validator for the event logger.
 type eventLoggerValidator struct {
 	val   *validator.Validate
-	ctx   context.Context
+	ctx   context.Context //nolint:containedctx
 	spec  *EventLoggerSpec
 	trans ut.Translator
 }

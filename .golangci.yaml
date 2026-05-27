@@ -6,7 +6,7 @@ linters:
     - bidichk
     - bodyclose
     - canonicalheader
-    #- containedctx
+    - containedctx
     - copyloopvar
     - decorder
     - dogsled
@@ -163,7 +163,9 @@ linters:
         - name: var-naming
           disabled: true
         - name: struct-tag
-          disabled: true
+          arguments:
+            - "json,inline" # allow json inline tags
+            - "!validate" # instruct the rule not to check validate tags
     staticcheck:
       checks:
         - 'all'

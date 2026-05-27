@@ -142,7 +142,7 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 		saccName = cr.Spec.ServiceAccount
 	}
 
-	container := config.GetCfg(r.Config).ContainerTemplate
+	container := config.GetCfg(r.ConfigCtx).ContainerTemplate
 
 	container.Name = "event-logger"
 	container.Command = []string{"/opt/go/k8s-event-logger"}

@@ -282,10 +282,10 @@ resources:
 	Ω(err).ShouldNot(HaveOccurred())
 
 	r := &Reconciler{
-		Client: cl,
-		Log:    ctrl.Log.WithName("controllers").WithName("Pod"),
-		Scheme: s,
-		Config: cr.Ctx(),
+		Client:    cl,
+		Log:       ctrl.Log.WithName("controllers").WithName("Pod"),
+		Scheme:    s,
+		ConfigCtx: cr.Ctx(),
 	}
 
 	req := reconcile.Request{
