@@ -40,7 +40,7 @@ type Reconciler struct {
 	Log    logr.Logger
 	Scheme *runtime.Scheme
 
-	Config context.Context
+	ConfigCtx context.Context //nolint:containedctx
 }
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
