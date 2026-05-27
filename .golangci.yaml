@@ -6,7 +6,7 @@ linters:
     - bidichk
     - bodyclose
     - canonicalheader
-    #- containedctx
+    - containedctx
     - copyloopvar
     - decorder
     - dogsled
@@ -161,8 +161,6 @@ linters:
             - '^fmt\.(Fp|P)?rint(f|ln)?$'
             - '^(bytes\.Buffer|string\.Writer|strings\.Builder)\.Write(Byte|Rune|String)?$'
         - name: var-naming
-          disabled: true
-        - name: struct-tag
           disabled: true
     staticcheck:
       checks:
