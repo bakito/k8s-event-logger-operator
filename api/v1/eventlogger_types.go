@@ -17,12 +17,13 @@ limitations under the License.
 package v1
 
 import (
-	"github.com/bakito/k8s-event-logger-operator/version"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/bakito/k8s-event-logger-operator/version"
 )
 
-// EventLoggerSpec defines the desired state of EventLogger
+// EventLoggerSpec defines the desired state of EventLogger.
 type EventLoggerSpec struct {
 	// Kinds the kinds to log the events for
 	// +kubebuilder:validation:MinItems=1
@@ -64,7 +65,7 @@ type EventLoggerSpec struct {
 	LogFields []LogField `json:"logFields,omitempty"`
 }
 
-// Kind defines a kind to log events for
+// Kind defines a kind to log events for.
 type Kind struct {
 	// +kubebuilder:validation:MinLength=3
 	Name string `json:"name"`
@@ -93,7 +94,7 @@ type Kind struct {
 	SkipOnMatch *bool `json:"skipOnMatch,omitempty"`
 }
 
-// LogField defines a log field
+// LogField defines a log field.
 type LogField struct {
 	// name of the log field
 	Name string `json:"name"`
@@ -107,7 +108,7 @@ type LogField struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// EventLoggerStatus defines the observed state of EventLogger
+// EventLoggerStatus defines the observed state of EventLogger.
 type EventLoggerStatus struct {
 	// OperatorVersion the version of the operator that processed the cr
 	OperatorVersion string `json:"operatorVersion"`
@@ -121,7 +122,7 @@ type EventLoggerStatus struct {
 
 // +kubebuilder:object:root=true
 
-// EventLogger is the Schema for the eventloggers API
+// EventLogger is the Schema for the eventloggers API.
 type EventLogger struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -132,18 +133,19 @@ type EventLogger struct {
 
 // +kubebuilder:object:root=true
 
-// EventLoggerList contains a list of EventLogger
+// EventLoggerList contains a list of EventLogger.
 type EventLoggerList struct {
-	metav1.TypeMeta `              json:",inline"`
-	metav1.ListMeta `              json:"metadata,omitempty"`
-	Items           []EventLogger `json:"items"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+
+	Items []EventLogger `json:"items"`
 }
 
 func init() {
 	SchemeBuilder.Register(&EventLogger{}, &EventLoggerList{})
 }
 
-// Apply update the status of the current event logger
+// Apply update the status of the current event logger.
 func (in *EventLogger) Apply(err error) {
 	if err != nil {
 		in.Status.Error = err.Error()

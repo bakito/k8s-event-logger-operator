@@ -2,12 +2,11 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
 
-	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
-	"github.com/bakito/operator-utils/pkg/filter"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -17,6 +16,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+	"github.com/bakito/operator-utils/pkg/filter"
 )
 
 type contextKey string
@@ -33,7 +35,7 @@ var (
 	defaultPodMaxMem = resource.MustParse("128Mi")
 )
 
-// Reconciler reconciles a Pod object
+// Reconciler reconciles a Pod object.
 type Reconciler struct {
 	client.Reader
 	Log    logr.Logger
@@ -46,7 +48,7 @@ type Reconciler struct {
 
 // +kubebuilder:rbac:groups=,resources=configmaps,verbs=get;list;watch
 
-// Reconcile EventLogger to setup event logger pods
+// Reconcile EventLogger to setup event logger pods.
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
 	return reconcile.Result{}, r.readConfig(ctx, reqLogger, req.NamespacedName)
@@ -125,7 +127,6 @@ func (r *Reconciler) setupEventLoggerImage(nn types.NamespacedName) error {
 	if len(p.Spec.Containers) == 1 {
 		r.eventLoggerImage = p.Spec.Containers[0].Image
 		return nil
-
 	}
 	for _, c := range p.Spec.Containers {
 		if c.Name == defaultContainerName {
@@ -133,7 +134,7 @@ func (r *Reconciler) setupEventLoggerImage(nn types.NamespacedName) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("could not evaluate the event logger image to use")
+	return errors.New("could not evaluate the event logger image to use")
 }
 
 func (r *Reconciler) Ctx() context.Context {
@@ -151,7 +152,7 @@ func GetCfg(ctx context.Context) *Cfg {
 	return new(*c)
 }
 
-// SetupWithManager setup with manager
+// SetupWithManager setup with manager.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	namespace := os.Getenv(cnst.EnvPodNamespace)
 	cmName := os.Getenv(cnst.EnvConfigMapName)

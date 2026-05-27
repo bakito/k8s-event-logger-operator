@@ -17,7 +17,7 @@ spec:
     - name: v1
       schema:
         openAPIV3Schema:
-          description: EventLogger is the Schema for the eventloggers API
+          description: EventLogger is the Schema for the eventloggers API.
           properties:
             apiVersion:
               description: |-
@@ -37,7 +37,7 @@ spec:
             metadata:
               type: object
             spec:
-              description: EventLoggerSpec defines the desired state of EventLogger
+              description: EventLoggerSpec defines the desired state of EventLogger.
               properties:
                 annotations:
                   additionalProperties:
@@ -70,7 +70,7 @@ spec:
                 kinds:
                   description: Kinds the kinds to log the events for
                   items:
-                    description: Kind defines a kind to log events for
+                    description: Kind defines a kind to log events for.
                     properties:
                       apiGroup:
                         nullable: true
@@ -118,7 +118,7 @@ spec:
                 logFields:
                   description: LogFields fields ot the event to be logged.
                   items:
-                    description: LogField defines a log field
+                    description: LogField defines a log field.
                     properties:
                       name:
                         description: name of the log field
@@ -157,7 +157,7 @@ spec:
                   type: string
               type: object
             status:
-              description: EventLoggerStatus defines the observed state of EventLogger
+              description: EventLoggerStatus defines the observed state of EventLogger.
               properties:
                 error:
                   description: Error

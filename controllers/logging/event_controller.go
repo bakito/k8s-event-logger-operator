@@ -20,7 +20,6 @@ import (
 	"context"
 	"reflect"
 
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/fatih/structs"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -34,11 +33,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 )
 
 var eventLog = ctrl.Log.WithName("event")
 
-// Reconciler reconciles a Event object
+// Reconciler reconciles an Event object.
 type Reconciler struct {
 	client.Client
 	Log    logr.Logger
@@ -50,7 +51,7 @@ type Reconciler struct {
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
 
-// Reconcile EventLogger to update the current config
+// Reconcile EventLogger to update the current config.
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
 	if r.Config.name == "" {
@@ -120,7 +121,7 @@ type loggingPredicate struct {
 	Config      *Config
 }
 
-// Create implements Predicate
+// Create implements Predicate.
 func (p *loggingPredicate) Create(e event.CreateEvent) bool {
 	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.Object)
@@ -128,7 +129,7 @@ func (p *loggingPredicate) Create(e event.CreateEvent) bool {
 	return p.logEvent(e.Object)
 }
 
-// Update implements Predicate
+// Update implements Predicate.
 func (p *loggingPredicate) Update(e event.UpdateEvent) bool {
 	if _, ok := e.ObjectNew.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.ObjectNew)
@@ -136,7 +137,7 @@ func (p *loggingPredicate) Update(e event.UpdateEvent) bool {
 	return p.logEvent(e.ObjectNew)
 }
 
-// Delete implements Predicate
+// Delete implements Predicate.
 func (p *loggingPredicate) Delete(e event.DeleteEvent) bool {
 	if _, ok := e.Object.(*eventloggerv1.EventLogger); ok {
 		return p.Config.matches(e.Object)
@@ -212,7 +213,7 @@ func getLatestRevision(ctx context.Context, cl client.Client, namespace string) 
 	return eventList.ResourceVersion, nil
 }
 
-// SetupWithManager setup with manager
+// SetupWithManager setup with manager.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, namespace string) error {
 	cl, err := client.New(mgr.GetConfig(), client.Options{})
 	if err != nil {

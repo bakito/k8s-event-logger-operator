@@ -3,21 +3,24 @@ package v1
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 
-	"github.com/bakito/k8s-event-logger-operator/version"
 	english "github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/go-playground/validator/v10/translations/en"
+	"k8s.io/apimachinery/pkg/api/validate/content"
 	"k8s.io/apimachinery/pkg/util/validation"
+
+	"github.com/bakito/k8s-event-logger-operator/version"
 )
 
-// Custom type for context key, so we don't have to use 'string' directly
+// Custom type for context key, so we don't have to use 'string' directly.
 type contextKey string
 
 var (
@@ -25,21 +28,21 @@ var (
 	errorsKey = contextKey("errors")
 )
 
-// HasChanged check if the spec or operator version has changed
+// HasChanged check if the spec or operator version has changed.
 func (in *EventLogger) HasChanged() bool {
 	return in.Status.Hash != in.Spec.Hash() || in.Status.OperatorVersion != version.Version
 }
 
-// Hash the event
+// Hash the event.
 func (in *EventLoggerSpec) Hash() string {
 	h := sha256.New()
 	bytes, _ := json.Marshal(in)
 	_, _ = h.Write(bytes)
 	sum := h.Sum(nil)
-	return fmt.Sprintf("%x", sum)
+	return hex.EncodeToString(sum)
 }
 
-// Validate the event
+// Validate the event.
 func (in *EventLoggerSpec) Validate() error {
 	return newEventLoggerValidator(in).Validate()
 }
@@ -66,7 +69,7 @@ func k8sLabelAnnotationKeys(_ context.Context, fl validator.FieldLevel) bool {
 	return true
 }
 
-// eventLoggerValidator is a custom validator for the event logger
+// eventLoggerValidator is a custom validator for the event logger.
 type eventLoggerValidator struct {
 	val   *validator.Validate
 	ctx   context.Context
@@ -74,7 +77,7 @@ type eventLoggerValidator struct {
 	trans ut.Translator
 }
 
-// Custom error for event logger validation
+// Custom error for event logger validation.
 type eventLoggerValidatorError struct {
 	errList []string
 }
@@ -87,15 +90,15 @@ func (err *eventLoggerValidatorError) addError(errStr string) {
 	err.errList = append(err.errList, errStr)
 }
 
-// newEventLoggerValidator creates a new EventLoggerValidator
+// newEventLoggerValidator creates a new EventLoggerValidator.
 func newEventLoggerValidator(spec *EventLoggerSpec) *eventLoggerValidator {
 	result := validator.New()
 
 	_ = result.RegisterValidationCtx("k8s-label-annotation-keys", k8sLabelAnnotationKeys)
 	_ = result.RegisterValidationCtx("k8s-label-values", k8sLabelValues)
 
-	errKey := strings.Join(validation.IsQualifiedName("a@a"), " ")
-	errLabelVal := strings.Join(validation.IsValidLabelValue("a:/a"), " ")
+	errKey := strings.Join(content.IsLabelKey("a@a"), " ")
+	errLabelVal := strings.Join(content.IsLabelValue("a:/a"), " ")
 
 	// context
 	ctx := context.WithValue(context.Background(), specKey, spec)
@@ -114,11 +117,11 @@ func newEventLoggerValidator(spec *EventLoggerSpec) *eventLoggerValidator {
 	}{
 		{
 			tag:         "k8s-label-annotation-keys",
-			translation: fmt.Sprintf("'key in {0}' must match the pattern %s", errKey),
+			translation: "'key in {0}' must match the pattern " + errKey,
 		},
 		{
 			tag:         "k8s-label-values",
-			translation: fmt.Sprintf("'values in {0}' must match the pattern %s", errLabelVal),
+			translation: "'values in {0}' must match the pattern " + errLabelVal,
 		},
 	}
 	for _, t := range translations {
@@ -133,19 +136,16 @@ func newEventLoggerValidator(spec *EventLoggerSpec) *eventLoggerValidator {
 	}
 }
 
-func registrationFunc(tag string, translation string) validator.RegisterTranslationsFunc {
+func registrationFunc(tag, translation string) validator.RegisterTranslationsFunc {
 	return func(ut ut.Translator) (err error) {
-		if err = ut.Add(tag, translation, true); err != nil {
-			return
-		}
-		return
+		return ut.Add(tag, translation, true)
 	}
 }
 
-func translateFunc(ut ut.Translator, fe validator.FieldError) string {
-	t, err := ut.T(fe.Tag(), reflect.ValueOf(fe.Value()).String(), fe.Param())
+func translateFunc(tr ut.Translator, fe validator.FieldError) string {
+	t, err := tr.T(fe.Tag(), reflect.ValueOf(fe.Value()).String(), fe.Param())
 	if err != nil {
-		return fe.(error).Error()
+		return fe.Error()
 	}
 	return t
 }
@@ -170,8 +170,11 @@ func (v *eventLoggerValidator) Validate() error {
 	}
 
 	// collect additional errors stored in context
-	for _, errStr := range v.ctx.Value(errorsKey).(*eventLoggerValidatorError).errList {
-		result.addError(errStr)
+	elve, ok := v.ctx.Value(errorsKey).(*eventLoggerValidatorError)
+	if ok {
+		for _, errStr := range elve.errList {
+			result.addError(errStr)
+		}
 	}
 
 	return result

@@ -5,13 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/bakito/k8s-event-logger-operator/controllers/config"
-	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
-	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	gm "go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -23,6 +17,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	apiv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/controllers/config"
+	c "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+	"github.com/bakito/k8s-event-logger-operator/version"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -34,29 +36,29 @@ var _ = Describe("Logging", func() {
 	var (
 		mockCtrl *gm.Controller
 		ns2      string
-		el       *v1.EventLogger
+		el       *apiv1.EventLogger
 	)
 
 	BeforeEach(func() {
 		mockCtrl = gm.NewController(GinkgoT())
 		ns2 = "eventlogger-operators"
 
-		el = &v1.EventLogger{
+		el = &apiv1.EventLogger{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "eventlogger",
 				Namespace: testNamespace,
 			},
-			Spec: v1.EventLoggerSpec{
+			Spec: apiv1.EventLoggerSpec{
 				Labels:        map[string]string{"test-label": "foo"},
 				Annotations:   map[string]string{"test-annotation": "bar"},
 				ScrapeMetrics: new(true),
 				Namespace:     &ns2,
 				NodeSelector:  map[string]string{"ns-key": "ns-value"},
 			},
-			Status: v1.EventLoggerStatus{
+			Status: apiv1.EventLoggerStatus{
 				OperatorVersion: "0",
 				Hash:            "",
-				LastProcessed:   metav1.Date(2020, 1, 1, 1, 1, 1, 1, time.Local),
+				LastProcessed:   metav1.Date(2020, 1, 1, 1, 1, 1, 1, time.UTC),
 			},
 		}
 	})
@@ -71,7 +73,7 @@ var _ = Describe("Logging", func() {
 				Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
 
 				// check updated status
-				updated := &v1.EventLogger{}
+				updated := &apiv1.EventLogger{}
 				err := cl.Get(context.TODO(), types.NamespacedName{
 					Name:      "eventlogger",
 					Namespace: testNamespace,
@@ -229,7 +231,7 @@ var _ = Describe("Logging", func() {
 func testReconcile(initialObjects ...client.Object) (client.Client, reconcile.Result) {
 	s := scheme.Scheme
 
-	Ω(v1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
+	Ω(apiv1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
 
 	nn := types.NamespacedName{
 		Namespace: uuid.New().String(),
@@ -298,7 +300,7 @@ resources:
 	return cl, res
 }
 
-func assertEntrySize(cl client.Client, el *v1.EventLogger, list client.ObjectList, expected int) {
+func assertEntrySize(cl client.Client, el *apiv1.EventLogger, list client.ObjectList, expected int) {
 	option := client.MatchingLabels{}
 	applyDefaultLabels(el, option)
 	err := cl.List(context.TODO(), list, option)

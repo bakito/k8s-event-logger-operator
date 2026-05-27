@@ -22,13 +22,6 @@ import (
 	"os"
 	gr "runtime"
 
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/bakito/k8s-event-logger-operator/controllers/config"
-	"github.com/bakito/k8s-event-logger-operator/controllers/logging"
-	"github.com/bakito/k8s-event-logger-operator/controllers/setup"
-	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
-	"github.com/bakito/k8s-event-logger-operator/version"
-	"github.com/bakito/operator-utils/pkg/pprof"
 	"github.com/go-logr/zapr"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -36,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	crtlcache "sigs.k8s.io/controller-runtime/pkg/cache"
@@ -44,6 +36,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/controllers/config"
+	"github.com/bakito/k8s-event-logger-operator/controllers/logging"
+	"github.com/bakito/k8s-event-logger-operator/controllers/setup"
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+	"github.com/bakito/k8s-event-logger-operator/version"
+	"github.com/bakito/operator-utils/pkg/pprof"
+
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 var (
@@ -220,7 +222,7 @@ func main() {
 }
 
 func printVersion() {
-	setupLog.Info(fmt.Sprintf("Operator Version: %s", version.Version))
-	setupLog.Info(fmt.Sprintf("Go Version: %s", gr.Version()))
+	setupLog.Info("Operator Version: " + version.Version)
+	setupLog.Info("Go Version: " + gr.Version())
 	setupLog.Info(fmt.Sprintf("Go OS/Arch: %s/%s", gr.GOOS, gr.GOARCH))
 }

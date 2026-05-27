@@ -5,13 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
-	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
-	mc "github.com/bakito/k8s-event-logger-operator/pkg/mocks/client"
-	ml "github.com/bakito/k8s-event-logger-operator/pkg/mocks/logr"
 	"github.com/go-logr/logr"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	gm "go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -24,6 +18,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	apiv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
+	mc "github.com/bakito/k8s-event-logger-operator/pkg/mocks/client"
+	ml "github.com/bakito/k8s-event-logger-operator/pkg/mocks/logr"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -56,7 +58,7 @@ var _ = Describe("Logging", func() {
 
 		BeforeEach(func() {
 			s = scheme.Scheme
-			Ω(v1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
+			Ω(apiv1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
 			r = &Reconciler{
 				Client:     cl,
 				Log:        ctrl.Log.WithName("controllers").WithName("Event"),
@@ -93,7 +95,7 @@ var _ = Describe("Logging", func() {
 		It("should do noting if not found", func() {
 			cl.EXPECT().
 				Get(gm.Any(), gm.Any(), gm.Any()).
-				Return(errors.NewNotFound(v1.GroupVersion.WithResource("").GroupResource(), ""))
+				Return(errors.NewNotFound(apiv1.GroupVersion.WithResource("").GroupResource(), ""))
 			_, err := r.Reconcile(ctx, req)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
@@ -170,7 +172,7 @@ var _ = Describe("Logging", func() {
 			lp := &loggingPredicate{
 				Config: &Config{
 					filter: filter.Always,
-					logFields: []v1.LogField{
+					logFields: []apiv1.LogField{
 						{Name: "type", Path: []string{"Type"}},
 						{Name: "name", Path: []string{"InvolvedObject", "Name"}},
 						{Name: "kind", Path: []string{"InvolvedObject", "Kind"}},
@@ -231,7 +233,7 @@ var _ = Describe("Logging", func() {
 		})
 
 		DescribeTable("the > inequality",
-			func(config v1.EventLoggerSpec, event corev1.Event, expected bool, description string) {
+			func(config apiv1.EventLoggerSpec, event corev1.Event, expected bool, description string) {
 				data := &sld{config, event, expected, description}
 				lp := &loggingPredicate{Config: &Config{filter: newFilter(data.Config)}}
 
@@ -241,46 +243,46 @@ var _ = Describe("Logging", func() {
 				Ω(lp.Config.filter.String()).Should(Equal(data.Description))
 			},
 			Entry("1",
-				v1.EventLoggerSpec{},
+				apiv1.EventLoggerSpec{},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 				true,
 				"true",
 			),
 			Entry("2",
-				v1.EventLoggerSpec{EventTypes: []string{}},
+				apiv1.EventLoggerSpec{EventTypes: []string{}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 				true,
 				"true",
 			),
 			Entry("3",
-				v1.EventLoggerSpec{EventTypes: []string{"Normal"}},
+				apiv1.EventLoggerSpec{EventTypes: []string{"Normal"}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 				true,
 				"( EventType in [Normal] )",
 			),
 			Entry("4",
-				v1.EventLoggerSpec{EventTypes: []string{"Normal"}},
+				apiv1.EventLoggerSpec{EventTypes: []string{"Normal"}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Warning"},
 				false,
 				"( EventType in [Normal] )",
 			),
 			Entry("5",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "Pod"}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 				true,
 				"( ( ( Kind == 'Pod' ) ) )",
 			),
 			Entry("6",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "ConfigMap"}}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "ConfigMap"}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 				false,
 				"( ( ( Kind == 'ConfigMap' ) ) )",
 			),
 			Entry("7",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}}}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "Pod", EventTypes: []string{}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}},
 				true,
 				"( ( ( Kind == 'Pod' ) ) )",
@@ -288,8 +290,8 @@ var _ = Describe("Logging", func() {
 			Entry(
 				"8",
 
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}},
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}},
 				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Created"},
 				true,
@@ -298,8 +300,8 @@ var _ = Describe("Logging", func() {
 			Entry(
 				"9",
 
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}},
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{{Name: "Pod", EventTypes: []string{}, Reasons: []string{"Created", "Started"}}},
 				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Reason: "Killing"},
 				false,
@@ -307,8 +309,8 @@ var _ = Describe("Logging", func() {
 			),
 			Entry(
 				"10",
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{{Name: "Application", APIGroup: new("argoproj.io"), EventTypes: []string{}}},
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{{Name: "Application", APIGroup: new("argoproj.io"), EventTypes: []string{}}},
 				},
 				corev1.Event{
 					InvolvedObject: corev1.ObjectReference{
@@ -321,8 +323,8 @@ var _ = Describe("Logging", func() {
 			),
 			Entry(
 				"11",
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{{Name: "Application", APIGroup: new("argoproj.io"), EventTypes: []string{}}},
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{{Name: "Application", APIGroup: new("argoproj.io"), EventTypes: []string{}}},
 				},
 				corev1.Event{
 					InvolvedObject: corev1.ObjectReference{
@@ -335,28 +337,28 @@ var _ = Describe("Logging", func() {
 			),
 			Entry("12",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Normal"}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "Pod"}}, EventTypes: []string{"Normal"}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 				true,
 				"( EventType in [Normal] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
 			),
 			Entry("13",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod"}}, EventTypes: []string{"Warning"}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "Pod"}}, EventTypes: []string{"Warning"}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 				false,
 				"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
 			),
 			Entry("14",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 				true,
 				"( ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
 			),
 			Entry("15",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", EventTypes: []string{"Warning"}}}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "Pod", EventTypes: []string{"Warning"}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
 				false,
 				"( ( ( Kind == 'Pod' AND EventType in [Warning] ) ) )",
@@ -364,8 +366,8 @@ var _ = Describe("Logging", func() {
 			Entry(
 				"16",
 
-				v1.EventLoggerSpec{
-					Kinds:      []v1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}},
+				apiv1.EventLoggerSpec{
+					Kinds:      []apiv1.Kind{{Name: "Pod", EventTypes: []string{"Normal"}}},
 					EventTypes: []string{"Warning"},
 				},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Type: "Normal"},
@@ -373,21 +375,21 @@ var _ = Describe("Logging", func() {
 				"( EventType in [Warning] OR ( ( Kind == 'Pod' AND EventType in [Normal] ) ) )",
 			),
 			Entry("17",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}}}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "Pod", MatchingPatterns: []string{".*message.*"}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				true,
 				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*message.*/ ) ) ) ) )",
 			),
 			Entry("18",
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}}}},
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{Name: "Pod", MatchingPatterns: []string{".*Message.*"}}}},
 				corev1.Event{InvolvedObject: corev1.ObjectReference{Kind: "Pod"}, Message: "This is a test message"},
 				false,
 				"( ( ( Kind == 'Pod' AND ( false XOR ( Message matches /.*Message.*/ ) ) ) ) )",
 			),
 			Entry(
 				"19",
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{
 						{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: new(false)},
 					},
 				},
@@ -397,8 +399,8 @@ var _ = Describe("Logging", func() {
 			),
 			Entry(
 				"20",
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{
 						{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: new(false)},
 					},
 				},
@@ -408,8 +410,8 @@ var _ = Describe("Logging", func() {
 			),
 			Entry(
 				"21",
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{
 						{Name: "Pod", MatchingPatterns: []string{".*message.*"}, SkipOnMatch: new(true)},
 					},
 				},
@@ -419,8 +421,8 @@ var _ = Describe("Logging", func() {
 			),
 			Entry(
 				"22",
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{
 						{Name: "Pod", MatchingPatterns: []string{".*Message.*"}, SkipOnMatch: new(true)},
 					},
 				},
@@ -431,8 +433,8 @@ var _ = Describe("Logging", func() {
 			Entry(
 				"23",
 
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{
 						{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}},
 					},
 				},
@@ -443,8 +445,8 @@ var _ = Describe("Logging", func() {
 			Entry(
 				"24",
 
-				v1.EventLoggerSpec{
-					Kinds: []v1.Kind{
+				apiv1.EventLoggerSpec{
+					Kinds: []apiv1.Kind{
 						{Name: "Pod", EventTypes: []string{}, SkipReasons: []string{"Created", "Started"}},
 					},
 				},
@@ -454,7 +456,7 @@ var _ = Describe("Logging", func() {
 			),
 			Entry("25",
 
-				v1.EventLoggerSpec{Kinds: []v1.Kind{{
+				apiv1.EventLoggerSpec{Kinds: []apiv1.Kind{{
 					Name: "Pod", EventTypes: []string{},
 					SkipReasons: []string{"Created"},
 					Reasons:     []string{"Created"},
@@ -479,7 +481,7 @@ var _ = Describe("Logging", func() {
 	Context("loggingPredicate", func() {
 		var (
 			lp *loggingPredicate
-			el *v1.EventLogger
+			el *apiv1.EventLogger
 		)
 		BeforeEach(func() {
 			lp = &loggingPredicate{
@@ -489,7 +491,7 @@ var _ = Describe("Logging", func() {
 					name:           testName,
 				},
 			}
-			el = &v1.EventLogger{
+			el = &apiv1.EventLogger{
 				ObjectMeta: metav1.ObjectMeta{
 					Namespace: testNamespace,
 					Name:      testName,
@@ -584,10 +586,10 @@ var _ = Describe("Logging", func() {
 })
 
 type sld struct {
-	Config      v1.EventLoggerSpec `json:"config"`
-	Event       corev1.Event       `json:"event"`
-	Expected    bool               `json:"expected"`
-	Description string             `json:"description"`
+	Config      apiv1.EventLoggerSpec `json:"config"`
+	Event       corev1.Event          `json:"event"`
+	Expected    bool                  `json:"expected"`
+	Description string                `json:"description"`
 }
 
 func repeat(m gm.Matcher, times int) []any {

@@ -4,11 +4,7 @@ import (
 	"os"
 	"time"
 
-	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,6 +13,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	apiv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Config", func() {
@@ -27,7 +29,7 @@ var _ = Describe("Config", func() {
 
 	BeforeEach(func() {
 		s = scheme.Scheme
-		Ω(v1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
+		Ω(apiv1.SchemeBuilder.AddToScheme(s)).ShouldNot(HaveOccurred())
 
 		cr = &Reconciler{
 			Log:    ctrl.Log.WithName("controllers").WithName("Pod"),

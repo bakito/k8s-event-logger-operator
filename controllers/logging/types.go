@@ -6,11 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
+
+	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/pkg/filter"
 )
 
 func newFilter(c eventloggerv1.EventLoggerSpec) filter.Filter {
@@ -85,7 +86,7 @@ func newFilterForMatchingPatterns(patterns []string, skipOnMatch bool) filter.Fi
 	for _, mp := range patterns {
 		matcher := regexp.MustCompile(mp)
 		filters = append(filters, filter.New(func(e *corev1.Event) bool {
-			return matcher.Match([]byte(e.Message))
+			return matcher.MatchString(e.Message)
 		}, fmt.Sprintf("Message matches /%s/", mp)))
 	}
 
@@ -95,7 +96,7 @@ func newFilterForMatchingPatterns(patterns []string, skipOnMatch bool) filter.Fi
 	}, fmt.Sprintf("( %v XOR %s )", skipOnMatch, f.String()))
 }
 
-// ConfigFor get config for namespace and name
+// ConfigFor get config for namespace and name.
 func ConfigFor(name, podNamespace, watchNamespace string) *Config {
 	return &Config{
 		name:           name,
@@ -104,7 +105,7 @@ func ConfigFor(name, podNamespace, watchNamespace string) *Config {
 	}
 }
 
-// Config event config
+// Config event config.
 type Config struct {
 	podNamespace   string
 	watchNamespace string
@@ -120,7 +121,7 @@ func (c Config) matches(meta metav1.Object) bool {
 	return c.watchNamespace == meta.GetNamespace() && (c.name == meta.GetName())
 }
 
-// contains check if a string in a []string exists
+// contains check if a string in a []string exists.
 func contains(slice []string, str string) bool {
 	return slices.Contains(slice, str)
 }
