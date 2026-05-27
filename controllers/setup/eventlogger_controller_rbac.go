@@ -19,16 +19,19 @@ package setup
 import (
 	"context"
 
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 )
 
-func (r *Reconciler) setupRbac(ctx context.Context, cr *eventloggerv1.EventLogger) (bool, bool, bool, error) {
-	var err error
+func (r *Reconciler) setupRbac(
+	ctx context.Context,
+	cr *eventloggerv1.EventLogger,
+) (saccChanged, roleChanged, rbChanged bool, err error) {
 	sacc, role, rb := rbacForCR(cr)
 
 	if cr.Spec.ServiceAccount == "" {

@@ -19,17 +19,17 @@ package setup
 import (
 	"context"
 	"flag"
-	"fmt"
 	"maps"
 
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/bakito/k8s-event-logger-operator/controllers/config"
-	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/controllers/config"
+	cnst "github.com/bakito/k8s-event-logger-operator/pkg/constants"
 )
 
 const (
@@ -69,7 +69,7 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 	if replacePod || len(podList.Items) > 1 {
 		for i := range podList.Items {
 			p := podList.Items[i]
-			reqLogger.Info(fmt.Sprintf("Deleting %s", pod.Kind), "namespace", pod.GetNamespace(), "name", pod.GetName())
+			reqLogger.Info("Deleting "+pod.Kind, "namespace", pod.GetNamespace(), "name", pod.GetName())
 			err = r.Delete(ctx, &p, &client.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 			if err != nil {
 				return false, err
@@ -84,7 +84,7 @@ func (r *Reconciler) createOrReplacePod(ctx context.Context, cr *eventloggerv1.E
 			return false, err
 		}
 		reqLogger.Info(
-			fmt.Sprintf("Creating a new %s", pod.Kind),
+			"Creating a new "+pod.Kind,
 			"namespace",
 			pod.GetNamespace(),
 			"name",
@@ -113,7 +113,7 @@ func (r *Reconciler) findPods(
 	return podList, r.List(ctx, podList, opts...)
 }
 
-// podForCR returns a pod with the same name/namespace as the cr
+// podForCR returns a pod with the same name/namespace as the cr.
 func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	metricsAddrFlag := flag.Lookup(cnst.ArgMetricsAddr)
 	var metricsAddr string

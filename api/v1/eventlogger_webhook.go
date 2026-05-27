@@ -23,8 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-// SetupWebhookWithManager setup with manager
-func (in *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
+// SetupWebhookWithManager setup with manager.
+func (*EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, &EventLogger{}).
 		WithValidator(&validateEl{}).
 		Complete()
@@ -34,21 +34,21 @@ func (in *EventLogger) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 type validateEl struct{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
 func (v *validateEl) ValidateCreate(_ context.Context, el *EventLogger) (warnings admission.Warnings, err error) {
 	return v.validate(el)
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
 func (v *validateEl) ValidateUpdate(_ context.Context, el, _ *EventLogger) (warnings admission.Warnings, err error) {
 	return v.validate(el)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (v *validateEl) ValidateDelete(_ context.Context, _ *EventLogger) (warnings admission.Warnings, err error) {
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
+func (*validateEl) ValidateDelete(_ context.Context, _ *EventLogger) (warnings admission.Warnings, err error) {
 	return nil, nil
 }
 
-func (v *validateEl) validate(el *EventLogger) (admission.Warnings, error) {
+func (*validateEl) validate(el *EventLogger) (admission.Warnings, error) {
 	return nil, el.Spec.Validate()
 }

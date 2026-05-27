@@ -21,13 +21,21 @@ TB_MOCKGEN ?= $(TB_LOCALBIN)/mockgen
 TB_SEMVER ?= $(TB_LOCALBIN)/semver
 
 ## Tool Versions
+# renovate: packageName=github.com/kubernetes-sigs/controller-tools
 TB_CONTROLLER_GEN_VERSION ?= v0.21.0
+# renovate: packageName=github.com/kubernetes/code-generator
 TB_DEEPCOPY_GEN_VERSION ?= v0.36.1
+# renovate: packageName=github.com/mvdan/gofumpt
 TB_GOFUMPT_VERSION ?= v0.10.0
+# renovate: packageName=github.com/golangci/golangci-lint/v2
 TB_GOLANGCI_LINT_VERSION ?= v2.12.2
+# renovate: packageName=github.com/segmentio/golines
 TB_GOLINES_VERSION ?= v0.13.0
+# renovate: packageName=github.com/goreleaser/goreleaser/v2
 TB_GORELEASER_VERSION ?= v2.16.0
+# renovate: packageName=github.com/norwoodj/helm-docs/cmd/helm-docs
 TB_HELM_DOCS_VERSION ?= v1.14.2
+# renovate: packageName=github.com/bakito/semver
 TB_SEMVER_VERSION ?= v1.1.10
 
 ## Tool Installer
@@ -90,7 +98,7 @@ tb.reset:
 ## Update Tools
 .PHONY: tb.update
 tb.update: tb.reset
-	toolbox makefile -f $(TB_LOCALDIR)/Makefile \
+	toolbox makefile --renovate -f $(TB_LOCALDIR)/Makefile \
 		sigs.k8s.io/controller-tools/cmd/controller-gen@github.com/kubernetes-sigs/controller-tools \
 		k8s.io/code-generator/cmd/deepcopy-gen@github.com/kubernetes/code-generator \
 		mvdan.cc/gofumpt@github.com/mvdan/gofumpt \

@@ -4,17 +4,19 @@ import (
 	"encoding/json"
 	"errors"
 
-	v1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apiv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
 	"github.com/bakito/k8s-event-logger-operator/version"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("V1", func() {
-	Context("APIGroup serialisation", func() {
+	Context("APIGroup serialization", func() {
 		It("should serialize an empty string", func() {
-			k := &v1.Kind{
+			k := &apiv1.Kind{
 				Name:     "a",
 				APIGroup: new(""),
 			}
@@ -23,7 +25,7 @@ var _ = Describe("V1", func() {
 			Ω(string(b)).Should(Equal(`{"name":"a","apiGroup":""}`))
 		})
 		It("not add apiGroups if nil", func() {
-			k := &v1.Kind{
+			k := &apiv1.Kind{
 				Name: "a",
 			}
 			b, err := json.Marshal(k)
@@ -31,7 +33,7 @@ var _ = Describe("V1", func() {
 			Ω(string(b)).Should(Equal(`{"name":"a"}`))
 		})
 		It("should serialize an the apiGroup value", func() {
-			k := &v1.Kind{
+			k := &apiv1.Kind{
 				Name:     "a",
 				APIGroup: new("b"),
 			}
@@ -41,9 +43,9 @@ var _ = Describe("V1", func() {
 		})
 	})
 	Context("Apply", func() {
-		var el *v1.EventLogger
+		var el *apiv1.EventLogger
 		BeforeEach(func() {
-			el = &v1.EventLogger{}
+			el = &apiv1.EventLogger{}
 		})
 		It("should not set an error message", func() {
 			el.Apply(nil)

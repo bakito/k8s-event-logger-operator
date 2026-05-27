@@ -19,8 +19,6 @@ package setup
 import (
 	"context"
 
-	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
-	"github.com/bakito/k8s-event-logger-operator/version"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -29,11 +27,14 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	eventloggerv1 "github.com/bakito/k8s-event-logger-operator/api/v1"
+	"github.com/bakito/k8s-event-logger-operator/version"
 )
 
 var gracePeriod int64
 
-// Reconciler reconciles a Pod object
+// Reconciler reconciles a Pod object.
 type Reconciler struct {
 	client.Client
 	Log    logr.Logger
@@ -44,7 +45,7 @@ type Reconciler struct {
 
 // +kubebuilder:rbac:groups=eventlogger.bakito.ch,resources=eventloggers,verbs=get;list;watch;create;update;patch;delete
 
-// Reconcile EventLogger to setup event logger pods
+// Reconcile EventLogger to setup event logger pods.
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	reqLogger := r.Log.WithValues("namespace", req.Namespace, "name", req.Name)
 
@@ -123,16 +124,16 @@ func loggerName(cr *eventloggerv1.EventLogger) string {
 	return "event-logger-" + cr.Name
 }
 
-func podChanged(old, new *corev1.Pod) bool {
-	if old.Spec.ServiceAccountName != new.Spec.ServiceAccountName {
+func podChanged(oldPod, newPod *corev1.Pod) bool {
+	if oldPod.Spec.ServiceAccountName != newPod.Spec.ServiceAccountName {
 		return true
 	}
-	if len(old.Spec.Containers) > 0 && len(new.Spec.Containers) > 0 &&
-		old.Spec.Containers[0].Image != new.Spec.Containers[0].Image {
+	if len(oldPod.Spec.Containers) > 0 && len(newPod.Spec.Containers) > 0 &&
+		oldPod.Spec.Containers[0].Image != newPod.Spec.Containers[0].Image {
 		return true
 	}
 
-	return podEnv(old, "WATCH_NAMESPACE") != podEnv(new, "WATCH_NAMESPACE")
+	return podEnv(oldPod, "WATCH_NAMESPACE") != podEnv(newPod, "WATCH_NAMESPACE")
 }
 
 func podEnv(pod *corev1.Pod, name string) string {
@@ -144,7 +145,7 @@ func podEnv(pod *corev1.Pod, name string) string {
 	return "N/A"
 }
 
-// SetupWithManager setup with manager
+// SetupWithManager setup with manager.
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&eventloggerv1.EventLogger{}).
