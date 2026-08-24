@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -40,19 +39,17 @@ var _ = Describe("Config", func() {
 	Context("Reconcile", func() {
 		var configMap *corev1.ConfigMap
 		BeforeEach(func() {
-			configMap = &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{
+			configMap = &corev1.ConfigMap{
 				Name:      uuid.NewString(),
 				Namespace: uuid.NewString(),
-			}}
+			}
 		})
 
 		It("should fail if the data is empty", func() {
 			cr.Reader = fake.NewClientBuilder().WithScheme(s).WithObjects(configMap).Build()
 			res, err := cr.Reconcile(cr.Ctx(), reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      configMap.Name,
-					Namespace: configMap.Namespace,
-				},
+				Name:      configMap.Name,
+				Namespace: configMap.Namespace,
 			})
 			Ω(err).Should(HaveOccurred())
 			Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
@@ -61,10 +58,8 @@ var _ = Describe("Config", func() {
 			configMap.Data = map[string]string{"foo": "bar"}
 			cr.Reader = fake.NewClientBuilder().WithScheme(s).WithObjects(configMap).Build()
 			res, err := cr.Reconcile(cr.Ctx(), reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      configMap.Name,
-					Namespace: configMap.Namespace,
-				},
+				Name:      configMap.Name,
+				Namespace: configMap.Namespace,
 			})
 			Ω(err).Should(HaveOccurred())
 			Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
@@ -73,10 +68,8 @@ var _ = Describe("Config", func() {
 			configMap.Data = map[string]string{cnst.ConfigKeyContainerTemplate: ""}
 			cr.Reader = fake.NewClientBuilder().WithScheme(s).WithObjects(configMap).Build()
 			res, err := cr.Reconcile(cr.Ctx(), reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      configMap.Name,
-					Namespace: configMap.Namespace,
-				},
+				Name:      configMap.Name,
+				Namespace: configMap.Namespace,
 			})
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
@@ -100,10 +93,8 @@ resources:
 `}
 			cr.Reader = fake.NewClientBuilder().WithScheme(s).WithObjects(configMap).Build()
 			res, err := cr.Reconcile(cr.Ctx(), reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      configMap.Name,
-					Namespace: configMap.Namespace,
-				},
+				Name:      configMap.Name,
+				Namespace: configMap.Namespace,
 			})
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(res.RequeueAfter).Should(Equal(time.Duration(0)))
@@ -122,10 +113,10 @@ resources:
 			nn  types.NamespacedName
 		)
 		BeforeEach(func() {
-			pod = &corev1.Pod{ObjectMeta: metav1.ObjectMeta{
+			pod = &corev1.Pod{
 				Name:      uuid.NewString(),
 				Namespace: uuid.NewString(),
-			}}
+			}
 			nn = types.NamespacedName{
 				Namespace: pod.Namespace,
 				Name:      pod.Name,
