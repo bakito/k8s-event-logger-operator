@@ -12,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,10 +66,8 @@ var _ = Describe("Logging", func() {
 				LoggerMode: false,
 			}
 			req = reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Name:      "foo",
-					Namespace: testNamespace,
-				},
+				Name:      "foo",
+				Namespace: testNamespace,
 			}
 		})
 
@@ -136,9 +133,7 @@ var _ = Describe("Logging", func() {
 			}
 
 			lp.logEvent(&corev1.Event{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "1",
-				},
+				ResourceVersion: "1",
 			})
 		})
 		It("should log one message with 14 fields", func() {
@@ -154,9 +149,7 @@ var _ = Describe("Logging", func() {
 			}
 
 			lp.logEvent(&corev1.Event{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "3",
-				},
+				ResourceVersion: "3",
 			})
 		})
 		It("should log one message with custom fields", func() {
@@ -182,11 +175,9 @@ var _ = Describe("Logging", func() {
 			}
 
 			lp.logEvent(&corev1.Event{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "3",
-					Name:            "test-event-name",
-				},
-				Type: "test-type",
+				ResourceVersion: "3",
+				Name:            "test-event-name",
+				Type:            "test-type",
 				InvolvedObject: corev1.ObjectReference{
 					Kind: "test-kind",
 					Name: "test-io-name",
@@ -213,22 +204,16 @@ var _ = Describe("Logging", func() {
 			}
 
 			lp.logEvent(&corev1.Event{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "3",
-				},
-				LastTimestamp: metav1.Now(),
+				ResourceVersion: "3",
+				LastTimestamp:   metav1.Now(),
 			})
 			lp.logEvent(&corev1.Event{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "4",
-				},
-				FirstTimestamp: metav1.Now(),
+				ResourceVersion: "4",
+				FirstTimestamp:  metav1.Now(),
 			})
 			lp.logEvent(&corev1.Event{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: "5",
-				},
-				EventTime: metav1.MicroTime{Time: time.Now()},
+				ResourceVersion: "5",
+				EventTime:       metav1.MicroTime{Time: time.Now()},
 			})
 		})
 
@@ -492,10 +477,8 @@ var _ = Describe("Logging", func() {
 				},
 			}
 			el = &apiv1.EventLogger{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace: testNamespace,
-					Name:      testName,
-				},
+				Namespace: testNamespace,
+				Name:      testName,
 			}
 		})
 		Context("Create", func() {

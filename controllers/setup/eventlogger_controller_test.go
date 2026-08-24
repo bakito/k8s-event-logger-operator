@@ -44,10 +44,8 @@ var _ = Describe("Logging", func() {
 		ns2 = "eventlogger-operators"
 
 		el = &apiv1.EventLogger{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "eventlogger",
-				Namespace: testNamespace,
-			},
+			Name:      "eventlogger",
+			Namespace: testNamespace,
 			Spec: apiv1.EventLoggerSpec{
 				Labels:        map[string]string{"test-label": "foo"},
 				Annotations:   map[string]string{"test-annotation": "bar"},
@@ -238,19 +236,15 @@ func testReconcile(initialObjects ...client.Object) (client.Client, reconcile.Re
 		Name:      uuid.New().String(),
 	}
 	operatorPod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: nn.Namespace,
-			Name:      nn.Name,
-		},
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{Image: testImage}},
 		},
 	}
 	cfg := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: nn.Namespace,
-			Name:      nn.Name,
-		},
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
 		Data: map[string]string{c.ConfigKeyContainerTemplate: `
 image: quay.io/bakito/k8s-event-logger
 resources:
@@ -274,10 +268,8 @@ resources:
 	}
 
 	_, err := cr.Reconcile(cr.Ctx(), reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      cfg.Name,
-			Namespace: cfg.Namespace,
-		},
+		Name:      cfg.Name,
+		Namespace: cfg.Namespace,
 	})
 	Ω(err).ShouldNot(HaveOccurred())
 
@@ -289,10 +281,8 @@ resources:
 	}
 
 	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      "eventlogger",
-			Namespace: testNamespace,
-		},
+		Name:      "eventlogger",
+		Namespace: testNamespace,
 	}
 	res, err := r.Reconcile(context.Background(), req)
 	Ω(err).ShouldNot(HaveOccurred())
@@ -313,15 +303,11 @@ func assertEntrySize(cl client.Client, el *apiv1.EventLogger, list client.Object
 
 func newPod() *corev1.Pod {
 	return &corev1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Pod",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: testNamespace,
-			Labels: map[string]string{
-				"app":        "event-logger-eventlogger",
-				"created-by": "eventlogger",
-			},
+		Kind:      "Pod",
+		Namespace: testNamespace,
+		Labels: map[string]string{
+			"app":        "event-logger-eventlogger",
+			"created-by": "eventlogger",
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{

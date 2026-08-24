@@ -21,7 +21,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -118,23 +117,17 @@ func (r *Reconciler) mutateRoleBinding(rb *rbacv1.RoleBinding, cr *eventloggerv1
 
 func rbacForCR(cr *eventloggerv1.EventLogger) (*corev1.ServiceAccount, *rbacv1.Role, *rbacv1.RoleBinding) {
 	sacc := &corev1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      loggerName(cr),
-			Namespace: cr.Namespace,
-		},
+		Name:      loggerName(cr),
+		Namespace: cr.Namespace,
 	}
 
 	role := &rbacv1.Role{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      loggerName(cr),
-			Namespace: cr.Namespace,
-		},
+		Name:      loggerName(cr),
+		Namespace: cr.Namespace,
 	}
 	rb := &rbacv1.RoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      loggerName(cr),
-			Namespace: cr.Namespace,
-		},
+		Name:      loggerName(cr),
+		Namespace: cr.Namespace,
 	}
 
 	return sacc, role, rb

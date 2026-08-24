@@ -23,7 +23,6 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -162,15 +161,11 @@ func (r *Reconciler) podForCR(cr *eventloggerv1.EventLogger) *corev1.Pod {
 	}
 
 	pod := &corev1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Pod",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: loggerName(cr) + "-",
-			Namespace:    cr.Namespace,
-			Labels:       copyLabels(cr),
-			Annotations:  annotations,
-		},
+		Kind:         "Pod",
+		GenerateName: loggerName(cr) + "-",
+		Namespace:    cr.Namespace,
+		Labels:       copyLabels(cr),
+		Annotations:  annotations,
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				container,
