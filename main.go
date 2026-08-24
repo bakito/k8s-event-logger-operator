@@ -161,7 +161,7 @@ func main() {
 				Log:    ctrl.Log.WithName("controllers").WithName("Config"),
 				Scheme: mgr.GetScheme(),
 			}
-			if err = (cr).SetupWithManager(mgr); err != nil {
+			if err = cr.SetupWithManager(mgr); err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "Config")
 				os.Exit(1)
 			}
