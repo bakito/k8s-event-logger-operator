@@ -14,6 +14,12 @@ jobs:
   e2e:
     name: Run end-2-end Tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # https://hub.docker.com/r/kindest/node/tags
+        k8s_version: ["v1.35.8", "v1.36.4", "v1.37.0"]
+
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -25,6 +31,7 @@ jobs:
         uses: bakito/kind-with-registry-action@b13dc5fd599a5c774e7ca721d6e7a34f7269d2d8 # v1.0.1
         with:
           docker_image_name: k8s-event-logger:e2e
+          kubectl_version: ${{ matrix.k8s_version }}
 
       - name: Install helm chart
         run: |
