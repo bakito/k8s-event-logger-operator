@@ -159,17 +159,19 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 	podName := os.Getenv(cnst.EnvPodName)
 	configReload := os.Getenv(cnst.EnvConfigReload)
 
-	if err := r.setupEventLoggerImage(types.NamespacedName{
+	err := r.setupEventLoggerImage(types.NamespacedName{
 		Namespace: namespace,
 		Name:      podName,
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
 
-	if err := r.readConfig(r.Ctx(), mgr.GetLogger(), types.NamespacedName{
+	err = r.readConfig(r.Ctx(), mgr.GetLogger(), types.NamespacedName{
 		Namespace: namespace,
 		Name:      cmName,
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
 

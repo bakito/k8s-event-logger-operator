@@ -143,13 +143,14 @@ func main() {
 
 	if enableLoggerMode {
 		setupLog.WithValues("configName", configName).Info("Current configuration")
-		if err = (&logging.Reconciler{
+		err = (&logging.Reconciler{
 			Client:     mgr.GetClient(),
 			Log:        ctrl.Log.WithName("controllers").WithName("Event"),
 			Scheme:     mgr.GetScheme(),
 			Config:     logging.ConfigFor(configName, podNamespace, watchNamespace),
 			LoggerMode: true,
-		}).SetupWithManager(mgr, watchNamespace); err != nil {
+		}).SetupWithManager(mgr, watchNamespace)
+		if err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", "Event")
 			os.Exit(1)
 		}
@@ -161,35 +162,39 @@ func main() {
 				Log:    ctrl.Log.WithName("controllers").WithName("Config"),
 				Scheme: mgr.GetScheme(),
 			}
-			if err = cr.SetupWithManager(mgr); err != nil {
+			err = cr.SetupWithManager(mgr)
+			if err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "Config")
 				os.Exit(1)
 			}
-			if err = (&setup.Reconciler{
+			err = (&setup.Reconciler{
 				Client:    mgr.GetClient(),
 				Log:       ctrl.Log.WithName("controllers").WithName("EventLogger"),
 				Scheme:    mgr.GetScheme(),
 				ConfigCtx: cr.Ctx(),
-			}).SetupWithManager(mgr); err != nil {
+			}).SetupWithManager(mgr)
+			if err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "EventLogger")
 				os.Exit(1)
 			}
 			setupLog.Info("Running in global mode.")
 
 			if os.Getenv(cnst.EnvEnableWebhook) != "false" {
-				if err = (&eventloggerv1.EventLogger{}).SetupWebhookWithManager(mgr); err != nil {
+				err = (&eventloggerv1.EventLogger{}).SetupWebhookWithManager(mgr)
+				if err != nil {
 					setupLog.Error(err, "unable to create webhook", "webhook", "EventLogger")
 					os.Exit(1)
 				}
 			}
 		} else {
-			if err = (&logging.Reconciler{
+			err = (&logging.Reconciler{
 				Client:     mgr.GetClient(),
 				Log:        ctrl.Log.WithName("controllers").WithName("Event"),
 				Scheme:     mgr.GetScheme(),
 				Config:     logging.ConfigFor(configName, podNamespace, watchNamespace),
 				LoggerMode: false,
-			}).SetupWithManager(mgr, watchNamespace); err != nil {
+			}).SetupWithManager(mgr, watchNamespace)
+			if err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "Event")
 				os.Exit(1)
 			}
