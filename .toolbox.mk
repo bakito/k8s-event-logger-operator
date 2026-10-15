@@ -22,7 +22,7 @@ TB_SEMVER ?= $(TB_LOCALBIN)/semver
 
 ## Tool Versions
 # renovate: packageName=github.com/kubernetes-sigs/controller-tools
-TB_CONTROLLER_GEN_VERSION ?= v0.22.0
+TB_CONTROLLER_GEN_VERSION ?= v0.23.0
 # renovate: packageName=github.com/kubernetes/code-generator
 TB_DEEPCOPY_GEN_VERSION ?= v0.37.1
 # renovate: packageName=github.com/mvdan/gofumpt
