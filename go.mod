@@ -1,6 +1,6 @@
 module github.com/bakito/k8s-event-logger-operator
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/bakito/operator-utils v1.3.3
